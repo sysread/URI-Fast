@@ -1,0 +1,5 @@
+/.build
+/URI::Tiny*
+*.swp
+/cover_db
+./scratch.pl

@@ -1,0 +1,52 @@
+#!perl
+
+
+use URI;
+use URI::Tiny qw(uri_of_str);
+use Benchmark qw(:all);
+
+my @urls = (
+  '/foo/bar/baz',
+  'http://www.test.com',
+  'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff',
+  'https://test.com/some/path/?aaaa=bbbb&cccc=dddd&eeee=ffff',
+  'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
+);
+
+timethese 400_000, {
+  'file'     => sub{ my $uri = uri_of_str $urls[0]; },
+  'simple'   => sub{ my $uri = uri_of_str $urls[1]; },
+  'basic'    => sub{ my $uri = uri_of_str $urls[2]; },
+  'trailing' => sub{ my $uri = uri_of_str $urls[3]; },
+  'complete' => sub{ my $uri = uri_of_str $urls[4]; },
+};
+
+print "\n";
+
+timethese 200_000, {
+  '      URI - ctor' => sub{ my $uri = URI->new($urls[1]); },
+  'URI::Tiny - ctor' => sub{ my $uri = uri_of_str $urls[1]; },
+};
+
+print "\n";
+
+timethese 200_000, {
+  '      URI - basic' => sub{ my $uri = URI->new($urls[4]); $uri->scheme },
+  'URI::Tiny - basic' => sub{ my $uri = uri_of_str $urls[4]; $uri->scheme },
+};
+
+print "\n";
+
+timethese 200_000, {
+  '      URI - auth' => sub{ my $uri = URI->new($urls[4]); $uri->host },
+  'URI::Tiny - auth' => sub{ my $uri = uri_of_str $urls[4]; $uri->host },
+};
+
+print "\n";
+
+timethese 200_000, {
+  '      URI - query' => sub{ my $uri = URI->new($urls[4]); $uri->query_form },
+  'URI::Tiny - query' => sub{ my $uri = uri_of_str $urls[4]; $uri->param('asdf') },
+};
+
+print "\n";
