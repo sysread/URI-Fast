@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-URI::Tiny - A fast URI parser and builder
+URI::Fast - A fast URI parser and builder
 
 =head1 VERSION
 

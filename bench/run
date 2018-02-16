@@ -2,7 +2,7 @@
 
 
 use URI;
-use URI::Tiny qw(uri_of_str);
+use URI::Fast qw(uri_of_str);
 use Benchmark qw(:all);
 
 my @urls = (
@@ -25,28 +25,28 @@ print "\n";
 
 timethese 200_000, {
   '      URI - ctor' => sub{ my $uri = URI->new($urls[1]); },
-  'URI::Tiny - ctor' => sub{ my $uri = uri_of_str $urls[1]; },
+  'URI::Fast - ctor' => sub{ my $uri = uri_of_str $urls[1]; },
 };
 
 print "\n";
 
 timethese 200_000, {
   '      URI - basic' => sub{ my $uri = URI->new($urls[4]); $uri->scheme },
-  'URI::Tiny - basic' => sub{ my $uri = uri_of_str $urls[4]; $uri->scheme },
+  'URI::Fast - basic' => sub{ my $uri = uri_of_str $urls[4]; $uri->scheme },
 };
 
 print "\n";
 
 timethese 200_000, {
   '      URI - auth' => sub{ my $uri = URI->new($urls[4]); $uri->host },
-  'URI::Tiny - auth' => sub{ my $uri = uri_of_str $urls[4]; $uri->host },
+  'URI::Fast - auth' => sub{ my $uri = uri_of_str $urls[4]; $uri->host },
 };
 
 print "\n";
 
 timethese 200_000, {
   '      URI - query' => sub{ my $uri = URI->new($urls[4]); $uri->query_form },
-  'URI::Tiny - query' => sub{ my $uri = uri_of_str $urls[4]; $uri->param('asdf') },
+  'URI::Fast - query' => sub{ my $uri = uri_of_str $urls[4]; $uri->param('asdf') },
 };
 
 print "\n";

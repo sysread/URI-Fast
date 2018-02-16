@@ -1,7 +1,7 @@
 use Test2;
 use Test2::Bundle::Extended;
 
-use URI::Tiny qw(uri_of_str str_of_uri);
+use URI::Fast qw(uri_of_str str_of_uri);
 
 my @urls = (
   '/foo/bar/baz',

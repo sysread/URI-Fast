@@ -1,4 +1,4 @@
-package URI::Tiny;
+package URI::Fast;
 # ABSTRACT: A fast URI parser and builder
 
 use common::sense;
@@ -19,7 +19,7 @@ sub uri_of_str {
     path   => $path,
     query  => $query,
     frag   => $frag,
-  }, 'URI::Tiny';
+  }, 'URI::Fast';
 }
 
 sub str_of_uri {
