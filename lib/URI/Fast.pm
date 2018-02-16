@@ -233,7 +233,7 @@ sub param {
     }
   } if $_[0]->{query} && !$_[0]->{param};
 
-  $_[0]->set_param($_[1], $_[2]) if @_ == 3;
+  $_[0]->_set_param($_[1], $_[2]) if @_ == 3;
   $_[0]->{param}{$_[1]};
 }
 
@@ -245,7 +245,7 @@ sub _encode_param {
     : join('=', $k, $v ? uri_encode($v) : '');
 }
 
-sub set_param {
+sub _set_param {
   my ($self, $k, $v) = @_;
 
   if (defined $v) {
