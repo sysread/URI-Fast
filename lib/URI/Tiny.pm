@@ -133,14 +133,19 @@ sub _encode_param {
   my ($k, $v) = @_;
   $k = uri_encode $k;
   return ref $v
-    ? join('&', map{"$k=$_"} map{uri_encode($_)} @$v)
-    : join('=', $k, uri_encode($v));
+    ? join('&', map{"$k=$_"} map{$_ ? uri_encode($_) : ''} @$v)
+    : join('=', $k, $v ? uri_encode($v) : '');
 }
 
 sub set_param {
   my ($self, $k, $v) = @_;
-  my $self = shift;
-  $self->{param}{$k} = $v;
+
+  if (defined $v) {
+    $self->{param}{$k} = $v;
+  } else {
+    delete $self->{param}{$k};
+  }
+
   $self->{query} = join '&',
     map{ _encode_param($_, $self->{param}{$_}) }
     keys %{$self->{param}};
