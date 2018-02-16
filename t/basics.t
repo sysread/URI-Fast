@@ -117,15 +117,16 @@ subtest 'building' => sub{
   like $uri->query, qr/baz=bat/, 'query correctly updated';
   like $uri->query, qr/&/, 'query correctly updated';
 
-  is $uri->param('foo', undef), U, 'delete param';;
-  is $uri->query, 'baz=bat', 'query correctly updated';
+  is $uri->param('foo', undef), U, 'delete param';
+  is $uri->param('baz', 'bat and foo'), 'bat and foo', 'update param';
+  is $uri->query, 'baz=bat%20and%20foo', 'query correctly updated';
 
   $uri->pwd('secret');
   $uri->usr('someone');
   $uri->port(1234);
   $uri->path('/some/path');
 
-  is str_of_uri($uri), 'http://someone:secret@www.fnord.com:1234/some/path?baz=bat', 'str_of_uri';
+  is str_of_uri($uri), 'http://someone:secret@www.fnord.com:1234/some/path?baz=bat%20and%20foo', 'str_of_uri';
 };
 
 done_testing;

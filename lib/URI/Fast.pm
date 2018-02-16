@@ -1,3 +1,111 @@
+=head1 SYNOPSIS
+
+  use URI::Fast qw(uri_of_str str_of_uri);
+
+  my $uri = uri_of_str 'http://www.example.com/some/path?a=b&c=d';
+  $uri->param(a => 'not b anymore');  # update a query parameter
+  $uri->param(b => undef);            # delete a query parameter
+  $uri->user('somebody');             # modify the auth section
+
+  my $str = str_of_uri $uri;          # http://somebody@www.example.com/some/path?a=not%20b%20anymore
+
+=head1 DESCRIPTION
+
+L<URI> is an excellent module. It is battle-tested, robust, and at this point
+handles nearly every edge case imaginable. It is often the case, however, that
+one just needs to grab the path string out of a URL. Or validate some query
+parameters. Or switch the scheme from http to https.  Et cetera. In those
+cases, L<URI> may seem like overkill and may, in fact, be much slower than a
+simpler solution, like L<URI::Split>. Unfortunately, L<URI::Split> is so bare
+bones that it does not even parse the authorization section or provide an
+object that can be easily modified.
+
+C<URI::Fast> aims to bridge the gap between the two extremes. It provides fast
+parsing and string building without many of the frills of L<URI> while at the
+same time providing I<slightly> more than L<URI::Split> by returning an object
+with accessor methods to update the URI without resorting to string
+replacement.
+
+=head1 EXPORTED SUBROUTINES
+
+=head2 str_of_uri
+
+Accepts a L<URI::Fast> object and generates the URI string from it.
+
+=head2 uri_of_str
+
+Accepts a string, minimally parses it (using L<URI::Split>), and returns a
+L<URI::Fast> object.
+
+When initially created, only the scheme, authorization section, path, query
+string, and fragment are split out. Breaking these down further is done as
+needed.
+
+=head1 ATTRIBUTES
+
+=head2 uri
+
+The URI string used to create the object.
+
+=head2 scheme
+
+Defaults to C<file> if not present in the uri string.
+
+=head2 auth
+
+The authorization section is composed of any the username, password, host name,
+and port number.
+
+  someone:secret@hostname.com:1234
+
+Accessing the following attributes may incur a small amount of extra overhead
+the first time they are called and the auth string is parsed. Using them to
+update the values will cause the auth string to be regenerated.
+
+=over
+
+=item usr
+
+=item pwd
+
+=item host
+
+=item port
+
+=back
+
+=head2 path
+
+The entire path string. Trailing slashes are removed.
+
+=over
+
+=item split_path
+
+Returns the path as an array ref of each segment, split by C</>.
+
+=back
+
+=head2 query
+
+The complete query string. Does not include the leading C<?>.
+
+=over
+
+=item param
+
+Gets or sets a parameter value. The first time this is called, it incurs the
+overhead of parsing and decoding the query string. When used to modify the
+query, the query string is updated with the encoded values.
+
+=back
+
+=head2 frag
+
+The fragment section of the URI, excluding the leading C<#>.
+
+=cut
+
 package URI::Fast;
 # ABSTRACT: A fast URI parser and builder
 
