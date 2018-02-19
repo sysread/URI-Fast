@@ -22,10 +22,6 @@ version 0.01
     my $b = $uri->param('b');
   }
 
-  # Use faster URI constructor
-  use URI::Fast qw(fast_URI);
-  my $uri = fast_URI 'http://www.example.com/some/path?a=b&c=d';
-
 =head1 DESCRIPTION
 
 L<URI> is an excellent module. It is battle-tested, robust, and at this point
@@ -51,13 +47,6 @@ L<URI::Fast> object.
 When initially created, only the scheme, authorization section, path, query
 string, and fragment are split out. Breaking these down further is done as
 needed.
-
-=head2 fast_URI
-
-Returns an instance of L<URI> or the appropriate subclass, if available. It
-does this faster than the URI constructor does by skipping some of the edge
-cases it guards against, such as unwrapping, stringifying refs, and trimming
-leading and trailing spaces.
 
 =head1 ATTRIBUTES
 

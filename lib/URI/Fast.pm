@@ -10,10 +10,6 @@
     my $b = $uri->param('b');
   }
 
-  # Use faster URI constructor
-  use URI::Fast qw(fast_URI);
-  my $uri = fast_URI 'http://www.example.com/some/path?a=b&c=d';
-
 =head1 DESCRIPTION
 
 L<URI> is an excellent module. It is battle-tested, robust, and at this point
@@ -39,13 +35,6 @@ L<URI::Fast> object.
 When initially created, only the scheme, authorization section, path, query
 string, and fragment are split out. Breaking these down further is done as
 needed.
-
-=head2 fast_URI
-
-Returns an instance of L<URI> or the appropriate subclass, if available. It
-does this faster than the URI constructor does by skipping some of the edge
-cases it guards against, such as unwrapping, stringifying refs, and trimming
-leading and trailing spaces.
 
 =head1 ATTRIBUTES
 
@@ -117,8 +106,11 @@ use common::sense;
 use URI::Split qw(uri_split uri_join);
 use URI::Encode::XS qw(uri_decode);
 
+require URI;
+require URI::_foreign;
+
 use parent 'Exporter';
-our @EXPORT_OK = qw(uri fast_URI);
+our @EXPORT_OK = qw(uri);
 
 sub uri ($) {
   my $self = bless {}, __PACKAGE__;
@@ -195,21 +187,6 @@ sub param {
   };
 
   $_[0]->{param}{$_[1]};
-}
-
-sub fast_URI ($) {
-  require URI;
-
-  local $_ = $_[0];
-  m/^\s*([^:]+)(?=\/\/)/;
-
-  my $ic;
-  $ic = URI::implementor($1) // do {
-    require URI::_foreign;
-    $ic = 'URI::_foreign';
-  };
-
-  return $ic->_init($_, $1);
 }
 
 1;

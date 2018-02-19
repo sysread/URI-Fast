@@ -1,7 +1,7 @@
 use Test2;
 use Test2::Bundle::Extended;
 
-use URI::Fast qw(uri fast_URI);
+use URI::Fast qw(uri);
 
 my @urls = (
   '/foo/bar/baz',
@@ -98,19 +98,6 @@ subtest 'complete' => sub{
   is $uri->param('baz'), 'bat', 'query';
   is $uri->param('slack'), 'fnord', 'query';
   is $uri->param('asdf'), 'the quick brown fox & hound', 'query';
-};
-
-subtest 'fast_URI' => sub{
-  ok my $uri = fast_URI($urls[4]), 'ctor';
-  ok $uri->isa('URI'), 'isa URI';
-  ok $uri->isa('URI'), 'isa URI::https';
-
-  is $uri->scheme, 'https', 'scheme';
-  is $uri->authority, 'user:pwd@192.168.0.1:8000', 'authority';
-  is $uri->path, '/foo/bar', 'path';
-  is [$uri->path_segments], ['', 'foo', 'bar'], 'path_segments'; # note: interface different from URI::Fast; includes leading empty segment
-  is $uri->query, 'baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound', 'query';
-  is $uri->fragment, 'foofrag', 'fragment';
 };
 
 done_testing;
