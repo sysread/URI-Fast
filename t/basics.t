@@ -1,7 +1,7 @@
 use Test2;
 use Test2::Bundle::Extended;
 
-use URI::Fast qw(uri_of_str str_of_uri);
+use URI::Fast qw(uri);
 
 my @urls = (
   '/foo/bar/baz',
@@ -12,7 +12,7 @@ my @urls = (
 );
 
 subtest 'implicit file path' => sub{
-  ok my $uri = uri_of_str($urls[0]), 'new';
+  ok my $uri = uri($urls[0]), 'new';
   is $uri->scheme, 'file', 'scheme';
   ok !$uri->auth, 'auth';
   is $uri->path, '/foo/bar/baz', 'path';
@@ -27,7 +27,7 @@ subtest 'implicit file path' => sub{
 };
 
 subtest 'simple' => sub{
-  ok my $uri = uri_of_str($urls[1]), 'new';
+  ok my $uri = uri($urls[1]), 'new';
   is $uri->scheme, 'http', 'scheme';
   is $uri->auth, 'www.test.com', 'auth';
   ok !$uri->path, 'path';
@@ -42,7 +42,7 @@ subtest 'simple' => sub{
 };
 
 subtest 'path & query' => sub{
-  ok my $uri = uri_of_str($urls[2]), 'new';
+  ok my $uri = uri($urls[2]), 'new';
   is $uri->scheme, 'https', 'scheme';
   is $uri->auth, 'test.com', 'auth';
   is $uri->path, '/some/path', 'path';
@@ -61,7 +61,7 @@ subtest 'path & query' => sub{
   is $uri->param('fnord'), U, '!query';
 
   subtest 'path w/ trailing slash' => sub {
-    ok my $uri = uri_of_str($urls[3]), 'new';
+    ok my $uri = uri($urls[3]), 'new';
     is $uri->scheme, 'https', 'scheme';
     is $uri->auth, 'test.com', 'auth';
     is $uri->path, '/some/path', 'path';
@@ -82,7 +82,7 @@ subtest 'path & query' => sub{
 };
 
 subtest 'complete' => sub{
-  ok my $uri = uri_of_str($urls[4]), 'new';
+  ok my $uri = uri($urls[4]), 'new';
   is $uri->scheme, 'https', 'scheme';
   is $uri->auth, 'user:pwd@192.168.0.1:8000', 'auth';
   is $uri->path, '/foo/bar', 'path';
@@ -98,35 +98,6 @@ subtest 'complete' => sub{
   is $uri->param('baz'), 'bat', 'query';
   is $uri->param('slack'), 'fnord', 'query';
   is $uri->param('asdf'), 'the quick brown fox & hound', 'query';
-};
-
-subtest 'building' => sub{
-  ok my $uri = uri_of_str($urls[1]), 'new';
-  is $uri->usr('someone'), 'someone', 'set usr';
-  is $uri->host('www.fnord.com'), 'www.fnord.com', 'set host';
-  is $uri->auth, 'someone@www.fnord.com', 'auth correctly set';
-
-  is $uri->usr(undef), U, 'undef usr';
-  is $uri->auth, 'www.fnord.com', 'auth correctly updated';
-
-  is $uri->query, U, 'undef query';
-  is $uri->param('foo'), U, 'get undef param';
-  is $uri->param('foo', 'bar'), 'bar', 'set param';
-  is $uri->param('baz', 'bat'), 'bat', 'set param';
-  like $uri->query, qr/foo=bar/, 'query correctly updated';
-  like $uri->query, qr/baz=bat/, 'query correctly updated';
-  like $uri->query, qr/&/, 'query correctly updated';
-
-  is $uri->param('foo', undef), U, 'delete param';
-  is $uri->param('baz', 'bat and foo'), 'bat and foo', 'update param';
-  is $uri->query, 'baz=bat%20and%20foo', 'query correctly updated';
-
-  $uri->pwd('secret');
-  $uri->usr('someone');
-  $uri->port(1234);
-  $uri->path('/some/path');
-
-  is str_of_uri($uri), 'http://someone:secret@www.fnord.com:1234/some/path?baz=bat%20and%20foo', 'str_of_uri';
 };
 
 done_testing;

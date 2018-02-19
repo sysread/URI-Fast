@@ -2,7 +2,7 @@
 
 
 use URI;
-use URI::Fast qw(uri_of_str);
+use URI::Fast qw(uri);
 use Benchmark qw(:all);
 
 my @urls = (
@@ -14,39 +14,39 @@ my @urls = (
 );
 
 timethese 400_000, {
-  'file'     => sub{ my $uri = uri_of_str $urls[0]; },
-  'simple'   => sub{ my $uri = uri_of_str $urls[1]; },
-  'basic'    => sub{ my $uri = uri_of_str $urls[2]; },
-  'trailing' => sub{ my $uri = uri_of_str $urls[3]; },
-  'complete' => sub{ my $uri = uri_of_str $urls[4]; },
+  'file'     => sub{ my $uri = uri $urls[0]; $uri->scheme; },
+  'simple'   => sub{ my $uri = uri $urls[1]; $uri->scheme; },
+  'basic'    => sub{ my $uri = uri $urls[2]; $uri->scheme; },
+  'trailing' => sub{ my $uri = uri $urls[3]; $uri->scheme; },
+  'complete' => sub{ my $uri = uri $urls[4]; $uri->scheme; },
 };
 
 print "\n";
 
 timethese 200_000, {
   '      URI - ctor' => sub{ my $uri = URI->new($urls[1]); },
-  'URI::Fast - ctor' => sub{ my $uri = uri_of_str $urls[1]; },
+  'URI::Fast - ctor' => sub{ my $uri = uri $urls[1]; },
 };
 
 print "\n";
 
 timethese 200_000, {
   '      URI - basic' => sub{ my $uri = URI->new($urls[4]); $uri->scheme },
-  'URI::Fast - basic' => sub{ my $uri = uri_of_str $urls[4]; $uri->scheme },
+  'URI::Fast - basic' => sub{ my $uri = uri $urls[4]; $uri->scheme },
 };
 
 print "\n";
 
 timethese 200_000, {
   '      URI - auth' => sub{ my $uri = URI->new($urls[4]); $uri->host },
-  'URI::Fast - auth' => sub{ my $uri = uri_of_str $urls[4]; $uri->host },
+  'URI::Fast - auth' => sub{ my $uri = uri $urls[4]; $uri->host },
 };
 
 print "\n";
 
 timethese 200_000, {
   '      URI - query' => sub{ my $uri = URI->new($urls[4]); $uri->query_form },
-  'URI::Fast - query' => sub{ my $uri = uri_of_str $urls[4]; $uri->param('asdf') },
+  'URI::Fast - query' => sub{ my $uri = uri $urls[4]; $uri->param('asdf') },
 };
 
 print "\n";
