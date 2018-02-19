@@ -1,3 +1,5 @@
+# PODNAME: URI::Fast::Benchmarks
+
 =head1 BENCHMARKS
 
 Various operations comparing L<URI::Fast> against L<URI>'s performance. The

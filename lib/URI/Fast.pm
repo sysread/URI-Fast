@@ -10,6 +10,11 @@
     my $b = $uri->param('b');
   }
 
+  if ($uri->path =~ /\/login/ && $uri->scheme ne 'https') {
+    $uri->scheme('https');
+    $uri->param('upgraded', 1);
+  }
+
 =head1 DESCRIPTION
 
 L<URI> is an excellent module. It is battle-tested, robust, and at this point
@@ -18,12 +23,12 @@ one just needs to grab the path string out of a URL. Or validate some query
 parameters. Et cetera. In those cases, L<URI> may seem like overkill and may,
 in fact, be much slower than a simpler solution, like L<URI::Split>.
 Unfortunately, L<URI::Split> is so bare bones that it does not even parse the
-authorization section or access query parameters.
+authorization section or access or update query parameters.
 
 C<URI::Fast> aims to bridge the gap between the two extremes. It provides fast
 parsing without many of the frills of L<URI> while at the same time providing
 I<slightly> more than L<URI::Split> by returning an object with methods to
-access portions of the URI.
+access and update portions of the URI.
 
 =head1 EXPORTED SUBROUTINES
 
@@ -37,6 +42,9 @@ string, and fragment are split out. Breaking these down further is done as
 needed.
 
 =head1 ATTRIBUTES
+
+Unless otherwise specified, all attributes serve as full accessors, allowing
+the URI segment to be both retrieved and modified.
 
 =head2 scheme
 
@@ -69,7 +77,10 @@ the first time they are called and the auth string is parsed.
 In scalar context, returns the entire path string. In list context, returns a
 list of path segments, split by C</>.
 
-=over
+The path may also be updated using either a string or an array ref of segments:
+
+  $uri->path('/foo/bar');
+  $uri->path(['foo', 'bar']);
 
 =head2 query
 
@@ -256,7 +267,7 @@ sub param {
     }
   }
 
-  $self->{param}{$key} if defined $key
+  $self->{param}{$key} if defined $key;
 }
 
 1;
