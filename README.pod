@@ -27,11 +27,10 @@ version 0.01
 L<URI> is an excellent module. It is battle-tested, robust, and at this point
 handles nearly every edge case imaginable. It is often the case, however, that
 one just needs to grab the path string out of a URL. Or validate some query
-parameters. Or switch the scheme from http to https.  Et cetera. In those
-cases, L<URI> may seem like overkill and may, in fact, be much slower than a
-simpler solution, like L<URI::Split>. Unfortunately, L<URI::Split> is so bare
-bones that it does not even parse the authorization section or provide an
-object that can be easily modified.
+parameters. Et cetera. In those cases, L<URI> may seem like overkill and may,
+in fact, be much slower than a simpler solution, like L<URI::Split>.
+Unfortunately, L<URI::Split> is so bare bones that it does not even parse the
+authorization section or provide an object that can be easily modified.
 
 C<URI::Fast> aims to bridge the gap between the two extremes. It provides fast
 parsing without many of the frills of L<URI> while at the same time providing
