@@ -33,9 +33,25 @@ test 'Constructor', 200_000, {
   'URI::Fast' => sub{ my $uri = uri $urls[1] },
 };
 
-test 'Complex URL', 200_000, {
+test 'Parse scheme', 200_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->scheme },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->scheme },
+};
+
+test 'Parse path', 200_000, {
+  'URI' => sub{ my $uri = URI->new($urls[3]); my $p = $uri->path },
+  'URI::Fast' => sub{ my $uri = uri $urls[3]; my $p = $uri->path },
+};
+
+test 'Split path', 200_000, {
+  'URI' => sub{ my $uri = URI->new($urls[3]); my @p = $uri->path_segments },
+  'URI::Fast' => sub{ my $uri = uri $urls[3]; my @p = $uri->path },
+};
+
+test 'Update path', 200_000, {
+  'URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/foo/bar') },
+  'URI::Fast/string' => sub{ my $uri = uri $urls[3]; $uri->path('/foo/bar') },
+  'URI::Fast/list' => sub{ my $uri = uri $urls[3]; $uri->path(['foo', 'bar']) },
 };
 
 test 'Parse authorization', 200_000, {
@@ -43,12 +59,22 @@ test 'Parse authorization', 200_000, {
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host },
 };
 
-test 'Path segments', 200_000, {
-  'URI' => sub{ my $uri = URI->new($urls[3]); ($uri->path_segments) },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->split_path },
+test 'Update authorization', 200_000, {
+  'URI' => sub{ my $uri = URI->new($urls[3]); $uri->host('test.com') },
+  'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host('test.com') },
 };
 
 test 'Parse query', 200_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->query_form },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->param('asdf') },
+};
+
+test 'Set query parameter', 200_000, {
+  'URI' => sub{ my $uri = URI->new($urls[3]); $uri->query_form(foo => 'bar') },
+  'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->param('foo', 'bar') },
+};
+
+test 'Stringification', 200_000, {
+  'URI' => sub{ my $uri = URI->new($urls[3]); my $str = "$uri" },
+  'URI::Fast' => sub{ my $uri = uri $urls[3]; my $str = "$uri" },
 };
