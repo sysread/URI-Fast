@@ -106,7 +106,7 @@ use URI::Encode::XS qw(uri_decode);
 use parent 'Exporter';
 our @EXPORT_OK = qw(uri);
 
-sub uri {
+sub uri ($) {
   my $self = bless {}, __PACKAGE__;
   @{$self}{qw(scheme auth path query frag)} = uri_split $_[0];
   $self->{path} =~ s/\/$//;

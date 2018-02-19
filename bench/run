@@ -38,6 +38,13 @@ timethese 200_000, {
 print "\n";
 
 timethese 200_000, {
+  '      URI - path' => sub{ my $uri = URI->new($urls[4]); ($uri->path_segments) },
+  'URI::Fast - path' => sub{ my $uri = uri $urls[4]; $uri->split_path },
+};
+
+print "\n";
+
+timethese 200_000, {
   '      URI - auth' => sub{ my $uri = URI->new($urls[4]); $uri->host },
   'URI::Fast - auth' => sub{ my $uri = uri $urls[4]; $uri->host },
 };
