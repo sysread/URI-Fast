@@ -38,8 +38,8 @@ Accepts a string, minimally parses it (using L<URI::Split>), and returns a
 L<URI::Fast> object.
 
 When initially created, only the scheme, authorization section, path, query
-string, and fragment are split out. Breaking these down further is done as
-needed.
+string, and fragment are split out. Thesea are broken down in a lazy fashion
+as needed when a related attribute accessor is called.
 
 =head1 ATTRIBUTES
 
@@ -52,9 +52,11 @@ Defaults to C<file> if not present in the uri string.
 
 =head2 auth
 
-The authorization section is composed of any the username, password, host name,
-and port number.
+The authorization section is composed of the username, password, host name, and
+port number:
 
+  hostname.com
+  someone@hostname.com
   someone:secret@hostname.com:1234
 
 Accessing the following attributes may incur a small amount of extra overhead
@@ -64,11 +66,20 @@ the first time they are called and the auth string is parsed.
 
 =item usr
 
+The username segment of the authorization string.
+
 =item pwd
+
+The password segment of the authorization string.
 
 =item host
 
+The host name segment of the authorization string. May be a domain string or
+an IP address.
+
 =item port
+
+The port number segment of the authorization string.
 
 =back
 
@@ -90,11 +101,13 @@ The complete query string. Does not include the leading C<?>.
 
 =item param
 
-Gets a parameter value. The first time this is called, it incurs the overhead
-of parsing and decoding the query string.
+Gets or sets a parameter value. The first time this is called, it incurs the
+overhead of parsing and decoding the query string.
 
 If the key appears more than once in the query string, the value returned will
 be an array ref of each of its values.
+
+Setting the parameter will update the query string.
 
 =back
 
@@ -105,7 +118,7 @@ The fragment section of the URI, excluding the leading C<#>.
 =cut
 
 package URI::Fast;
-# ABSTRACT: A fast URI parser
+# ABSTRACT: A fast(er) URI parser
 
 use common::sense;
 use URI::Split qw(uri_split);

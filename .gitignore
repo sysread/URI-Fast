@@ -1,5 +1,5 @@
 /.build
-/URI::Fast*
+/URI-Fast*
 *.swp
 /cover_db
 ./scratch.pl
