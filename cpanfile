@@ -1,3 +1,5 @@
+requires 'perl', '5.010';
+
 requires 'URI::Split';
 requires 'URI::Encode::XS';
 requires 'Exporter';

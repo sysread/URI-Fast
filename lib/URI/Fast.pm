@@ -100,42 +100,35 @@ package URI::Fast;
 # ABSTRACT: A fast URI parser
 
 use common::sense;
-use Const::Fast;
 use URI::Split qw(uri_split);
 use URI::Encode::XS qw(uri_decode);
 
 use parent 'Exporter';
 our @EXPORT_OK = qw(uri);
 
-const our @FIELDS => qw(scheme auth path query frag);
-
 sub uri {
   my $self = bless {}, __PACKAGE__;
-  @{$self}{@FIELDS} = uri_split $_[0];
+  @{$self}{qw(scheme auth path query frag)} = uri_split $_[0];
   $self->{path} =~ s/\/$//;
   $self->{scheme} //= 'file';
   $self;
 }
 
 # Build a simple accessor for basic attributes
-do {
-  foreach my $attr (qw(scheme auth path query frag)) {
-    *{__PACKAGE__ . "::$attr"} = sub {
-      $_[0]->{$attr};
-    };
-  }
-};
+foreach my $attr (qw(scheme auth path query frag)) {
+  *{__PACKAGE__ . "::$attr"} = sub {
+    $_[0]->{$attr};
+  };
+}
 
 # For bits of the auth string, build a lazy accessor that calls _auth, which
 # parses the auth string.
-do {
-  foreach my $attr (qw(usr pwd host port)) {
-    *{__PACKAGE__ . "::$attr"} = sub {
-      $_[0]->{auth} && $_[0]->{_auth} || $_[0]->_auth;
-      $_[0]->{$attr};
-    };
-  }
-};
+foreach my $attr (qw(usr pwd host port)) {
+  *{__PACKAGE__ . "::$attr"} = sub {
+    $_[0]->{auth} && $_[0]->{_auth} || $_[0]->_auth;
+    $_[0]->{$attr};
+  };
+}
 
 # Parses auth strings
 sub _auth {
@@ -163,25 +156,24 @@ sub split_path {
 sub param {
   $_[0]->{query} || return;
 
-  if (!$_[0]->{paam}) {
-    my %param;                                  # Somewhere to set our things
+  if (!$_[0]->{param}) {
+    my %param;                                         # Somewhere to set our things
 
-    if (local $_ = $_[0]->{query}) {            # Faster access via a dynamic variable
-      tr/\+/ /;                                 # Seriously, dfarrell?
-      local @_ = split /[&=]/;                  # Tokenize
+    if (local $_ = $_[0]->{query}) {                   # Faster access via a dynamic variable
+      tr/\+/ /;                                        # Seriously, dfarrell?
+      local @_ = split /[&=]/;                         # Tokenize
 
-      while (my $k = uri_decode(shift || '')) { # Decode the next parameter
-        if (exists $param{$k}) {                # Multiple parameters exist with the same key
-          $param{$k} = [$param{$k}]             # Reinitialize as array ref to store multiple values
+      while (my $k = uri_decode(shift // '')) {        # Decode the next parameter
+        if (exists $param{$k}) {                       # Multiple parameters exist with the same key
+          $param{$k} = [$param{$k}]                    # Reinitialize as array ref to store multiple values
             unless ref $param{$k};
 
-          push @{$param{$k}}, uri_decode shift; # Add to the array
+          push @{$param{$k}}, uri_decode(shift // ''); # Add to the array
         }
-        else {                                  # First or only use of key
-          $param{$k} = uri_decode shift;
+        else {                                         # First or only use of key
+          $param{$k} = uri_decode(shift // '');
         }
       }
-
     }
 
     $_[0]->{param} = \%param;
