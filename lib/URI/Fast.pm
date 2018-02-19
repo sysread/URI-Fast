@@ -4,11 +4,15 @@
 
   my $uri = uri 'http://www.example.com/some/path?a=b&c=d';
 
-  if ($uri->scheme eq 'http') {
+  if ($uri->scheme =~ /http(s)?/) {
     my @path = $uri->split_path;
     my $a = $uri->param('a');
     my $b = $uri->param('b');
   }
+
+  # Use faster URI constructor
+  use URI::Fast qw(fast_URI);
+  my $uri = fast_URI 'http://www.example.com/some/path?a=b&c=d';
 
 =head1 DESCRIPTION
 
@@ -23,7 +27,7 @@ authorization section or access query parameters.
 C<URI::Fast> aims to bridge the gap between the two extremes. It provides fast
 parsing without many of the frills of L<URI> while at the same time providing
 I<slightly> more than L<URI::Split> by returning an object with methods to
-access portiosn of the URI.
+access portions of the URI.
 
 =head1 EXPORTED SUBROUTINES
 
