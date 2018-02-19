@@ -37,6 +37,13 @@ When initially created, only the scheme, authorization section, path, query
 string, and fragment are split out. Breaking these down further is done as
 needed.
 
+=head2 fast_URI
+
+Returns an instance of L<URI> or the appropriate subclass, if available. It
+does this faster than the URI constructor does by skipping some of the edge
+cases it guards against, such as unwrapping, stringifying refs, and trimming
+leading and trailing spaces.
+
 =head1 ATTRIBUTES
 
 =head2 scheme
@@ -73,7 +80,8 @@ The entire path string. Trailing slashes are removed.
 
 =item split_path
 
-Returns the path as an array ref of each segment, split by C</>.
+Returns the path as an array ref of each segment, split by C</>. The separator
+(forward slash) is excluded from the strings.
 
 =back
 
@@ -88,6 +96,9 @@ The complete query string. Does not include the leading C<?>.
 Gets a parameter value. The first time this is called, it incurs the overhead
 of parsing and decoding the query string.
 
+If the key appears more than once in the query string, the value returned will
+be an array ref of each of its values.
+
 =back
 
 =head2 frag
@@ -100,11 +111,11 @@ package URI::Fast;
 # ABSTRACT: A fast URI parser
 
 use common::sense;
-use URI::Split qw(uri_split);
+use URI::Split qw(uri_split uri_join);
 use URI::Encode::XS qw(uri_decode);
 
 use parent 'Exporter';
-our @EXPORT_OK = qw(uri);
+our @EXPORT_OK = qw(uri fast_URI);
 
 sub uri ($) {
   my $self = bless {}, __PACKAGE__;
@@ -150,7 +161,8 @@ sub _auth {
 # Returns a list of path segments, including the leading slash
 sub split_path {
   local $_ = $_[0]->{path};
-  split /(?=\/)/;
+  s/^\///;
+  split /\//;
 }
 
 sub param {
@@ -180,6 +192,21 @@ sub param {
   };
 
   $_[0]->{param}{$_[1]};
+}
+
+sub fast_URI ($) {
+  require URI;
+
+  local $_ = $_[0];
+  m/^\s*([^:]+)(?=\/\/)/;
+
+  my $ic;
+  $ic = URI::implementor($1) // do {
+    require URI::_foreign;
+    $ic = 'URI::_foreign';
+  };
+
+  return $ic->_init($_, $1);
 }
 
 1;

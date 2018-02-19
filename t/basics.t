@@ -1,7 +1,7 @@
 use Test2;
 use Test2::Bundle::Extended;
 
-use URI::Fast qw(uri);
+use URI::Fast qw(uri fast_URI);
 
 my @urls = (
   '/foo/bar/baz',
@@ -12,11 +12,11 @@ my @urls = (
 );
 
 subtest 'implicit file path' => sub{
-  ok my $uri = uri($urls[0]), 'new';
+  ok my $uri = uri($urls[0]), 'ctor';
   is $uri->scheme, 'file', 'scheme';
   ok !$uri->auth, 'auth';
   is $uri->path, '/foo/bar/baz', 'path';
-  is [$uri->split_path], ['/foo', '/bar', '/baz'], 'path as array';
+  is [$uri->split_path], ['foo', 'bar', 'baz'], 'split_path';
   ok !$uri->query, 'query';
   ok !$uri->frag, 'frag';
 
@@ -27,11 +27,11 @@ subtest 'implicit file path' => sub{
 };
 
 subtest 'simple' => sub{
-  ok my $uri = uri($urls[1]), 'new';
+  ok my $uri = uri($urls[1]), 'ctor';
   is $uri->scheme, 'http', 'scheme';
   is $uri->auth, 'www.test.com', 'auth';
   ok !$uri->path, 'path';
-  is [$uri->split_path], [], 'path as array';
+  is [$uri->split_path], [], 'split_path';
   ok !$uri->query, 'query';
   ok !$uri->frag, 'frag';
 
@@ -42,11 +42,11 @@ subtest 'simple' => sub{
 };
 
 subtest 'path & query' => sub{
-  ok my $uri = uri($urls[2]), 'new';
+  ok my $uri = uri($urls[2]), 'ctor';
   is $uri->scheme, 'https', 'scheme';
   is $uri->auth, 'test.com', 'auth';
   is $uri->path, '/some/path', 'path';
-  is [$uri->split_path], ['/some', '/path'], 'path as array';
+  is [$uri->split_path], ['some', 'path'], 'split_path';
   is $uri->query, 'aaaa=bbbb&cccc=dddd&eeee=ffff', 'query';
   ok !$uri->frag, 'frag';
 
@@ -61,11 +61,11 @@ subtest 'path & query' => sub{
   is $uri->param('fnord'), U, '!query';
 
   subtest 'path w/ trailing slash' => sub {
-    ok my $uri = uri($urls[3]), 'new';
+    ok my $uri = uri($urls[3]), 'ctor';
     is $uri->scheme, 'https', 'scheme';
     is $uri->auth, 'test.com', 'auth';
     is $uri->path, '/some/path', 'path';
-    is [$uri->split_path], ['/some', '/path'], 'path as array';
+    is [$uri->split_path], ['some', 'path'], 'split_path';
     is $uri->query, 'aaaa=bbbb&cccc=dddd&eeee=ffff', 'query';
     ok !$uri->frag, 'frag';
 
@@ -82,11 +82,11 @@ subtest 'path & query' => sub{
 };
 
 subtest 'complete' => sub{
-  ok my $uri = uri($urls[4]), 'new';
+  ok my $uri = uri($urls[4]), 'ctor';
   is $uri->scheme, 'https', 'scheme';
   is $uri->auth, 'user:pwd@192.168.0.1:8000', 'auth';
   is $uri->path, '/foo/bar', 'path';
-  is [$uri->split_path], ['/foo', '/bar'], 'path as array';
+  is [$uri->split_path], ['foo', 'bar'], 'split_path';
   is $uri->query, 'baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound', 'query';
   is $uri->frag, 'foofrag', 'frag';
 
@@ -98,6 +98,19 @@ subtest 'complete' => sub{
   is $uri->param('baz'), 'bat', 'query';
   is $uri->param('slack'), 'fnord', 'query';
   is $uri->param('asdf'), 'the quick brown fox & hound', 'query';
+};
+
+subtest 'fast_URI' => sub{
+  ok my $uri = fast_URI($urls[4]), 'ctor';
+  ok $uri->isa('URI'), 'isa URI';
+  ok $uri->isa('URI'), 'isa URI::https';
+
+  is $uri->scheme, 'https', 'scheme';
+  is $uri->authority, 'user:pwd@192.168.0.1:8000', 'authority';
+  is $uri->path, '/foo/bar', 'path';
+  is [$uri->path_segments], ['', 'foo', 'bar'], 'path_segments'; # note: interface different from URI::Fast; includes leading empty segment
+  is $uri->query, 'baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound', 'query';
+  is $uri->fragment, 'foofrag', 'fragment';
 };
 
 done_testing;
