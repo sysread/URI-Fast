@@ -64,20 +64,23 @@ the first time they are called and the auth string is parsed.
 
 =head3 usr
 
-The username segment of the authorization string.
+The username segment of the authorization string. Updating this value alters
+L</auth>.
 
 =head3 pwd
 
-The password segment of the authorization string.
+The password segment of the authorization string. Updating this value alters
+L</auth>.
 
 =head3 host
 
-The host name segment of the authorization string. May be a domain string or
-an IP address.
+The host name segment of the authorization string. May be a domain string or an
+IP address. Updating this value alters L</auth>.
 
 =head3 port
 
-The port number segment of the authorization string.
+The port number segment of the authorization string. Updating this value alters
+L</auth>.
 
 =head2 path
 
@@ -101,7 +104,7 @@ overhead of parsing and decoding the query string.
 If the key appears more than once in the query string, the value returned will
 be an array ref of each of its values.
 
-Setting the parameter will update the query string.
+Setting the parameter will update the L</query> string.
 
 =head2 frag
 
@@ -150,6 +153,7 @@ foreach my $attr (qw(scheme auth query frag)) {
     if (@_ == 2) {
       !exists($LEGAL{$attr}) || $_[1] =~ $LEGAL{$attr} || croak "illegal chars in $attr";
       $_[0]->{$attr} = $_[1];
+      undef $_[0]->{'_' . $attr};
     }
 
     $_[0]->{$attr};
@@ -184,28 +188,28 @@ foreach my $attr (qw(usr pwd host port)) {
     # Set new value, then regenerate authorization section string
     if (@_ == 2) {
       !exists($LEGAL{$attr}) || $_[1] =~ $LEGAL{$attr} || croak "illegal chars in $attr";
-      $_[0]->{$attr} = $_[1];
+      $_[0]->{_auth}{$attr} = $_[1];
       $_[0]->_reauth;
     }
 
-    $_[0]->{$attr};
+    $_[0]->{_auth}{$attr};
   };
 }
 
 # Parses auth section
 sub _auth {
   my ($self) = @_;
-  $self->{_auth} = 1;                             # Set a flag to prevent reparsing
+  $self->{_auth} = {};                             # Set a flag to prevent reparsing
 
   if (local $_ = $self->auth) {
     my ($cred, $loc) = split /@/;                 # usr:pwd@host:port
 
     if ($loc) {
-      @{$self}{qw(usr pwd)}   = split ':', $cred; # Both credentials and location are present
-      @{$self}{qw(host port)} = split ':', $loc;
+      @{$self->{_auth}}{qw(usr pwd)}   = split ':', $cred; # Both credentials and location are present
+      @{$self->{_auth}}{qw(host port)} = split ':', $loc;
     }
     else {
-      @{$self}{qw(host port)} = split ':', $cred; # Only location is present
+      @{$self->{_auth}}{qw(host port)} = split ':', $cred; # Only location is present
     }
   }
 }
@@ -215,16 +219,16 @@ sub _reauth {
   my $self = shift;
   $self->{auth} = '';
 
-  if ($self->{usr}) {
-    $self->{auth} = $self->{usr};
-    $self->{auth} .= ':' . $self->{pwd} if $self->{pwd};
+  if ($self->{_auth}{usr}) {
+    $self->{auth} = $self->{_auth}{usr};
+    $self->{auth} .= ':' . $self->{_auth}{pwd} if $self->{_auth}{pwd};
     $self->{auth} .= '@';
   }
 
-  $self->{auth} .= $self->{host};
+  $self->{auth} .= $self->{_auth}{host};
 
-  if ($self->{port}) {
-    $self->{auth} .= ':' . $self->{port};
+  if ($self->{_auth}{port}) {
+    $self->{auth} .= ':' . $self->{_auth}{port};
   }
 }
 
@@ -232,51 +236,51 @@ sub param {
   my ($self, $key, $val) = @_;
   $self->{query} || $val || return;
 
-  if (!$self->{param}) {
-    $self->{param} = {};                                       # Somewhere to set our things
+  if (!$self->{_query}) {
+    $self->{_query} = {};                                       # Somewhere to set our things
 
-    if (local $_ = $self->{query}) {                           # Faster access via a dynamic variable
-      tr/\+/ /;                                                # Seriously, dfarrell?
-      local @_ = split /[&=]/;                                 # Tokenize
+    if (local $_ = $self->{query}) {                            # Faster access via a dynamic variable
+      tr/\+/ /;                                                 # Seriously, dfarrell?
+      local @_ = split /[&=]/;                                  # Tokenize
 
-      while (my $k = uri_decode(shift // '')) {                # Decode the next self->{param}eter
-        if ($val && $k eq $key) {                              # We'll be setting this shortly, so ignore
+      while (my $k = uri_decode(shift // '')) {                 # Decode the next self->{_query}eter
+        if ($val && $k eq $key) {                               # We'll be setting this shortly, so ignore
           shift;
           next;
         }
 
-        if (exists $self->{param}{$k}) {                       # Multiple self->{param}eters exist with the same key
-          $self->{param}{$k} = [$self->{param}{$k}]            # Reinitialize as array ref to store multiple values
-            unless ref $self->{param}{$k};
+        if (exists $self->{_query}{$k}) {                       # Multiple self->{_query}eters exist with the same key
+          $self->{_query}{$k} = [$self->{_query}{$k}]           # Reinitialize as array ref to store multiple values
+            unless ref $self->{_query}{$k};
 
-          push @{$self->{param}{$k}}, uri_decode(shift // ''); # Add to the array
+          push @{$self->{_query}{$k}}, uri_decode(shift // ''); # Add to the array
         }
-        else {                                                 # First or only use of key
-          $self->{param}{$k} = uri_decode(shift // '');
+        else {                                                  # First or only use of key
+          $self->{_query}{$k} = uri_decode(shift // '');
         }
       }
     }
   };
 
-  if ($val) {                                                  # Modifying this value
-    $self->{param}{$key} = $val;                               # Update the pre-parsed hash ref
+  if ($val) {                                                   # Modifying this value
+    $self->{_query}{$key} = $val;                               # Update the pre-parsed hash ref
 
-    $key = uri_encode($key);                                   # Encode the key
-    $self->{query} =~ s/\b$key=[^&]+&?//;                      # Remove from the query string
+    $key = uri_encode($key);                                    # Encode the key
+    $self->{query} =~ s/\b$key=[^&]+&?//;                       # Remove from the query string
 
-    if (ref $val) {                                            # If $val is an array, each element gets its own place in the query
+    if (ref $val) {                                             # If $val is an array, each element gets its own place in the query
       foreach (@$val) {
         $self->{query} .= '&' if $self->{query};
         $self->{query} .= $key . '=' . uri_encode($_);
       }
     }
-    else {                                                     # Otherwise, just add the encoded pair
+    else {                                                      # Otherwise, just add the encoded pair
       $self->{query} .= '&' if $self->{query};
       $self->{query} .= $key . '=' . uri_encode($val);
     }
   }
 
-  $self->{param}{$key} if defined $key;
+  $self->{_query}{$key} if defined $key;
 }
 
 1;

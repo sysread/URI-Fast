@@ -76,20 +76,23 @@ the first time they are called and the auth string is parsed.
 
 =head3 usr
 
-The username segment of the authorization string.
+The username segment of the authorization string. Updating this value alters
+L</auth>.
 
 =head3 pwd
 
-The password segment of the authorization string.
+The password segment of the authorization string. Updating this value alters
+L</auth>.
 
 =head3 host
 
-The host name segment of the authorization string. May be a domain string or
-an IP address.
+The host name segment of the authorization string. May be a domain string or an
+IP address. Updating this value alters L</auth>.
 
 =head3 port
 
-The port number segment of the authorization string.
+The port number segment of the authorization string. Updating this value alters
+L</auth>.
 
 =head2 path
 
@@ -113,7 +116,7 @@ overhead of parsing and decoding the query string.
 If the key appears more than once in the query string, the value returned will
 be an array ref of each of its values.
 
-Setting the parameter will update the query string.
+Setting the parameter will update the L</query> string.
 
 =head2 frag
 

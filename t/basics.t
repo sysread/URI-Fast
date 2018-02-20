@@ -97,6 +97,12 @@ subtest 'update auth' => sub{
   is $uri->auth, 'someone:secret@www.test.com:1234', 'auth';
   is "$uri", 'http://someone:secret@www.test.com:1234', 'string';
 
+  is $uri->auth('www.nottest.com'), 'www.nottest.com', 'auth(new)';
+  is $uri->host, 'www.nottest.com', 'host';
+  ok !$uri->usr, 'usr';
+  ok !$uri->pwd, 'pwd';
+  ok !$uri->port, 'port';
+
   ok dies{ $uri->scheme('1foo') }, 'illegal scheme croaks';
   ok dies{ $uri->scheme('http*') }, 'illegal scheme croaks';
   ok dies{ $uri->port('asdf') }, 'illegal port croaks';
@@ -123,6 +129,10 @@ subtest 'update param' => sub{
   is $uri->param('cccc'), 'qwerty', 'param(k)';
   is $uri->query, 'aaaa=bbbb&eeee=ffff&cccc=qwerty', 'query';
   is "$uri", 'https://test.com/some/path?aaaa=bbbb&eeee=ffff&cccc=qwerty', 'string';
+
+  is $uri->query('foo=bar'), 'foo=bar', 'query(new)';
+  is $uri->param('foo'), 'bar', 'new query parsed';
+  ok !$uri->param('cccc'), 'old parsed values removed';
 };
 
 done_testing;
