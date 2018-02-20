@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.03 2018-02-20
 -10% speedup in stringification by not creating variables
 -Bugfix: setting auth or query did not clear sub-attributes
 -Bugfix: host was being appended regardless of presence
