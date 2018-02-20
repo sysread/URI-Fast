@@ -62,26 +62,22 @@ port number:
 Accessing the following attributes may incur a small amount of extra overhead
 the first time they are called and the auth string is parsed.
 
-=over
-
-=item usr
+=head3 usr
 
 The username segment of the authorization string.
 
-=item pwd
+=head3 pwd
 
 The password segment of the authorization string.
 
-=item host
+=head3 host
 
 The host name segment of the authorization string. May be a domain string or
 an IP address.
 
-=item port
+=head3 port
 
 The port number segment of the authorization string.
-
-=back
 
 =head2 path
 
@@ -97,9 +93,7 @@ The path may also be updated using either a string or an array ref of segments:
 
 The complete query string. Does not include the leading C<?>.
 
-=over
-
-=item param
+=head3 param
 
 Gets or sets a parameter value. The first time this is called, it incurs the
 overhead of parsing and decoding the query string.
@@ -109,11 +103,13 @@ be an array ref of each of its values.
 
 Setting the parameter will update the query string.
 
-=back
-
 =head2 frag
 
 The fragment section of the URI, excluding the leading C<#>.
+
+=head1 SPEED
+
+See L<URI::Fast::Benchmarks>.
 
 =cut
 
