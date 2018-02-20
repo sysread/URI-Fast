@@ -126,15 +126,16 @@ use Carp;
 
 use overload
   '""' => sub{
-    my $s = "$_[0]->{scheme}://$_[0]->{auth}$_[0]->{path}";
-    $s .= '?' . $_[0]->{query} if $_[0]->{query};
-    $s .= '#' . $_[0]->{frag}  if $_[0]->{frag};
-    $s;
+    "$_[0]->{scheme}://$_[0]->{auth}$_[0]->{path}"
+      . ($_[0]->{query} ? ('?' . $_[0]->{query}) : '')
+      . ($_[0]->{frag}  ? ('#' . $_[0]->{frag})  : '');
   };
 
 use parent 'Exporter';
 our @EXPORT_OK = qw(uri);
 
+# Regexes used to validate characters present in string when attributes are
+# updated.
 our %LEGAL = (
   scheme => qr/^[a-zA-Z][-.+a-zA-Z0-9]*$/,
   port   => qr/^[0-9]+$/,

@@ -38,6 +38,11 @@ test 'Parse scheme', 200_000, {
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->scheme },
 };
 
+test 'Update scheme', 200_000, {
+  'URI' => sub{ my $uri = URI->new($urls[1]); $uri->scheme('https') },
+  'URI::Fast' => sub{ my $uri = uri $urls[1]; $uri->scheme('https') },
+};
+
 test 'Parse path', 200_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $p = $uri->path },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $p = $uri->path },
