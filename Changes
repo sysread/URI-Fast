@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.02 2018-02-20
 -Bump minimum URI::Encode::XS version to 0.07 (thanks eserte!)
 
 0.01 2018-02-19
