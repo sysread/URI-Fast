@@ -200,10 +200,10 @@ foreach my $attr (qw(usr pwd host port)) {
 # Parses auth section
 sub _auth {
   my ($self) = @_;
-  $self->{_auth} = {};                             # Set a flag to prevent reparsing
+  $self->{_auth} = {};                                     # Set a flag to prevent reparsing
 
   if (local $_ = $self->auth) {
-    my ($cred, $loc) = split /@/;                 # usr:pwd@host:port
+    my ($cred, $loc) = split /@/;                          # usr:pwd@host:port
 
     if ($loc) {
       @{$self->{_auth}}{qw(usr pwd)}   = split ':', $cred; # Both credentials and location are present
@@ -220,16 +220,18 @@ sub _reauth {
   my $self = shift;
   $self->{auth} = '';
 
-  if ($self->{_auth}{usr}) {
-    $self->{auth} = $self->{_auth}{usr};
-    $self->{auth} .= ':' . $self->{_auth}{pwd} if $self->{_auth}{pwd};
+  if ($self->{_auth}{usr}) {                                           # Add the credentials block (usr:pwd)
+    $self->{auth} = $self->{_auth}{usr};                               # Add user
+    $self->{auth} .= ':' . $self->{_auth}{pwd} if $self->{_auth}{pwd}; # Add :pwd if pwd present
     $self->{auth} .= '@';
   }
 
-  $self->{auth} .= $self->{_auth}{host};
+  if ($self->{_auth}{host}) {
+    $self->{auth} .= $self->{_auth}{host};                             # Add host if present (may not be for, e.g. file://)
 
-  if ($self->{_auth}{port}) {
-    $self->{auth} .= ':' . $self->{_auth}{port};
+    if ($self->{_auth}{port}) {
+      $self->{auth} .= ':' . $self->{_auth}{port};                     # Port only valid if host is present
+    }
   }
 }
 
