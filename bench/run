@@ -2,7 +2,8 @@
 
 
 use URI;
-use URI::Fast qw(uri);
+use URI::Fast;
+use Panda::URI;
 use Benchmark qw(:all);
 
 my @urls = (
@@ -22,64 +23,86 @@ sub test {
 }
 
 test "Basics", 400_000, {
-  'file'     => sub{ my $uri = uri $urls[0]; $uri->scheme; },
-  'simple'   => sub{ my $uri = uri $urls[1]; $uri->scheme; },
-  'basic'    => sub{ my $uri = uri $urls[2]; $uri->scheme; },
-  'complete' => sub{ my $uri = uri $urls[3]; $uri->scheme; },
+  'file'     => sub{ my $uri = URI::Fast::uri $urls[0]; $uri->scheme; },
+  'simple'   => sub{ my $uri = URI::Fast::uri $urls[1]; $uri->scheme; },
+  'basic'    => sub{ my $uri = URI::Fast::uri $urls[2]; $uri->scheme; },
+  'complete' => sub{ my $uri = URI::Fast::uri $urls[3]; $uri->scheme; },
 };
 
-test 'Constructor', 200_000, {
+test 'Constructor', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[1]) },
-  'URI::Fast' => sub{ my $uri = uri $urls[1] },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[1] },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[1] },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[1]) },
 };
 
-test 'Parse scheme', 200_000, {
+test 'Parse scheme', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->scheme },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->scheme },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[3]; $uri->scheme },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[3]; $uri->scheme },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[3]); $uri->scheme },
 };
 
-test 'Update scheme', 200_000, {
+test 'Update scheme', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[1]); $uri->scheme('https') },
-  'URI::Fast' => sub{ my $uri = uri $urls[1]; $uri->scheme('https') },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[1]; $uri->scheme('https') },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[1]; $uri->scheme('https') },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[1]); $uri->scheme('https') },
 };
 
-test 'Parse path', 200_000, {
+test 'Parse path', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $p = $uri->path },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; my $p = $uri->path },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[3]; my $p = $uri->path },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[3]; my $p = $uri->path },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[3]); my $p = $uri->path },
 };
 
-test 'Split path', 200_000, {
+test 'Split path', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my @p = $uri->path_segments },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; my @p = $uri->path },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[3]; my @p = $uri->path },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[3]; my @p = $uri->path_segments },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[3]); my @p = $uri->path_segments },
 };
 
-test 'Update path', 200_000, {
+test 'Update path', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/foo/bar') },
-  'URI::Fast/string' => sub{ my $uri = uri $urls[3]; $uri->path('/foo/bar') },
-  'URI::Fast/list' => sub{ my $uri = uri $urls[3]; $uri->path(['foo', 'bar']) },
+  'URI::Fast/string' => sub{ my $uri = URI::Fast::uri $urls[3]; $uri->path('/foo/bar') },
+  'URI::Fast/list' => sub{ my $uri = URI::Fast::uri $urls[3]; $uri->path(['foo', 'bar']) },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri($urls[3]); $uri->path('/foo/bar') },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[3]); $uri->path('/foo/bar') },
 };
 
-test 'Parse authorization', 200_000, {
+test 'Parse authorization', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->host },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[3]; $uri->host },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[3]; $uri->host },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[3]); $uri->host },
 };
 
-test 'Update authorization', 200_000, {
+test 'Update authorization', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->host('test.com') },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host('test.com') },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[3]; $uri->host('test.com') },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[3]; $uri->host('test.com') },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[3]); $uri->host('test.com') },
 };
 
-test 'Parse query', 200_000, {
+test 'Parse query', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->query_form },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->param('asdf') },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[3]; $uri->param('asdf') },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[3]; $uri->param('asdf')},
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[3]); $uri->param('asdf')},
 };
 
-test 'Set query parameter', 200_000, {
+test 'Set query parameter', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->query_form(foo => 'bar') },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->param('foo', 'bar') },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[3]; $uri->param('foo', 'bar') },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[3]; $uri->param('foo', 'bar') },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[3]); $uri->param('foo', 'bar') },
 };
 
-test 'Stringification', 200_000, {
+test 'Stringification', 1_000_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $str = "$uri" },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; my $str = "$uri" },
+  'URI::Fast' => sub{ my $uri = URI::Fast::uri $urls[3]; my $str = "$uri" },
+  'Panda::URI::uri' => sub{ my $uri = Panda::URI::uri $urls[3]; my $str = "$uri" },
+  'Panda::URI->new' => sub{ my $uri = Panda::URI->new($urls[3]); my $str = "$uri" },
 };
