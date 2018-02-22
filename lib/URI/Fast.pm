@@ -114,6 +114,20 @@ The fragment section of the URI, excluding the leading C<#>.
 
 See L<URI::Fast::Benchmarks>.
 
+=head1 SEE ALSO
+
+=over
+
+=item L<URI>
+
+The de facto standard.
+
+=item L<Panda::URI>
+
+Written in C++ and purportedly very fast, but appears to only support Linux.
+
+=back
+
 =cut
 
 package URI::Fast;

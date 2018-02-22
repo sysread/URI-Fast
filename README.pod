@@ -8,7 +8,7 @@ URI::Fast - A fast(er) URI parser
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 SYNOPSIS
 
@@ -125,6 +125,20 @@ The fragment section of the URI, excluding the leading C<#>.
 =head1 SPEED
 
 See L<URI::Fast::Benchmarks>.
+
+=head1 SEE ALSO
+
+=over
+
+=item L<URI>
+
+The de facto standard.
+
+=item L<Panda::URI>
+
+Written in C++ and purportedly very fast, but appears to only support Linux.
+
+=back
 
 =head1 AUTHOR
 
