@@ -135,10 +135,11 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 use common::sense;
 use Carp;
 use Inline 'C';
-use URI::Encode::XS qw();
+require URI::Encode::XS;
+require Exporter;
 
 use parent 'Exporter';
-our @EXPORT_OK = qw(uri uri_split auth_split);
+our @EXPORT_OK = qw(uri uri_split auth_split query_split);
 
 use overload
   '""' => sub{
@@ -415,8 +416,8 @@ void auth_split(SV* auth) {
   size_t  idx  = 0;
   size_t  brk1 = 0;
   size_t  brk2 = 0;
-  SV*     usr;
-  SV*     pwd;
+  SV*     usr  = newSV(0);
+  SV*     pwd  = newSV(0);
 
   Inline_Stack_Vars;
   Inline_Stack_Reset;
@@ -435,12 +436,12 @@ void auth_split(SV* auth) {
       brk2 = strcspn(&src[idx], ":");
 
       if (brk2 > 0 && brk2 < brk1) {
-        usr = newSVpv(&src[idx], brk2); // usr
+        sv_setpvn(usr, &src[idx], brk2); // usr
         uri_decode(usr);
         Inline_Stack_Push(usr);
         idx += brk2 + 1;
 
-        pwd = newSVpv(&src[idx], brk1 - brk2 - 1); // pwd
+        sv_setpvn(pwd, &src[idx], brk1 - brk2 - 1); // pwd
         uri_decode(pwd);
         Inline_Stack_Push(pwd);
         idx += brk1 - brk2;
@@ -472,3 +473,31 @@ void auth_split(SV* auth) {
 
   Inline_Stack_Done;
 }
+
+/*
+void query_split(SV* query) {
+  STRLEN  len;
+  char*   src = SvPV(query, len);
+  size_t  idx = 0;
+  size_t  brk = 0;
+
+  Inline_Stack_Vars;
+  Inline_Stack_Reset;
+
+  while (idx < len) {
+    brk = strcspn(&src[idx], "&=");
+
+    if (brk == 0) {
+      break;
+    }
+
+    SV* tmp = newSVpv(&src[idx], brk);
+    
+    uri_decode(tmp);
+    Inline_Stack_Push(tmp);
+    idx += brk + 1;
+  }
+
+  Inline_Stack_Done;
+}
+*/
