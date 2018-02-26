@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.04 2018-02-26
 -Faster uri_split implemented with Inline::C
 -Faster auth parsing implemented with Inline::C
 -Faster auth assembly implemented with Inline::C
