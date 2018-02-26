@@ -1,6 +1,5 @@
 use Test2;
 use Test2::Bundle::Extended;
-use URI::Split qw();
 use URI::Fast qw(auth_split);
 
 subtest basics => sub{

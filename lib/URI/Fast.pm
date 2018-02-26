@@ -135,7 +135,7 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 use common::sense;
 use Carp;
 use Inline 'C';
-use URI::Encode::XS qw();
+use URI::Encode::XS qw(uri_encode uri_decode);
 require Exporter;
 
 use parent 'Exporter';
@@ -217,6 +217,8 @@ sub _auth {
   my ($self) = @_;
   $self->{_auth} = {}; # Set a flag to prevent reparsing
   @{ $self->{_auth} }{qw(usr pwd host port)} = auth_split($self->{auth});
+  #$self->{_auth}{usr} = uri_decode($self->{_auth}{usr}) if $self->{_auth}{usr};
+  #$self->{_auth}{pwd} = uri_decode($self->{_auth}{pwd}) if $self->{_auth}{pwd};
 }
 
 # Regenerates auth section
@@ -224,25 +226,21 @@ sub _reauth {
   my $self = shift;
   $self->{auth} = '';
 
-  if ($self->{_auth}{usr}) {                       # Add the credentials block (usr:pwd)
-    my $usr = $self->{_auth}{usr};
-    uri_encode($usr);
-    $self->{auth} = $usr;                          # Add user
+  if ($self->{_auth}{usr}) {                         # Add the credentials block (usr:pwd)
+    $self->{auth} = uri_encode($self->{_auth}{usr}); # Add user
 
-    if ($self->{_auth}{pwd}) {                     # Add :pwd if pwd present
-      my $pwd = $self->{_auth}{pwd};
-      uri_encode($pwd);
-      $self->{auth} .= ":$pwd";
+    if ($self->{_auth}{pwd}) {                       # Add :pwd if pwd present
+      $self->{auth} .= ':' . uri_encode($self->{_auth}{pwd});
     }
 
     $self->{auth} .= '@';
   }
 
   if ($self->{_auth}{host}) {
-    $self->{auth} .= $self->{_auth}{host};         # Add host if present (may not be for, e.g. file://)
+    $self->{auth} .= $self->{_auth}{host};           # Add host if present (may not be for, e.g. file://)
 
     if ($self->{_auth}{port}) {
-      $self->{auth} .= ':' . $self->{_auth}{port}; # Port only valid if host is present
+      $self->{auth} .= ':' . $self->{_auth}{port};   # Port only valid if host is present
     }
   }
 }
@@ -251,7 +249,7 @@ sub param {
   my ($self, $key, $val) = @_;
   $self->{query} // $val // return;
 
-  uri_encode($key);
+  $key = uri_encode($key);
 
   if ($val) {
     # Wipe out any current values for $key
@@ -259,9 +257,8 @@ sub param {
 
     # Encode and attach values for param to query string
     foreach (ref $val ? @$val : ($val)) {
-      uri_encode($_);
       $self->{query} .= '&' if length $self->{query};
-      $self->{query} .= "$key=$_";
+      $self->{query} .= $key . '=' . uri_encode($_);
     }
   }
 
@@ -270,12 +267,11 @@ sub param {
 
   if (@vals) {
     if (@vals > 1) {
-      return map{ tr/+/ /; uri_decode($_); $_ } @vals;
+      return map{ tr/+/ /; uri_decode($_) } @vals;
     }
     else {
       $vals[0] =~ tr/+/ /;
-      uri_decode($vals[0]);
-      return $vals[0];
+      return uri_decode($vals[0]);
     }
   }
   else {
@@ -289,12 +285,11 @@ __DATA__
 __C__
 
 #include <string.h>
+#
+void _decode(SV* str) {
+  SV* result;
 
-void uri_decode(SV* str) {
   dSP;
-  SV*    result;
-  STRLEN len;
-  char*  res;
 
   ENTER;
   SAVETMPS;
@@ -307,39 +302,11 @@ void uri_decode(SV* str) {
   SPAGAIN;
 
   result = POPs;
-  res = SvPV(result, len);
+  sv_setsv(str, result);
 
   PUTBACK;
   FREETMPS;
   LEAVE;
-
-  sv_setpvn(str, res, len);
-}
-
-void uri_encode(SV* str) {
-  dSP;
-  SV*    result;
-  STRLEN len;
-  char*  res;
-
-  ENTER;
-  SAVETMPS;
-  PUSHMARK(SP);
-  XPUSHs(str);
-  PUTBACK;
-
-  call_pv("URI::Encode::XS::uri_encode", G_SCALAR);
-
-  SPAGAIN;
-
-  result = POPs;
-  res = SvPV(result, len);
-
-  PUTBACK;
-  FREETMPS;
-  LEAVE;
-
-  sv_setpvn(str, res, len);
 }
 
 void uri_split(SV* uri) {
@@ -416,8 +383,9 @@ void auth_split(SV* auth) {
   size_t  idx  = 0;
   size_t  brk1 = 0;
   size_t  brk2 = 0;
-  SV*     usr  = newSV(0);
-  SV*     pwd  = newSV(0);
+
+  SV* usr;
+  SV* pwd;
 
   Inline_Stack_Vars;
   Inline_Stack_Reset;
@@ -436,14 +404,18 @@ void auth_split(SV* auth) {
       brk2 = strcspn(&src[idx], ":");
 
       if (brk2 > 0 && brk2 < brk1) {
-        sv_setpvn(usr, &src[idx], brk2); // usr
-        uri_decode(usr);
+        //Inline_Stack_Push(newSVpv(&src[idx], brk2));
+        usr = newSVpv(&src[idx], brk2);
+        _decode(usr);
         Inline_Stack_Push(usr);
+
         idx += brk2 + 1;
 
-        sv_setpvn(pwd, &src[idx], brk1 - brk2 - 1); // pwd
-        uri_decode(pwd);
+        //Inline_Stack_Push(newSVpv(&src[idx], brk1 - brk2 - 1));
+        pwd = newSVpv(&src[idx], brk1 - brk2 - 1);
+        _decode(pwd);
         Inline_Stack_Push(pwd);
+
         idx += brk1 - brk2;
       }
       else {
@@ -474,15 +446,18 @@ void auth_split(SV* auth) {
   Inline_Stack_Done;
 }
 
-/*
 void query_split(SV* query) {
   STRLEN  len;
   char*   src = SvPV(query, len);
   size_t  idx = 0;
   size_t  brk = 0;
+  AV*     parts;
+  SV*     tmp;
 
   Inline_Stack_Vars;
   Inline_Stack_Reset;
+
+  parts = newAV();
 
   while (idx < len) {
     brk = strcspn(&src[idx], "&=");
@@ -491,13 +466,14 @@ void query_split(SV* query) {
       break;
     }
 
-    SV* tmp = newSVpv(&src[idx], brk);
-    
-    uri_decode(tmp);
-    Inline_Stack_Push(tmp);
+    tmp = newSVpv(&src[idx], brk);
+    _decode(tmp);
+
+    av_push(parts, tmp);
+
     idx += brk + 1;
   }
 
+  Inline_Stack_Push(newRV_noinc((SV*) parts));
   Inline_Stack_Done;
 }
-*/
