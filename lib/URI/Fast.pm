@@ -135,7 +135,7 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 use common::sense;
 use Carp;
 use Inline 'C';
-require URI::Encode::XS;
+use URI::Encode::XS qw();
 require Exporter;
 
 use parent 'Exporter';
