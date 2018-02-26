@@ -2,7 +2,27 @@ use Test2;
 use Test2::Bundle::Extended;
 use Data::Dumper;
 use URI::Split qw();
-use URI::Fast qw(uri auth_split uri_split);
+use URI::Fast qw(uri uri_split auth_split auth_join);
+
+subtest 'auth_join' => sub{
+  my $usr  = 'someone';
+  my $pwd  = 'fnord';
+  my $host = 'www.test.com';
+  my $port = 1234;
+
+  my $tests = [
+    ["$usr:$pwd\@$host:$port" => [$usr, $pwd, $host, $port]],
+    ["$usr\@$host:$port"      => [$usr, undef, $host, $port]],
+    ["$host:$port"            => [undef, undef, $host, $port]],
+    ["$host"                  => [undef, undef, $host, undef]],
+    [""                       => [undef, undef, undef, undef]],
+  ];
+
+  foreach (@$tests) {
+    my ($expected, $args) = @$_;
+    is auth_join(@$args), $expected, "auth: $expected";
+  }
+};
 
 subtest 'auth_split' => sub{
   my $usr  = 'someone';

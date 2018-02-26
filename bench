@@ -2,7 +2,8 @@
 
 use common::sense;
 use URI;
-use URI::Fast qw(uri);
+use URI::Split qw();
+use URI::Fast qw(uri uri_split);
 use Benchmark qw(:all);
 
 my $POD;
@@ -54,6 +55,11 @@ sub test {
 
   print "\n";
 }
+
+test 'uri_split', 400_000, {
+  'URI::Split' => sub{ my @uri = URI::Split::uri_split($urls[3]) },
+  'URI::Fast' => sub{ my @uri = uri_split($urls[3]) },
+};
 
 test 'Constructor', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[1]) },

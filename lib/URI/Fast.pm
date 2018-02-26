@@ -139,7 +139,7 @@ use URI::Encode::XS qw(uri_encode uri_decode);
 require Exporter;
 
 use parent 'Exporter';
-our @EXPORT_OK = qw(uri uri_split auth_split query_split);
+our @EXPORT_OK = qw(uri uri_split auth_split auth_join);
 
 use overload
   '""' => sub{
@@ -195,54 +195,34 @@ sub path {
   }
 }
 
-# For bits of the auth string, build a lazy accessor that calls _auth, which
-# parses the auth string.
+# For bits of the auth string, build a lazy accessor that parses the auth
+# string, as well as a setter which regenerates it.
 foreach my $attr (qw(usr pwd host port)) {
   *{__PACKAGE__ . "::$attr"} = sub {
-    $_[0]->{auth} && $_[0]->{_auth} || $_[0]->_auth;
+    # Parse auth section if necessary
+    unless ($_[0]->{auth} && $_[0]->{_auth}) {
+      $_[0]->{_auth} = {};
+      @{ $_[0]->{_auth} }{qw(usr pwd host port)} = auth_split($_[0]->{auth});
+      $_[0]->{_auth}{usr} = uri_decode($_[0]->{_auth}{usr}) if $_[0]->{_auth}{usr};
+      $_[0]->{_auth}{pwd} = uri_decode($_[0]->{_auth}{pwd}) if $_[0]->{_auth}{pwd};
+    }
 
     # Set new value, then regenerate authorization section string
     if (@_ == 2) {
       !exists($LEGAL{$attr}) || $_[1] =~ $LEGAL{$attr} || croak "illegal chars in $attr";
       $_[0]->{_auth}{$attr} = $_[1];
-      $_[0]->_reauth;
+
+      # Update auth string
+      $_[0]->{auth} = auth_join(
+        ($_[0]->{_auth}{usr} ? uri_encode($_[0]->{_auth}{usr}) : undef),
+        ($_[0]->{_auth}{pwd} ? uri_encode($_[0]->{_auth}{pwd}) : undef),
+        $_[0]->{_auth}{host},
+        $_[0]->{_auth}{port},
+      );
     }
 
     $_[0]->{_auth}{$attr};
   };
-}
-
-# Parses auth section
-sub _auth {
-  my ($self) = @_;
-  $self->{_auth} = {};
-  @{ $self->{_auth} }{qw(usr pwd host port)} = auth_split($self->{auth});
-  $self->{_auth}{usr} = uri_decode($self->{_auth}{usr}) if length $self->{_auth}{usr};
-  $self->{_auth}{pwd} = uri_decode($self->{_auth}{pwd}) if length $self->{_auth}{pwd};
-}
-
-# Regenerates auth section
-sub _reauth {
-  my $self = shift;
-  $self->{auth} = '';
-
-  if ($self->{_auth}{usr}) {                         # Add the credentials block (usr:pwd)
-    $self->{auth} = uri_encode($self->{_auth}{usr}); # Add user
-
-    if ($self->{_auth}{pwd}) {                       # Add :pwd if pwd present
-      $self->{auth} .= ':' . uri_encode($self->{_auth}{pwd});
-    }
-
-    $self->{auth} .= '@';
-  }
-
-  if ($self->{_auth}{host}) {
-    $self->{auth} .= $self->{_auth}{host};           # Add host if present (may not be for, e.g. file://)
-
-    if ($self->{_auth}{port}) {
-      $self->{auth} .= ':' . $self->{_auth}{port};   # Port only valid if host is present
-    }
-  }
 }
 
 sub param {
@@ -257,7 +237,7 @@ sub param {
 
     # Encode and attach values for param to query string
     foreach (ref $val ? @$val : ($val)) {
-      $self->{query} .= '&' if length $self->{query};
+      $self->{query} .= '&' if $self->{query};
       $self->{query} .= $key . '=' . uri_encode($_);
     }
   }
@@ -348,6 +328,54 @@ void uri_split(SV* uri) {
     }
   } else {
     Inline_Stack_Push(&PL_sv_undef);
+  }
+
+  Inline_Stack_Done;
+}
+
+void auth_join(SV* usr, SV* pwd, SV* host, SV* port) {
+  STRLEN  len;
+  char*   tmp;
+  char    out[1024];
+  int     idx = 0;
+
+  Inline_Stack_Vars;
+  Inline_Stack_Reset;
+
+  if (SvTRUE(usr)) {
+    tmp = SvPV(usr, len);
+    strncpy(&out[idx], tmp, len);
+    idx += len;
+
+    if (SvTRUE(pwd)) {
+      out[idx++] = ':';
+
+      tmp = SvPV(pwd, len);
+      strncpy(&out[idx], tmp, len);
+      idx += len;
+    }
+
+    out[idx++] = '@';
+  }
+
+  if (SvTRUE(host)) {
+    tmp = SvPV(host, len);
+    strncpy(&out[idx], tmp, len);
+    idx += len;
+
+    if (SvTRUE(port)) {
+      out[idx++] = ':';
+
+      tmp = SvPV(port, len);
+      strncpy(&out[idx], tmp, len);
+      idx += len;
+    }
+  }
+
+  if (idx > 0) {
+    Inline_Stack_Push(newSVpv(out, idx));
+  } else {
+    Inline_Stack_Push(newSVpv("", 0));
   }
 
   Inline_Stack_Done;
