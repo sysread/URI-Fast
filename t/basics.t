@@ -1,9 +1,62 @@
 use Test2;
 use Test2::Bundle::Extended;
 use Data::Dumper;
-use URI::Fast qw(uri);
+use URI::Split qw();
+use URI::Fast qw(uri auth_split uri_split);
 
-my @urls = (
+subtest 'auth_split' => sub{
+  my $usr  = 'someone';
+  my $pwd  = 'fnord';
+  my $host = 'www.test.com';
+  my $port = 1234;
+
+  my $tests = [
+    ["$usr:$pwd\@$host:$port" => [$usr, $pwd, $host, $port]],
+    ["$usr\@$host:$port"      => [$usr, U, $host, $port]],
+    ["$host:$port"            => [U, U, $host, $port]],
+    ["$host"                  => [U, U, $host, U]],
+    [""                       => [U, U, U, U]],
+  ];
+
+  foreach (@$tests) {
+    my ($auth, $expected) = @$_;
+    my $split = [auth_split($auth)];
+    is $split, $expected, $auth, $split;
+  }
+};
+
+subtest 'uri_split' => sub{
+  my @uris = (
+    '/foo/bar/baz',
+    'file:///foo/bar/baz',
+    'http://www.test.com',
+    'http://www.test.com?foo=bar',
+    'http://www.test.com#bar',
+    'http://www.test.com/some/path',
+    'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff',
+    'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
+    'https://user:pwd@www.test.com:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
+  );
+
+  # From URI::Split's test suite
+  subtest 'equivalence' => sub{
+    is [uri_split('p')],           [U, U, 'p', U, U],          'p';
+    is [uri_split('p?q')],         [U, U, 'p', 'q', U],        'p?q';
+    is [uri_split('p?q/#f/?')],    [U, U, 'p', 'q/', 'f/?'],   'p?q/#f/?';
+    is [uri_split('s://a/p?q#f')], ['s', 'a', '/p', 'q', 'f'], 's://a/p?q#f';
+  };
+
+  # Ensure identical output to URI::Split
+  subtest 'parity' => sub{
+    foreach my $uri (@uris) {
+      my $orig = [URI::Split::uri_split($uri)];
+      my $xs   = [uri_split($uri)];
+      is $xs, $orig, $uri, {orig => $orig, xs => $xs};
+    }
+  };
+};
+
+my @uris = (
   '/foo/bar/baz',
   'http://www.test.com',
   'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff',
@@ -11,7 +64,7 @@ my @urls = (
 );
 
 subtest 'implicit file path' => sub{
-  ok my $uri = uri($urls[0]), 'ctor';
+  ok my $uri = uri($uris[0]), 'ctor';
   is $uri->scheme, 'file', 'scheme';
   ok !$uri->auth, 'auth';
   is $uri->path, '/foo/bar/baz', 'path';
@@ -26,7 +79,7 @@ subtest 'implicit file path' => sub{
 };
 
 subtest 'simple' => sub{
-  ok my $uri = uri($urls[1]), 'ctor';
+  ok my $uri = uri($uris[1]), 'ctor';
   is $uri->scheme, 'http', 'scheme';
   is $uri->auth, 'www.test.com', 'auth';
   ok !$uri->path, 'path';
@@ -41,7 +94,7 @@ subtest 'simple' => sub{
 };
 
 subtest 'path & query' => sub{
-  ok my $uri = uri($urls[2]), 'ctor';
+  ok my $uri = uri($uris[2]), 'ctor';
   is $uri->scheme, 'https', 'scheme';
   is $uri->auth, 'test.com', 'auth';
   is $uri->path, '/some/path', 'path';
@@ -61,7 +114,7 @@ subtest 'path & query' => sub{
 };
 
 subtest 'complete' => sub{
-  ok my $uri = uri($urls[3]), 'ctor';
+  ok my $uri = uri($uris[3]), 'ctor';
   is $uri->scheme, 'https', 'scheme';
   is $uri->auth, 'user:pwd@192.168.0.1:8000', 'auth';
   is $uri->path, '/foo/bar', 'path';
@@ -80,7 +133,7 @@ subtest 'complete' => sub{
 };
 
 subtest 'update auth' => sub{
-  ok my $uri = uri($urls[1]), 'ctor';
+  ok my $uri = uri($uris[1]), 'ctor';
   ok !$uri->usr, 'usr';
   ok !$uri->pwd, 'pwd';
   ok !$uri->port, 'port';
@@ -109,7 +162,7 @@ subtest 'update auth' => sub{
 };
 
 subtest 'update path' => sub{
-  ok my $uri = uri($urls[2]), 'ctor';
+  ok my $uri = uri($uris[2]), 'ctor';
   is $uri->path, '/some/path', 'scalar path';
   is [$uri->path], ['some', 'path'], 'list path';
 
@@ -123,7 +176,7 @@ subtest 'update path' => sub{
 };
 
 subtest 'update param' => sub{
-  ok my $uri = uri($urls[2]), 'ctor';
+  ok my $uri = uri($uris[2]), 'ctor';
   is $uri->param('cccc'), 'dddd', 'param(k)', Dumper($uri);
   is $uri->param('cccc', 'qwerty'), 'qwerty', 'param(k,v)';
   is $uri->param('cccc'), 'qwerty', 'param(k)';
