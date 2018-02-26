@@ -139,7 +139,7 @@ use URI::Encode::XS qw(uri_encode uri_decode);
 require Exporter;
 
 use parent 'Exporter';
-our @EXPORT_OK = qw(uri uri_split auth_split auth_join);
+our @EXPORT_OK = qw(uri uri_split);
 
 use overload
   '""' => sub{

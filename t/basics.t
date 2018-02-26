@@ -2,7 +2,7 @@ use Test2;
 use Test2::Bundle::Extended;
 use Data::Dumper;
 use URI::Split qw();
-use URI::Fast qw(uri uri_split auth_split auth_join);
+use URI::Fast qw(uri uri_split);
 
 subtest 'auth_join' => sub{
   my $usr  = 'someone';
@@ -20,7 +20,7 @@ subtest 'auth_join' => sub{
 
   foreach (@$tests) {
     my ($expected, $args) = @$_;
-    is auth_join(@$args), $expected, "auth: $expected";
+    is URI::Fast::auth_join(@$args), $expected, "auth: $expected";
   }
 };
 
@@ -40,7 +40,7 @@ subtest 'auth_split' => sub{
 
   foreach (@$tests) {
     my ($auth, $expected) = @$_;
-    my $split = [auth_split($auth)];
+    my $split = [URI::Fast::auth_split($auth)];
     is $split, $expected, $auth, $split;
   }
 };
