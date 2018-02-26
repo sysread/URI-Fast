@@ -247,7 +247,7 @@ sub _reauth {
 
 sub param {
   my ($self, $key, $val) = @_;
-  $self->{query} // $val // return;
+  $self->{query} || $val || return;
 
   $key = uri_encode($key);
 
