@@ -135,7 +135,7 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 use common::sense;
 use Carp;
 use Inline 'C';
-use URI::Encode::XS qw(uri_decode uri_encode);
+use URI::Encode::XS qw();
 
 use parent 'Exporter';
 our @EXPORT_OK = qw(uri uri_split auth_split);
@@ -223,18 +223,25 @@ sub _reauth {
   my $self = shift;
   $self->{auth} = '';
 
-  if ($self->{_auth}{usr}) {                               # Add the credentials block (usr:pwd)
-    $self->{auth} = uri_encode($self->{_auth}{usr});       # Add user
-    $self->{auth} .= ':' . uri_encode($self->{_auth}{pwd}) # Add :pwd if pwd present
-      if $self->{_auth}{pwd};
+  if ($self->{_auth}{usr}) {                       # Add the credentials block (usr:pwd)
+    my $usr = $self->{_auth}{usr};
+    uri_encode($usr);
+    $self->{auth} = $usr;                          # Add user
+
+    if ($self->{_auth}{pwd}) {                     # Add :pwd if pwd present
+      my $pwd = $self->{_auth}{pwd};
+      uri_encode($pwd);
+      $self->{auth} .= ":$pwd";
+    }
+
     $self->{auth} .= '@';
   }
 
   if ($self->{_auth}{host}) {
-    $self->{auth} .= $self->{_auth}{host};                 # Add host if present (may not be for, e.g. file://)
+    $self->{auth} .= $self->{_auth}{host};         # Add host if present (may not be for, e.g. file://)
 
     if ($self->{_auth}{port}) {
-      $self->{auth} .= ':' . $self->{_auth}{port};         # Port only valid if host is present
+      $self->{auth} .= ':' . $self->{_auth}{port}; # Port only valid if host is present
     }
   }
 }
@@ -243,7 +250,7 @@ sub param {
   my ($self, $key, $val) = @_;
   $self->{query} // $val // return;
 
-  $key = uri_encode($key);
+  uri_encode($key);
 
   if ($val) {
     # Wipe out any current values for $key
@@ -251,8 +258,9 @@ sub param {
 
     # Encode and attach values for param to query string
     foreach (ref $val ? @$val : ($val)) {
+      uri_encode($_);
       $self->{query} .= '&' if length $self->{query};
-      $self->{query} .= $key . '=' . uri_encode($_);
+      $self->{query} .= "$key=$_";
     }
   }
 
@@ -261,11 +269,12 @@ sub param {
 
   if (@vals) {
     if (@vals > 1) {
-      return map{ tr/+/ /; uri_decode($_) } @vals;
+      return map{ tr/+/ /; uri_decode($_); $_ } @vals;
     }
     else {
       $vals[0] =~ tr/+/ /;
-      return uri_decode($vals[0]);
+      uri_decode($vals[0]);
+      return $vals[0];
     }
   }
   else {
@@ -279,6 +288,58 @@ __DATA__
 __C__
 
 #include <string.h>
+
+void uri_decode(SV* str) {
+  dSP;
+  SV*    result;
+  STRLEN len;
+  char*  res;
+
+  ENTER;
+  SAVETMPS;
+  PUSHMARK(SP);
+  XPUSHs(str);
+  PUTBACK;
+
+  call_pv("URI::Encode::XS::uri_decode", G_SCALAR);
+
+  SPAGAIN;
+
+  result = POPs;
+  res = SvPV(result, len);
+
+  PUTBACK;
+  FREETMPS;
+  LEAVE;
+
+  sv_setpvn(str, res, len);
+}
+
+void uri_encode(SV* str) {
+  dSP;
+  SV*    result;
+  STRLEN len;
+  char*  res;
+
+  ENTER;
+  SAVETMPS;
+  PUSHMARK(SP);
+  XPUSHs(str);
+  PUTBACK;
+
+  call_pv("URI::Encode::XS::uri_encode", G_SCALAR);
+
+  SPAGAIN;
+
+  result = POPs;
+  res = SvPV(result, len);
+
+  PUTBACK;
+  FREETMPS;
+  LEAVE;
+
+  sv_setpvn(str, res, len);
+}
 
 void uri_split(SV* uri) {
   STRLEN  len;
@@ -354,6 +415,8 @@ void auth_split(SV* auth) {
   size_t  idx  = 0;
   size_t  brk1 = 0;
   size_t  brk2 = 0;
+  SV*     usr;
+  SV*     pwd;
 
   Inline_Stack_Vars;
   Inline_Stack_Reset;
@@ -372,10 +435,14 @@ void auth_split(SV* auth) {
       brk2 = strcspn(&src[idx], ":");
 
       if (brk2 > 0 && brk2 < brk1) {
-        Inline_Stack_Push(newSVpv(&src[idx], brk2));
+        usr = newSVpv(&src[idx], brk2); // usr
+        uri_decode(usr);
+        Inline_Stack_Push(usr);
         idx += brk2 + 1;
 
-        Inline_Stack_Push(newSVpv(&src[idx], brk1 - brk2 - 1));
+        pwd = newSVpv(&src[idx], brk1 - brk2 - 1); // pwd
+        uri_decode(pwd);
+        Inline_Stack_Push(pwd);
         idx += brk1 - brk2;
       }
       else {
