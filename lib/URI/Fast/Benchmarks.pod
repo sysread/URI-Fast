@@ -1,3 +1,4 @@
+
 # PODNAME: URI::Fast::Benchmarks
 
 =head1 BENCHMARKS
@@ -11,62 +12,74 @@ L<perlbrew|https://perlbrew.pl>.
 
 =head2 Constructor
 
-  Benchmark: timing 200000 iterations of URI, URI::Fast...
-         URI:  2 wallclock secs ( 1.48 usr +  0.00 sys =  1.48 CPU) @ 135135.14/s (n=200000)
-   URI::Fast:  0 wallclock secs ( 0.58 usr +  0.00 sys =  0.58 CPU) @ 344827.59/s (n=200000)
+                            Rate            URI      URI::Fast
+              URI       136612/s             --           -74%
+        URI::Fast       520833/s           281%             --
+
 
 =head2 Parse scheme
 
-  Benchmark: timing 200000 iterations of URI, URI::Fast...
-         URI:  3 wallclock secs ( 2.37 usr +  0.00 sys =  2.37 CPU) @ 84388.19/s (n=200000)
-   URI::Fast:  1 wallclock secs ( 0.81 usr +  0.00 sys =  0.81 CPU) @ 246913.58/s (n=200000)
+                            Rate            URI      URI::Fast
+              URI        86957/s             --           -78%
+        URI::Fast       400000/s           360%             --
 
-=head2 Parse path
 
-  Benchmark: timing 200000 iterations of URI, URI::Fast...
-         URI:  2 wallclock secs ( 2.40 usr +  0.00 sys =  2.40 CPU) @ 83333.33/s (n=200000)
-   URI::Fast:  1 wallclock secs ( 0.85 usr +  0.00 sys =  0.85 CPU) @ 235294.12/s (n=200000)
+=head2 Update scheme
 
-=head2 Split path
+                            Rate            URI      URI::Fast
+              URI        56497/s             --           -79%
+        URI::Fast       273973/s           385%             --
 
-  Benchmark: timing 200000 iterations of URI, URI::Fast...
-         URI:  3 wallclock secs ( 3.26 usr +  0.01 sys =  3.27 CPU) @ 61162.08/s (n=200000)
-   URI::Fast:  2 wallclock secs ( 1.10 usr +  0.00 sys =  1.10 CPU) @ 181818.18/s (n=200000)
-
-=head2 Update path
-
-  Benchmark: timing 200000 iterations of URI, URI::Fast/list, URI::Fast/string...
-               URI:  3 wallclock secs ( 2.87 usr +  0.00 sys =  2.87 CPU) @ 69686.41/s (n=200000)
-    URI::Fast/list:  1 wallclock secs ( 0.97 usr +  0.00 sys =  0.97 CPU) @ 206185.57/s (n=200000)
-  URI::Fast/string:  0 wallclock secs ( 0.87 usr +  0.00 sys =  0.87 CPU) @ 229885.06/s (n=200000)
 
 =head2 Parse authorization
 
-  Benchmark: timing 200000 iterations of URI, URI::Fast...
-         URI:  3 wallclock secs ( 2.85 usr +  0.01 sys =  2.86 CPU) @ 69930.07/s (n=200000)
-   URI::Fast:  2 wallclock secs ( 1.49 usr +  0.00 sys =  1.49 CPU) @ 134228.19/s (n=200000)
+                            Rate            URI      URI::Fast
+              URI        69930/s             --           -58%
+        URI::Fast       166667/s           138%             --
+
 
 =head2 Update authorization
 
-  Benchmark: timing 200000 iterations of URI, URI::Fast...
-         URI:  4 wallclock secs ( 4.47 usr +  0.00 sys =  4.47 CPU) @ 44742.73/s (n=200000)
-   URI::Fast:  2 wallclock secs ( 1.87 usr +  0.00 sys =  1.87 CPU) @ 106951.87/s (n=200000)
+                            Rate            URI      URI::Fast
+              URI        45147/s             --           -62%
+        URI::Fast       119760/s           165%             --
+
+
+=head2 Parse path
+
+                            Rate          URI/@          URI/$
+            URI/@        62305/s             --           -27%
+            URI/$        85470/s            37%             --
+      URI::Fast/@       238095/s           282%           179%
+      URI::Fast/$       384615/s           517%           350%
+
+
+=head2 Update path
+
+                            Rate            URI    URI::Fast/@
+              URI        70175/s             --           -76%
+      URI::Fast/@       294118/s           319%             --
+      URI::Fast/$       350877/s           400%            19%
+
 
 =head2 Parse query
 
-  Benchmark: timing 200000 iterations of URI, URI::Fast...
-         URI:  3 wallclock secs ( 2.49 usr +  0.00 sys =  2.49 CPU) @ 80321.29/s (n=200000)
-   URI::Fast:  2 wallclock secs ( 2.10 usr +  0.00 sys =  2.10 CPU) @ 95238.10/s (n=200000)
+                            Rate            URI      URI::Fast
+              URI        81301/s             --           -58%
+        URI::Fast       192308/s           137%             --
+
 
 =head2 Set query parameter
 
-  Benchmark: timing 200000 iterations of URI, URI::Fast...
-         URI:  4 wallclock secs ( 3.84 usr +  0.01 sys =  3.85 CPU) @ 51948.05/s (n=200000)
-   URI::Fast:  3 wallclock secs ( 2.61 usr +  0.00 sys =  2.61 CPU) @ 76628.35/s (n=200000)
+                            Rate            URI      URI::Fast
+              URI        52083/s             --           -62%
+        URI::Fast       137931/s           165%             --
+
 
 =head2 Stringification
 
-  Benchmark: timing 200000 iterations of URI, URI::Fast...
-         URI:  2 wallclock secs ( 2.10 usr +  0.00 sys =  2.10 CPU) @ 95238.10/s (n=200000)
-   URI::Fast:  1 wallclock secs ( 1.08 usr +  0.00 sys =  1.08 CPU) @ 185185.19/s (n=200000)
+                            Rate            URI      URI::Fast
+              URI        94787/s             --           -68%
+        URI::Fast       294118/s           210%             --
+
 

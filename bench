@@ -5,6 +5,21 @@ use URI;
 use URI::Fast qw(uri);
 use Benchmark qw(:all);
 
+open my $POD, '>', './lib/URI/Fast/Benchmarks.pod' or die $!;
+
+print $POD q{# PODNAME: URI::Fast::Benchmarks
+
+=head1 BENCHMARKS
+
+Various operations comparing L<URI::Fast> against L<URI>'s performance. The
+script to recreate is included in the C<bench> folder of the distribution.
+
+Tests were performed on my development machine, a 2015 MacBook Pro (2.7 GHz
+Intel Core i5, 8GB 1867 MHz DDR3 RAM) using Perl 5.24 installed using
+L<perlbrew|https://perlbrew.pl>.
+
+};
+
 my @urls = (
   '/foo/bar/baz',
   'http://www.test.com',
@@ -14,21 +29,25 @@ my @urls = (
 
 sub test {
   my ($msg, $count, $tests) = @_;
+  local $| = 1;
+
   print "--------------------------------------------------------------------------------\n";
-  print "$msg\n";
+  print "> $msg\n";
   print "--------------------------------------------------------------------------------\n";
-  timethese $count, $tests;
+  my $results = cmpthese $count, $tests;
+
+  print $POD "=head2 $msg\n\n";
+
+  foreach (@$results) {
+    printf $POD "  %15s%15s%15s%15s\n", @$_;
+  }
+
+  print $POD "\n\n";
+
   print "\n";
 }
 
-test "Basics", 500_000, {
-  'file'     => sub{ my $uri = uri $urls[0]; $uri->scheme; },
-  'simple'   => sub{ my $uri = uri $urls[1]; $uri->scheme; },
-  'basic'    => sub{ my $uri = uri $urls[2]; $uri->scheme; },
-  'complete' => sub{ my $uri = uri $urls[3]; $uri->scheme; },
-};
-
-test 'Constructor', 200_000, {
+test 'Constructor', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[1]) },
   'URI::Fast' => sub{ my $uri = uri $urls[1] },
 };
@@ -54,16 +73,16 @@ test 'Update authorization', 200_000, {
 };
 
 test 'Parse path', 200_000, {
-  '      URI/string' => sub{ my $uri = URI->new($urls[3]); my $p = $uri->path },
-  '        URI/list' => sub{ my $uri = URI->new($urls[3]); my @p = $uri->path_segments },
-  'URI::Fast/string' => sub{ my $uri = uri $urls[3]; my $p = $uri->path },
-  '  URI::Fast/list' => sub{ my $uri = uri $urls[3]; my @p = $uri->path },
+  'URI/$' => sub{ my $uri = URI->new($urls[3]); my $p = $uri->path },
+  'URI/@' => sub{ my $uri = URI->new($urls[3]); my @p = $uri->path_segments },
+  'URI::Fast/$' => sub{ my $uri = uri $urls[3]; my $p = $uri->path },
+  'URI::Fast/@' => sub{ my $uri = uri $urls[3]; my @p = $uri->path },
 };
 
 test 'Update path', 200_000, {
-  '             URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/foo/bar') },
-  'URI::Fast/string' => sub{ my $uri = uri $urls[3]; $uri->path('/foo/bar') },
-  '  URI::Fast/list' => sub{ my $uri = uri $urls[3]; $uri->path(['foo', 'bar']) },
+  'URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/foo/bar') },
+  'URI::Fast/$' => sub{ my $uri = uri $urls[3]; $uri->path('/foo/bar') },
+  'URI::Fast/@' => sub{ my $uri = uri $urls[3]; $uri->path(['foo', 'bar']) },
 };
 
 test 'Parse query', 200_000, {
@@ -80,3 +99,5 @@ test 'Stringification', 200_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $str = "$uri" },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $str = "$uri" },
 };
+
+close $POD;
