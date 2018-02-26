@@ -46,8 +46,7 @@ access and update portions of the URI.
 
 =head2 uri
 
-Accepts a string, minimally parses it (using L<URI::Split>), and returns a
-L<URI::Fast> object.
+Accepts a string, minimally parses it, and returns a L<URI::Fast> object.
 
 When initially created, only the scheme, authorization section, path, query
 string, and fragment are split out. Thesea are broken down in a lazy fashion
