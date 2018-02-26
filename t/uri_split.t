@@ -1,6 +1,5 @@
 use Test2;
 use Test2::Bundle::Extended;
-use ExtUtils::testlib;
 use Data::Dumper;
 use URI::Split qw();
 use URI::Fast qw(uri_split);

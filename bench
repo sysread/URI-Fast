@@ -1,7 +1,6 @@
 #!perl
 
 use common::sense;
-use ExtUtils::testlib;
 use URI;
 use URI::Fast qw(uri);
 use Benchmark qw(:all);
@@ -22,7 +21,7 @@ sub test {
   print "\n";
 }
 
-test "Basics", 400_000, {
+test "Basics", 500_000, {
   'file'     => sub{ my $uri = uri $urls[0]; $uri->scheme; },
   'simple'   => sub{ my $uri = uri $urls[1]; $uri->scheme; },
   'basic'    => sub{ my $uri = uri $urls[2]; $uri->scheme; },
