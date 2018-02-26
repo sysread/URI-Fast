@@ -1,4 +1,4 @@
-#requires 'perl', '5.010';
+requires 'perl', '5.010';
 
 requires 'Exporter';
 requires 'Inline::C';
