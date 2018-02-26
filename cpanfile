@@ -1,8 +1,8 @@
 requires 'perl', '5.010';
 
-requires 'URI::Split';
-requires 'URI::Encode::XS', '0.07';
 requires 'Exporter';
+requires 'Inline::C';
+requires 'URI::Encode::XS', '0.07';
 requires 'common::sense';
 
 on test => sub {

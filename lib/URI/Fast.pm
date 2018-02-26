@@ -1,3 +1,232 @@
+package URI::Fast;
+# ABSTRACT: A fast(er) URI parser
+
+use common::sense;
+use Carp;
+use Inline 'C';
+use URI::Encode::XS qw(uri_decode uri_encode);
+
+use parent 'Exporter';
+our @EXPORT_OK = qw(uri uri_split);
+
+use overload
+  '""' => sub{
+    "$_[0]->{scheme}://$_[0]->{auth}$_[0]->{path}"
+      . ($_[0]->{query} ? ('?' . $_[0]->{query}) : '')
+      . ($_[0]->{frag}  ? ('#' . $_[0]->{frag})  : '');
+  };
+
+
+# Regexes used to validate characters present in string when attributes are
+# updated.
+our %LEGAL = (
+  scheme => qr/^[a-zA-Z][-.+a-zA-Z0-9]*$/,
+  port   => qr/^[0-9]+$/,
+);
+
+sub uri ($) {
+  my $self = bless {}, __PACKAGE__;
+  @{$self}{qw(scheme auth path query frag)} = uri_split($_[0]);
+  $self->{scheme} //= 'file';
+  $self;
+}
+
+# Build a simple accessor for basic attributes
+foreach my $attr (qw(scheme auth query frag)) {
+  *{__PACKAGE__ . "::$attr"} = sub {
+    if (@_ == 2) {
+      !exists($LEGAL{$attr}) || $_[1] =~ $LEGAL{$attr} || croak "illegal chars in $attr";
+      $_[0]->{$attr} = $_[1];
+      undef $_[0]->{'_' . $attr};
+    }
+
+    $_[0]->{$attr};
+  };
+}
+
+# Path is slightly more complicated as it can parse the path
+sub path {
+  if (@_ == 2) {
+    local $" = '/';           # Set list separator for string interpolation
+    $_[0]->{path} = ref $_[1] # Check whether setting with list or string
+      ? "/@{$_[1]}"           # List ref
+      : $_[1];                # Scalar
+  }
+
+  if (wantarray) {
+    local $_ = $_[0]->{path};
+    s/^\///;
+    split /\//;
+  }
+  else {
+    $_[0]->{path};
+  }
+}
+
+# For bits of the auth string, build a lazy accessor that calls _auth, which
+# parses the auth string.
+foreach my $attr (qw(usr pwd host port)) {
+  *{__PACKAGE__ . "::$attr"} = sub {
+    $_[0]->{auth} && $_[0]->{_auth} || $_[0]->_auth;
+
+    # Set new value, then regenerate authorization section string
+    if (@_ == 2) {
+      !exists($LEGAL{$attr}) || $_[1] =~ $LEGAL{$attr} || croak "illegal chars in $attr";
+      $_[0]->{_auth}{$attr} = $_[1];
+      $_[0]->_reauth;
+    }
+
+    $_[0]->{_auth}{$attr};
+  };
+}
+
+# Parses auth section
+sub _auth {
+  my ($self) = @_;
+  $self->{_auth} = {};                                     # Set a flag to prevent reparsing
+
+  if (local $_ = $self->auth) {
+    my ($cred, $loc) = split /@/;                          # usr:pwd@host:port
+
+    if ($loc) {
+      @{$self->{_auth}}{qw(usr pwd)}   = split ':', $cred; # Both credentials and location are present
+      @{$self->{_auth}}{qw(host port)} = split ':', $loc;
+    }
+    else {
+      @{$self->{_auth}}{qw(host port)} = split ':', $cred; # Only location is present
+    }
+  }
+}
+
+# Regenerates auth section
+sub _reauth {
+  my $self = shift;
+  $self->{auth} = '';
+
+  if ($self->{_auth}{usr}) {                                           # Add the credentials block (usr:pwd)
+    $self->{auth} = $self->{_auth}{usr};                               # Add user
+    $self->{auth} .= ':' . $self->{_auth}{pwd} if $self->{_auth}{pwd}; # Add :pwd if pwd present
+    $self->{auth} .= '@';
+  }
+
+  if ($self->{_auth}{host}) {
+    $self->{auth} .= $self->{_auth}{host};                             # Add host if present (may not be for, e.g. file://)
+
+    if ($self->{_auth}{port}) {
+      $self->{auth} .= ':' . $self->{_auth}{port};                     # Port only valid if host is present
+    }
+  }
+}
+
+sub param {
+  my ($self, $key, $val) = @_;
+  $self->{query} // $val // return;
+
+  $key = uri_encode($key);
+
+  if ($val) {
+    # Wipe out any current values for $key
+    $self->{query} =~ s/&?\b$key=[^&#]+//;
+
+    # Encode and attach values for param to query string
+    foreach (ref $val ? @$val : ($val)) {
+      $self->{query} .= '&' if length $self->{query};
+      $self->{query} .= $key . '=' . uri_encode($_);
+    }
+  }
+
+  # Collect and decode values for $key
+  my @vals = $self->{query} =~ /\b$key=([^&#]+)/g;
+
+  if (@vals) {
+    if (@vals > 1) {
+      return map{ tr/+/ /; uri_decode($_) } @vals;
+    }
+    else {
+      $vals[0] =~ tr/+/ /;
+      return uri_decode($vals[0]);
+    }
+  }
+  else {
+    return;
+  }
+}
+
+1;
+
+__DATA__
+__C__
+
+void uri_split(SV* uri) {
+  STRLEN  len;
+  char*   src = SvPV(uri, len);
+  size_t  idx = 0;
+  size_t  brk = 0;
+
+  Inline_Stack_Vars;
+  Inline_Stack_Reset;
+
+  // Scheme
+  brk = strcspn(&src[idx], ":/@?#");
+  if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
+    Inline_Stack_Push(newSVpv(&src[idx], brk));
+    idx += brk + 3;
+
+    // Authority
+    brk = strcspn(&src[idx], "/?#");
+    if (brk > 0) {
+      Inline_Stack_Push(newSVpv(&src[idx], brk));
+      idx += brk;
+    } else {
+      Inline_Stack_Push(newSVpv("",0));
+    }
+  }
+  else {
+    Inline_Stack_Push(&PL_sv_undef);
+    Inline_Stack_Push(&PL_sv_undef);
+  }
+
+  // Path
+  brk = strcspn(&src[idx], "?#");
+  if (brk > 0) {
+    Inline_Stack_Push(newSVpv(&src[idx], brk));
+    idx += brk;
+  } else {
+    Inline_Stack_Push(newSVpv("",0));
+  }
+
+  // Query
+  if (src[idx] == '?') {
+    ++idx; // skip past ?
+    brk = strcspn(&src[idx], "#");
+    if (brk > 0) {
+      Inline_Stack_Push(newSVpv(&src[idx], brk));
+      idx += brk;
+    } else {
+      Inline_Stack_Push(&PL_sv_undef);
+    }
+  } else {
+    Inline_Stack_Push(&PL_sv_undef);
+  }
+
+  // Fragment
+  if (src[idx] == '#') {
+    ++idx; // skip past #
+    brk = len - idx;
+    if (brk > 0) {
+      Inline_Stack_Push(newSVpv(&src[idx], brk));
+    } else {
+      Inline_Stack_Push(&PL_sv_undef);
+    }
+  } else {
+    Inline_Stack_Push(&PL_sv_undef);
+  }
+
+  Inline_Stack_Done;
+}
+
+__END__
+
 =head1 SYNOPSIS
 
   use URI::Fast qw(uri);
@@ -129,175 +358,3 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 =back
 
 =cut
-
-package URI::Fast;
-# ABSTRACT: A fast(er) URI parser
-
-use common::sense;
-use URI::Split qw(uri_split);
-use URI::Encode::XS qw(uri_decode uri_encode);
-use Carp;
-
-use overload
-  '""' => sub{
-    "$_[0]->{scheme}://$_[0]->{auth}$_[0]->{path}"
-      . ($_[0]->{query} ? ('?' . $_[0]->{query}) : '')
-      . ($_[0]->{frag}  ? ('#' . $_[0]->{frag})  : '');
-  };
-
-use parent 'Exporter';
-our @EXPORT_OK = qw(uri);
-
-# Regexes used to validate characters present in string when attributes are
-# updated.
-our %LEGAL = (
-  scheme => qr/^[a-zA-Z][-.+a-zA-Z0-9]*$/,
-  port   => qr/^[0-9]+$/,
-);
-
-sub uri ($) {
-  my $self = bless {}, __PACKAGE__;
-  @{$self}{qw(scheme auth path query frag)} = uri_split $_[0];
-  $self->{scheme} //= 'file';
-  $self;
-}
-
-# Build a simple accessor for basic attributes
-foreach my $attr (qw(scheme auth query frag)) {
-  *{__PACKAGE__ . "::$attr"} = sub {
-    if (@_ == 2) {
-      !exists($LEGAL{$attr}) || $_[1] =~ $LEGAL{$attr} || croak "illegal chars in $attr";
-      $_[0]->{$attr} = $_[1];
-      undef $_[0]->{'_' . $attr};
-    }
-
-    $_[0]->{$attr};
-  };
-}
-
-# Path is slightly more complicated as it can parse the path
-sub path {
-  if (@_ == 2) {
-    local $" = '/';           # Set list separator for string interpolation
-    $_[0]->{path} = ref $_[1] # Check whether setting with list or string
-      ? "/@{$_[1]}"           # List ref
-      : $_[1];                # Scalar
-  }
-
-  if (wantarray) {
-    local $_ = $_[0]->{path};
-    s/^\///;
-    split /\//;
-  }
-  else {
-    $_[0]->{path};
-  }
-}
-
-# For bits of the auth string, build a lazy accessor that calls _auth, which
-# parses the auth string.
-foreach my $attr (qw(usr pwd host port)) {
-  *{__PACKAGE__ . "::$attr"} = sub {
-    $_[0]->{auth} && $_[0]->{_auth} || $_[0]->_auth;
-
-    # Set new value, then regenerate authorization section string
-    if (@_ == 2) {
-      !exists($LEGAL{$attr}) || $_[1] =~ $LEGAL{$attr} || croak "illegal chars in $attr";
-      $_[0]->{_auth}{$attr} = $_[1];
-      $_[0]->_reauth;
-    }
-
-    $_[0]->{_auth}{$attr};
-  };
-}
-
-# Parses auth section
-sub _auth {
-  my ($self) = @_;
-  $self->{_auth} = {};                                     # Set a flag to prevent reparsing
-
-  if (local $_ = $self->auth) {
-    my ($cred, $loc) = split /@/;                          # usr:pwd@host:port
-
-    if ($loc) {
-      @{$self->{_auth}}{qw(usr pwd)}   = split ':', $cred; # Both credentials and location are present
-      @{$self->{_auth}}{qw(host port)} = split ':', $loc;
-    }
-    else {
-      @{$self->{_auth}}{qw(host port)} = split ':', $cred; # Only location is present
-    }
-  }
-}
-
-# Regenerates auth section
-sub _reauth {
-  my $self = shift;
-  $self->{auth} = '';
-
-  if ($self->{_auth}{usr}) {                                           # Add the credentials block (usr:pwd)
-    $self->{auth} = $self->{_auth}{usr};                               # Add user
-    $self->{auth} .= ':' . $self->{_auth}{pwd} if $self->{_auth}{pwd}; # Add :pwd if pwd present
-    $self->{auth} .= '@';
-  }
-
-  if ($self->{_auth}{host}) {
-    $self->{auth} .= $self->{_auth}{host};                             # Add host if present (may not be for, e.g. file://)
-
-    if ($self->{_auth}{port}) {
-      $self->{auth} .= ':' . $self->{_auth}{port};                     # Port only valid if host is present
-    }
-  }
-}
-
-sub param {
-  my ($self, $key, $val) = @_;
-  $self->{query} || $val || return;
-
-  if (!$self->{_query}) {
-    $self->{_query} = {};                                       # Somewhere to set our things
-
-    if (local $_ = $self->{query}) {                            # Faster access via a dynamic variable
-      tr/\+/ /;                                                 # Seriously, dfarrell?
-      local @_ = split /[&=]/;                                  # Tokenize
-
-      while (my $k = uri_decode(shift // '')) {                 # Decode the next self->{_query}eter
-        if ($val && $k eq $key) {                               # We'll be setting this shortly, so ignore
-          shift;
-          next;
-        }
-
-        if (exists $self->{_query}{$k}) {                       # Multiple self->{_query}eters exist with the same key
-          $self->{_query}{$k} = [$self->{_query}{$k}]           # Reinitialize as array ref to store multiple values
-            unless ref $self->{_query}{$k};
-
-          push @{$self->{_query}{$k}}, uri_decode(shift // ''); # Add to the array
-        }
-        else {                                                  # First or only use of key
-          $self->{_query}{$k} = uri_decode(shift // '');
-        }
-      }
-    }
-  };
-
-  if ($val) {                                                   # Modifying this value
-    $self->{_query}{$key} = $val;                               # Update the pre-parsed hash ref
-
-    $key = uri_encode($key);                                    # Encode the key
-    $self->{query} =~ s/\b$key=[^&]+&?//;                       # Remove from the query string
-
-    if (ref $val) {                                             # If $val is an array, each element gets its own place in the query
-      foreach (@$val) {
-        $self->{query} .= '&' if $self->{query};
-        $self->{query} .= $key . '=' . uri_encode($_);
-      }
-    }
-    else {                                                      # Otherwise, just add the encoded pair
-      $self->{query} .= '&' if $self->{query};
-      $self->{query} .= $key . '=' . uri_encode($val);
-    }
-  }
-
-  $self->{_query}{$key} if defined $key;
-}
-
-1;
