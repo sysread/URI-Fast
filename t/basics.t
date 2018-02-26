@@ -1,6 +1,5 @@
 use Test2;
 use Test2::Bundle::Extended;
-use Data::Dumper;
 use URI::Split qw();
 use URI::Fast qw(uri uri_split);
 
@@ -197,7 +196,7 @@ subtest 'update path' => sub{
 
 subtest 'update param' => sub{
   ok my $uri = uri($uris[2]), 'ctor';
-  is $uri->param('cccc'), 'dddd', 'param(k)', Dumper($uri);
+  is $uri->param('cccc'), 'dddd', 'param(k)';
   is $uri->param('cccc', 'qwerty'), 'qwerty', 'param(k,v)';
   is $uri->param('cccc'), 'qwerty', 'param(k)';
   is $uri->query, 'aaaa=bbbb&eeee=ffff&cccc=qwerty', 'query';

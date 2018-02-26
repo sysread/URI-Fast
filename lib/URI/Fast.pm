@@ -132,7 +132,6 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 
 =cut
 
-use common::sense;
 use Carp;
 use Inline 'C';
 use URI::Encode::XS qw(uri_encode uri_decode);

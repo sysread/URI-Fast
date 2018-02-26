@@ -1,7 +1,12 @@
 {{$NEXT}}
--Add SEE ALSO to POD
--Much faster uri_split implemented with Inline::C
--Much faster auth parsing implemented with Inline::C
+-Faster uri_split implemented with Inline::C
+-Faster auth parsing implemented with Inline::C
+-Faster auth assembly implemented with Inline::C
+-Faster query param access by doing a regex for each access rather than parsing
+ and storing (who knew?)
+-This module no longer has common::sense
+-Bugfix: auth params now correctly url-encoded/decoded
+-See also that a SEE ALSO section was added to POD
 
 0.03 2018-02-20
 -10% speedup in stringification by not creating variables
