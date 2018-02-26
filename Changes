@@ -1,6 +1,7 @@
 {{$NEXT}}
 -Add SEE ALSO to POD
 -Much faster uri_split implemented with Inline::C
+-Much faster auth parsing implemented with Inline::C
 
 0.03 2018-02-20
 -10% speedup in stringification by not creating variables

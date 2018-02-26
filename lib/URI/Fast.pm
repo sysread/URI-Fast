@@ -138,7 +138,7 @@ use Inline 'C';
 use URI::Encode::XS qw(uri_decode uri_encode);
 
 use parent 'Exporter';
-our @EXPORT_OK = qw(uri uri_split);
+our @EXPORT_OK = qw(uri uri_split auth_split);
 
 use overload
   '""' => sub{
@@ -214,19 +214,8 @@ foreach my $attr (qw(usr pwd host port)) {
 # Parses auth section
 sub _auth {
   my ($self) = @_;
-  $self->{_auth} = {};                                     # Set a flag to prevent reparsing
-
-  if (local $_ = $self->auth) {
-    my ($cred, $loc) = split /@/;                          # usr:pwd@host:port
-
-    if ($loc) {
-      @{$self->{_auth}}{qw(usr pwd)}   = split ':', $cred; # Both credentials and location are present
-      @{$self->{_auth}}{qw(host port)} = split ':', $loc;
-    }
-    else {
-      @{$self->{_auth}}{qw(host port)} = split ':', $cred; # Only location is present
-    }
-  }
+  $self->{_auth} = {}; # Set a flag to prevent reparsing
+  @{ $self->{_auth} }{qw(usr pwd host port)} = auth_split($self->{auth});
 }
 
 # Regenerates auth section
@@ -287,6 +276,8 @@ sub param {
 
 __DATA__
 __C__
+
+#include <string.h>
 
 void uri_split(SV* uri) {
   STRLEN  len;
@@ -351,6 +342,64 @@ void uri_split(SV* uri) {
     }
   } else {
     Inline_Stack_Push(&PL_sv_undef);
+  }
+
+  Inline_Stack_Done;
+}
+
+void auth_split(SV* auth) {
+  STRLEN  len;
+  char*   src  = SvPV(auth, len);
+  size_t  idx  = 0;
+  size_t  brk1 = 0;
+  size_t  brk2 = 0;
+
+  Inline_Stack_Vars;
+  Inline_Stack_Reset;
+
+  if (len == 0) {
+    Inline_Stack_Push(&PL_sv_undef);
+    Inline_Stack_Push(&PL_sv_undef);
+    Inline_Stack_Push(&PL_sv_undef);
+    Inline_Stack_Push(&PL_sv_undef);
+  }
+  else {
+    // Credentials
+    brk1 = strcspn(&src[idx], "@");
+
+    if (brk1 > 0 && brk1 != len) {
+      brk2 = strcspn(&src[idx], ":");
+
+      if (brk2 > 0 && brk2 < brk1) {
+        Inline_Stack_Push(newSVpv(&src[idx], brk2));
+        idx += brk2 + 1;
+
+        Inline_Stack_Push(newSVpv(&src[idx], brk1 - brk2 - 1));
+        idx += brk1 - brk2;
+      }
+      else {
+        Inline_Stack_Push(newSVpv(&src[idx], brk1));
+        Inline_Stack_Push(&PL_sv_undef);
+        idx += brk1 + 1;
+      }
+    }
+    else {
+      Inline_Stack_Push(&PL_sv_undef);
+      Inline_Stack_Push(&PL_sv_undef);
+    }
+
+    // Location
+    brk1 = strcspn(&src[idx], ":");
+
+    if (brk1 > 0 && brk1 != (len - idx)) {
+      Inline_Stack_Push(newSVpv(&src[idx], brk1));
+      idx += brk1 + 1;
+      Inline_Stack_Push(newSVpv(&src[idx], len - idx));
+    }
+    else {
+      Inline_Stack_Push(newSVpv(&src[idx], len - idx));
+      Inline_Stack_Push(&PL_sv_undef);
+    }
   }
 
   Inline_Stack_Done;
