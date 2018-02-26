@@ -215,10 +215,10 @@ foreach my $attr (qw(usr pwd host port)) {
 # Parses auth section
 sub _auth {
   my ($self) = @_;
-  $self->{_auth} = {}; # Set a flag to prevent reparsing
+  $self->{_auth} = {};
   @{ $self->{_auth} }{qw(usr pwd host port)} = auth_split($self->{auth});
-  #$self->{_auth}{usr} = uri_decode($self->{_auth}{usr}) if $self->{_auth}{usr};
-  #$self->{_auth}{pwd} = uri_decode($self->{_auth}{pwd}) if $self->{_auth}{pwd};
+  $self->{_auth}{usr} = uri_decode($self->{_auth}{usr}) if length $self->{_auth}{usr};
+  $self->{_auth}{pwd} = uri_decode($self->{_auth}{pwd}) if length $self->{_auth}{pwd};
 }
 
 # Regenerates auth section
@@ -253,7 +253,7 @@ sub param {
 
   if ($val) {
     # Wipe out any current values for $key
-    $self->{query} =~ s/&?\b$key=[^&#]+//;
+    $self->{query} =~ s/&?\b$key=[^&#]+//g;
 
     # Encode and attach values for param to query string
     foreach (ref $val ? @$val : ($val)) {
@@ -269,14 +269,13 @@ sub param {
     if (@vals > 1) {
       return map{ tr/+/ /; uri_decode($_) } @vals;
     }
-    else {
+    elsif ($vals[0]) {
       $vals[0] =~ tr/+/ /;
       return uri_decode($vals[0]);
     }
   }
-  else {
-    return;
-  }
+
+  return;
 }
 
 1;
@@ -285,29 +284,6 @@ __DATA__
 __C__
 
 #include <string.h>
-#
-void _decode(SV* str) {
-  SV* result;
-
-  dSP;
-
-  ENTER;
-  SAVETMPS;
-  PUSHMARK(SP);
-  XPUSHs(str);
-  PUTBACK;
-
-  call_pv("URI::Encode::XS::uri_decode", G_SCALAR);
-
-  SPAGAIN;
-
-  result = POPs;
-  sv_setsv(str, result);
-
-  PUTBACK;
-  FREETMPS;
-  LEAVE;
-}
 
 void uri_split(SV* uri) {
   STRLEN  len;
@@ -404,18 +380,10 @@ void auth_split(SV* auth) {
       brk2 = strcspn(&src[idx], ":");
 
       if (brk2 > 0 && brk2 < brk1) {
-        //Inline_Stack_Push(newSVpv(&src[idx], brk2));
-        usr = newSVpv(&src[idx], brk2);
-        _decode(usr);
-        Inline_Stack_Push(usr);
-
+        Inline_Stack_Push(newSVpv(&src[idx], brk2));
         idx += brk2 + 1;
 
-        //Inline_Stack_Push(newSVpv(&src[idx], brk1 - brk2 - 1));
-        pwd = newSVpv(&src[idx], brk1 - brk2 - 1);
-        _decode(pwd);
-        Inline_Stack_Push(pwd);
-
+        Inline_Stack_Push(newSVpv(&src[idx], brk1 - brk2 - 1));
         idx += brk1 - brk2;
       }
       else {
@@ -443,37 +411,5 @@ void auth_split(SV* auth) {
     }
   }
 
-  Inline_Stack_Done;
-}
-
-void query_split(SV* query) {
-  STRLEN  len;
-  char*   src = SvPV(query, len);
-  size_t  idx = 0;
-  size_t  brk = 0;
-  AV*     parts;
-  SV*     tmp;
-
-  Inline_Stack_Vars;
-  Inline_Stack_Reset;
-
-  parts = newAV();
-
-  while (idx < len) {
-    brk = strcspn(&src[idx], "&=");
-
-    if (brk == 0) {
-      break;
-    }
-
-    tmp = newSVpv(&src[idx], brk);
-    _decode(tmp);
-
-    av_push(parts, tmp);
-
-    idx += brk + 1;
-  }
-
-  Inline_Stack_Push(newRV_noinc((SV*) parts));
   Inline_Stack_Done;
 }
