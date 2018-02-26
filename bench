@@ -15,6 +15,7 @@ if (@ARGV[0]) {
 }
 
 print $POD q{# PODNAME: URI::Fast::Benchmarks
+# ABSTRACT: Benchmarks comparing URI::Fast and URI
 
 =head1 BENCHMARKS
 
