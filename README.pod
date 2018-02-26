@@ -139,15 +139,6 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 
 =back
 
-    if ($loc) {
-      @{$self->{_auth}}{qw(usr pwd)}   = split ':', $cred; # Both credentials and location are present
-      @{$self->{_auth}}{qw(host port)} = split ':', $loc;
-    }
-    else {
-      @{$self->{_auth}}{qw(host port)} = split ':', $cred; # Only location is present
-    }
-  }
-
 =head1 AUTHOR
 
 Jeff Ober <sysread@fastmail.fm>

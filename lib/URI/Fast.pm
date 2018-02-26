@@ -223,17 +223,18 @@ sub _reauth {
   my $self = shift;
   $self->{auth} = '';
 
-  if ($self->{_auth}{usr}) {                                           # Add the credentials block (usr:pwd)
-    $self->{auth} = $self->{_auth}{usr};                               # Add user
-    $self->{auth} .= ':' . $self->{_auth}{pwd} if $self->{_auth}{pwd}; # Add :pwd if pwd present
+  if ($self->{_auth}{usr}) {                               # Add the credentials block (usr:pwd)
+    $self->{auth} = uri_encode($self->{_auth}{usr});       # Add user
+    $self->{auth} .= ':' . uri_encode($self->{_auth}{pwd}) # Add :pwd if pwd present
+      if $self->{_auth}{pwd};
     $self->{auth} .= '@';
   }
 
   if ($self->{_auth}{host}) {
-    $self->{auth} .= $self->{_auth}{host};                             # Add host if present (may not be for, e.g. file://)
+    $self->{auth} .= $self->{_auth}{host};                 # Add host if present (may not be for, e.g. file://)
 
     if ($self->{_auth}{port}) {
-      $self->{auth} .= ':' . $self->{_auth}{port};                     # Port only valid if host is present
+      $self->{auth} .= ':' . $self->{_auth}{port};         # Port only valid if host is present
     }
   }
 }

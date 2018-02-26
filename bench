@@ -5,7 +5,14 @@ use URI;
 use URI::Fast qw(uri);
 use Benchmark qw(:all);
 
-open my $POD, '>', './lib/URI/Fast/Benchmarks.pod' or die $!;
+my $POD;
+
+if (@ARGV[0]) {
+  open $POD, '>', './lib/URI/Fast/Benchmarks.pod' or die $!;
+} else {
+  my $str = '';
+  open $POD, '>', \$str;
+}
 
 print $POD q{# PODNAME: URI::Fast::Benchmarks
 
