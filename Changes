@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.05 2018-02-27
 -Update required version of Test2::Suite to 0.000049 to include U in
  Test2::Bundle::Extended
 
