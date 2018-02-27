@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.06 2018-02-27
 -New ultra-fast parser and struct-based object written in C
 
 0.05 2018-02-27
