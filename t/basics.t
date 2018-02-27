@@ -2,47 +2,7 @@ use Test2;
 use Test2::Bundle::Extended;
 use URI::Split qw();
 use URI::Fast qw(uri uri_split);
-
-subtest 'auth_join' => sub{
-  my $usr  = 'someone';
-  my $pwd  = 'fnord';
-  my $host = 'www.test.com';
-  my $port = 1234;
-
-  my $tests = [
-    ["$usr:$pwd\@$host:$port" => [$usr, $pwd, $host, $port]],
-    ["$usr\@$host:$port"      => [$usr, undef, $host, $port]],
-    ["$host:$port"            => [undef, undef, $host, $port]],
-    ["$host"                  => [undef, undef, $host, undef]],
-    [""                       => [undef, undef, undef, undef]],
-  ];
-
-  foreach (@$tests) {
-    my ($expected, $args) = @$_;
-    is URI::Fast::auth_join(@$args), $expected, "auth: $expected";
-  }
-};
-
-subtest 'auth_split' => sub{
-  my $usr  = 'someone';
-  my $pwd  = 'fnord';
-  my $host = 'www.test.com';
-  my $port = 1234;
-
-  my $tests = [
-    ["$usr:$pwd\@$host:$port" => [$usr, $pwd, $host, $port]],
-    ["$usr\@$host:$port"      => [$usr, U, $host, $port]],
-    ["$host:$port"            => [U, U, $host, $port]],
-    ["$host"                  => [U, U, $host, U]],
-    [""                       => [U, U, U, U]],
-  ];
-
-  foreach (@$tests) {
-    my ($auth, $expected) = @$_;
-    my $split = [URI::Fast::auth_split($auth)];
-    is $split, $expected, $auth, $split;
-  }
-};
+use Test::LeakTrace qw(no_leaks_ok);
 
 subtest 'uri_split' => sub{
   my @uris = (
@@ -205,6 +165,16 @@ subtest 'update param' => sub{
   is $uri->query('foo=bar'), 'foo=bar', 'query(new)';
   is $uri->param('foo'), 'bar', 'new query parsed';
   ok !$uri->param('cccc'), 'old parsed values removed';
+};
+
+subtest 'memory leaks' => sub{
+  no_leaks_ok { my @parts = uri_split($uris[3]) } 'uri_split';
+  no_leaks_ok { my $uri = uri($uris[3]) } 'ctor';
+  no_leaks_ok { uri($uris[3])->scheme('stuff') } 'scheme';
+  no_leaks_ok { uri($uris[3])->param('foo', 'bar') } 'param';
+  no_leaks_ok { my @parts = uri($uris[3])->path } 'split path';
+  no_leaks_ok { uri($uris[3])->path(['foo', 'bar']) } 'set path';
+  no_leaks_ok { uri($uris[3])->usr('foo') } 'set usr/regen auth';
 };
 
 done_testing;

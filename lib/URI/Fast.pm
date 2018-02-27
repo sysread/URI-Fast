@@ -133,128 +133,114 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 =cut
 
 use Carp;
-use URI::Encode::XS qw(uri_encode uri_decode);
-use Inline 'C' => 'lib/uri_fast.c';
+use URI::Encode::XS qw(uri_encode);
+use Inline C => 'lib/uri_fast.c';
 
 require Exporter;
 use parent 'Exporter';
 our @EXPORT_OK = qw(uri uri_split);
 
-use overload
-  '""' => sub{
-    "$_[0]->{scheme}://$_[0]->{auth}$_[0]->{path}"
-      . ($_[0]->{query} ? ('?' . $_[0]->{query}) : '')
-      . ($_[0]->{frag}  ? ('#' . $_[0]->{frag})  : '');
-  };
+use overload '""' => sub{ $_[0]->to_string };
 
+sub uri ($) {
+  my $self = URI::Fast->new($_[0]);
+  $self->set_scheme('file') unless $self->get_scheme;
+  $self;
+}
 
 # Regexes used to validate characters present in string when attributes are
 # updated.
-our %LEGAL = (
+my %LEGAL = (
   scheme => qr/^[a-zA-Z][-.+a-zA-Z0-9]*$/,
   port   => qr/^[0-9]+$/,
 );
 
-sub uri ($) {
-  my $self = bless {}, __PACKAGE__;
-  @{$self}{qw(scheme auth path query frag)} = uri_split($_[0]);
-  $self->{scheme} //= 'file';
-  $self;
-}
-
 # Build a simple accessor for basic attributes
-foreach my $attr (qw(scheme auth query frag)) {
+foreach my $attr (qw(scheme auth query frag host port)) {
+  my $s = "set_$attr";
+  my $g = "get_$attr";
+
   *{__PACKAGE__ . "::$attr"} = sub {
     if (@_ == 2) {
-      !exists($LEGAL{$attr}) || $_[1] =~ $LEGAL{$attr} || croak "illegal chars in $attr";
-      $_[0]->{$attr} = $_[1];
-      undef $_[0]->{'_' . $attr};
+      if (exists $LEGAL{$attr} && $_[1] !~ $LEGAL{$attr}) {
+        croak "illegal chars in $attr";
+      }
+
+      $_[0]->$s( $_[1] );
     }
 
-    $_[0]->{$attr};
+    $_[0]->$g();
+  };
+}
+
+foreach my $attr (qw(usr pwd)) {
+  my $s = "set_$attr";
+  my $g = "get_$attr";
+
+  *{__PACKAGE__ . "::$attr"} = sub {
+    if (@_ == 2) {
+      if (exists $LEGAL{$attr} && $_[1] !~ $LEGAL{$attr}) {
+        croak "illegal chars in $attr";
+      }
+
+      $_[0]->$s( uri_encode( $_[1] ) );
+    }
+
+    uri_decode( $_[0]->$g() );
   };
 }
 
 # Path is slightly more complicated as it can parse the path
 sub path {
+  my ($self, $val) = @_;
+
   if (@_ == 2) {
-    local $" = '/';           # Set list separator for string interpolation
-    $_[0]->{path} = ref $_[1] # Check whether setting with list or string
-      ? "/@{$_[1]}"           # List ref
-      : $_[1];                # Scalar
+    $self->set_path(ref $val ? '/' . join('/', @$val) : $val);
   }
 
   if (wantarray) {
-    local $_ = $_[0]->{path};
-    s/^\///;
-    split /\//;
+    return $self->split_path;
   }
   else {
-    $_[0]->{path};
+    $self->get_path;
   }
-}
-
-# For bits of the auth string, build a lazy accessor that parses the auth
-# string, as well as a setter which regenerates it.
-foreach my $attr (qw(usr pwd host port)) {
-  *{__PACKAGE__ . "::$attr"} = sub {
-    # Parse auth section if necessary
-    unless ($_[0]->{auth} && $_[0]->{_auth}) {
-      $_[0]->{_auth} = {};
-      @{ $_[0]->{_auth} }{qw(usr pwd host port)} = auth_split($_[0]->{auth});
-      $_[0]->{_auth}{usr} = uri_decode($_[0]->{_auth}{usr}) if $_[0]->{_auth}{usr};
-      $_[0]->{_auth}{pwd} = uri_decode($_[0]->{_auth}{pwd}) if $_[0]->{_auth}{pwd};
-    }
-
-    # Set new value, then regenerate authorization section string
-    if (@_ == 2) {
-      !exists($LEGAL{$attr}) || $_[1] =~ $LEGAL{$attr} || croak "illegal chars in $attr";
-      $_[0]->{_auth}{$attr} = $_[1];
-
-      # Update auth string
-      $_[0]->{auth} = auth_join(
-        ($_[0]->{_auth}{usr} ? uri_encode($_[0]->{_auth}{usr}) : undef),
-        ($_[0]->{_auth}{pwd} ? uri_encode($_[0]->{_auth}{pwd}) : undef),
-        $_[0]->{_auth}{host},
-        $_[0]->{_auth}{port},
-      );
-    }
-
-    $_[0]->{_auth}{$attr};
-  };
 }
 
 sub param {
   my ($self, $key, $val) = @_;
-  $self->{query} || $val || return;
-
   $key = uri_encode($key);
 
-  if ($val) {
-    # Wipe out any current values for $key
-    $self->{query} =~ s/&?\b$key=[^&#]+//g;
+  if (@_ == 3) {
+    my $query = $self->get_query;
 
-    # Encode and attach values for param to query string
-    foreach (ref $val ? @$val : ($val)) {
-      $self->{query} .= '&' if $self->{query};
-      $self->{query} .= $key . '=' . uri_encode($_);
+    # Wipe out current values for $key
+    $query =~ s/\b$key=[^&#]+&?//g;
+    $query =~ s/^&//;
+    $query =~ s/&$//;
+
+    # If $val is undefined, the parameter is deleted
+    if (defined $val) {
+      # Encode and attach values for param to query string
+      foreach (ref $val ? @$val : ($val)) {
+        $query .= '&' if $query;
+        $query .= $key . '=' . uri_encode($_);
+      }
     }
+
+    $self->set_query($query);
   }
 
-  # Collect and decode values for $key
-  my @vals = $self->{query} =~ /\b$key=([^&#]+)/g;
+  my @params = $_[0]->get_param(uri_encode($_[1]))
+    or return;
 
-  if (@vals) {
-    if (@vals > 1) {
-      return map{ tr/+/ /; uri_decode($_) } @vals;
-    }
-    elsif ($vals[0]) {
-      $vals[0] =~ tr/+/ /;
-      return uri_decode($vals[0]);
-    }
-  }
+  return @params == 1
+    ? uri_decode($params[0])
+    : [ map{ uri_decode($_) } @params ];
+}
 
-  return;
+sub uri_decode ($) {
+  $_[0] =~ tr/+/ /;
+  URI::Encode::XS::uri_decode($_[0]);
 }
 
 1;
