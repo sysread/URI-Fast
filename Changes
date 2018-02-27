@@ -1,4 +1,6 @@
 {{$NEXT}}
+-Update required version of Test2::Suite to 0.000049 to include U in
+ Test2::Bundle::Extended
 
 0.04 2018-02-26
 -Faster uri_split implemented with Inline::C
