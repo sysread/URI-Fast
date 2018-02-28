@@ -1,7 +1,6 @@
 {{$NEXT}}
 -Switch tests from using Test2::Bundle::Extended to Test2::V0
--Bugfix: inc Test2::Suite test req to latest version in hopes of fixing
- missing dependencies on restricted smoker setups
+-Bugfix: fix some missing test dependencies on restricted smoker setups
 -Bugfix: some unit tests were using the uri being tested as the test name,
  triggering errors when the uri included a fragment (hash and newlines are
  invalid in test names)
