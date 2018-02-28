@@ -1,6 +1,7 @@
 {{$NEXT}}
--Bugfix: add sub-dependency to cpanfile that appears to be missing from one of
- this module's dependencies (Test2::Suite maybe?)
+-Switch tests from using Test2::Bundle::Extended to Test2::V0
+-Bugfix: inc Test2::Suite test req to latest version in hopes of fixing
+ missing dependencies on restricted smoker setups
 -Bugfix: some unit tests were using the uri being tested as the test name,
  triggering errors when the uri included a fragment (hash and newlines are
  invalid in test names)

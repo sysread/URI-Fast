@@ -1,5 +1,4 @@
-use Test2;
-use Test2::Bundle::Extended;
+use Test2::V0;
 use URI::Split qw();
 use URI::Fast qw(uri uri_split);
 use Test::LeakTrace qw(no_leaks_ok);
