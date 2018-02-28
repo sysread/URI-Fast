@@ -1,5 +1,117 @@
 package URI::Fast;
+
 # ABSTRACT: A fast(er) URI parser
+
+use Carp;
+use URI::Encode::XS qw(uri_encode);
+use Inline C => 'lib/uri_fast.c';
+
+require Exporter;
+use parent 'Exporter';
+our @EXPORT_OK = qw(uri uri_split);
+
+use overload '""' => sub{ $_[0]->to_string };
+
+sub uri ($) {
+  my $self = URI::Fast->new($_[0]);
+  $self->set_scheme('file') unless $self->get_scheme;
+  $self;
+}
+
+# Regexes used to validate characters present in string when attributes are
+# updated.
+my %LEGAL = (
+  scheme => qr/^[a-zA-Z][-.+a-zA-Z0-9]*$/,
+  port   => qr/^[0-9]+$/,
+);
+
+# Build a simple accessor for basic attributes
+foreach my $attr (qw(scheme auth query frag host port)) {
+  my $s = "set_$attr";
+  my $g = "get_$attr";
+
+  *{__PACKAGE__ . "::$attr"} = sub {
+    if (@_ == 2) {
+      if (exists $LEGAL{$attr} && $_[1] !~ $LEGAL{$attr}) {
+        croak "illegal chars in $attr";
+      }
+
+      $_[0]->$s( $_[1] );
+    }
+
+    $_[0]->$g();
+  };
+}
+
+foreach my $attr (qw(usr pwd)) {
+  my $s = "set_$attr";
+  my $g = "get_$attr";
+
+  *{__PACKAGE__ . "::$attr"} = sub {
+    if (@_ == 2) {
+      if (exists $LEGAL{$attr} && $_[1] !~ $LEGAL{$attr}) {
+        croak "illegal chars in $attr";
+      }
+
+      $_[0]->$s( uri_encode( $_[1] ) );
+    }
+
+    uri_decode( $_[0]->$g() );
+  };
+}
+
+# Path is slightly more complicated as it can parse the path
+sub path {
+  my ($self, $val) = @_;
+
+  if (@_ == 2) {
+    $self->set_path(ref $val ? '/' . join('/', @$val) : $val);
+  }
+
+  if (wantarray) {
+    return $self->split_path;
+  }
+  else {
+    $self->get_path;
+  }
+}
+
+sub param {
+  my ($self, $key, $val) = @_;
+  $key = uri_encode($key);
+
+  if (@_ == 3) {
+    my $query = $self->get_query;
+
+    # Wipe out current values for $key
+    $query =~ s/\b$key=[^&#]+&?//g;
+    $query =~ s/^&//;
+    $query =~ s/&$//;
+
+    # If $val is undefined, the parameter is deleted
+    if (defined $val) {
+      # Encode and attach values for param to query string
+      foreach (ref $val ? @$val : ($val)) {
+        $query .= '&' if $query;
+        $query .= $key . '=' . uri_encode($_);
+      }
+    }
+
+    $self->set_query($query);
+  }
+
+  my @params = $_[0]->get_param(uri_encode($_[1]))
+    or return;
+
+  return @params == 1
+    ? uri_decode($params[0])
+    : [ map{ uri_decode($_) } @params ];
+}
+
+sub uri_decode ($) {
+  $_[0] =~ tr/+/ /;
+  URI::Encode::XS::uri_decode($_[0]);
+}
 
 =head1 SYNOPSIS
 
@@ -131,116 +243,5 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 =back
 
 =cut
-
-use Carp;
-use URI::Encode::XS qw(uri_encode);
-use Inline C => 'lib/uri_fast.c';
-
-require Exporter;
-use parent 'Exporter';
-our @EXPORT_OK = qw(uri uri_split);
-
-use overload '""' => sub{ $_[0]->to_string };
-
-sub uri ($) {
-  my $self = URI::Fast->new($_[0]);
-  $self->set_scheme('file') unless $self->get_scheme;
-  $self;
-}
-
-# Regexes used to validate characters present in string when attributes are
-# updated.
-my %LEGAL = (
-  scheme => qr/^[a-zA-Z][-.+a-zA-Z0-9]*$/,
-  port   => qr/^[0-9]+$/,
-);
-
-# Build a simple accessor for basic attributes
-foreach my $attr (qw(scheme auth query frag host port)) {
-  my $s = "set_$attr";
-  my $g = "get_$attr";
-
-  *{__PACKAGE__ . "::$attr"} = sub {
-    if (@_ == 2) {
-      if (exists $LEGAL{$attr} && $_[1] !~ $LEGAL{$attr}) {
-        croak "illegal chars in $attr";
-      }
-
-      $_[0]->$s( $_[1] );
-    }
-
-    $_[0]->$g();
-  };
-}
-
-foreach my $attr (qw(usr pwd)) {
-  my $s = "set_$attr";
-  my $g = "get_$attr";
-
-  *{__PACKAGE__ . "::$attr"} = sub {
-    if (@_ == 2) {
-      if (exists $LEGAL{$attr} && $_[1] !~ $LEGAL{$attr}) {
-        croak "illegal chars in $attr";
-      }
-
-      $_[0]->$s( uri_encode( $_[1] ) );
-    }
-
-    uri_decode( $_[0]->$g() );
-  };
-}
-
-# Path is slightly more complicated as it can parse the path
-sub path {
-  my ($self, $val) = @_;
-
-  if (@_ == 2) {
-    $self->set_path(ref $val ? '/' . join('/', @$val) : $val);
-  }
-
-  if (wantarray) {
-    return $self->split_path;
-  }
-  else {
-    $self->get_path;
-  }
-}
-
-sub param {
-  my ($self, $key, $val) = @_;
-  $key = uri_encode($key);
-
-  if (@_ == 3) {
-    my $query = $self->get_query;
-
-    # Wipe out current values for $key
-    $query =~ s/\b$key=[^&#]+&?//g;
-    $query =~ s/^&//;
-    $query =~ s/&$//;
-
-    # If $val is undefined, the parameter is deleted
-    if (defined $val) {
-      # Encode and attach values for param to query string
-      foreach (ref $val ? @$val : ($val)) {
-        $query .= '&' if $query;
-        $query .= $key . '=' . uri_encode($_);
-      }
-    }
-
-    $self->set_query($query);
-  }
-
-  my @params = $_[0]->get_param(uri_encode($_[1]))
-    or return;
-
-  return @params == 1
-    ? uri_decode($params[0])
-    : [ map{ uri_decode($_) } @params ];
-}
-
-sub uri_decode ($) {
-  $_[0] =~ tr/+/ /;
-  URI::Encode::XS::uri_decode($_[0]);
-}
 
 1;
