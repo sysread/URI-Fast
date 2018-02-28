@@ -1,4 +1,9 @@
 {{$NEXT}}
+-Bugfix: add sub-dependency to cpanfile that appears to be missing from one of
+ this module's dependencies (Test2::Suite maybe?)
+-Bugfix: some unit tests were using the uri being tested as the test name,
+ triggering errors when the uri included a fragment (hash and newlines are
+ invalid in test names)
 
 0.06 2018-02-27
 -New ultra-fast parser and struct-based object written in C

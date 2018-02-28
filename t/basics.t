@@ -21,16 +21,18 @@ subtest 'uri_split' => sub{
   subtest 'equivalence' => sub{
     is [uri_split('p')],           [U, U, 'p', U, U],          'p';
     is [uri_split('p?q')],         [U, U, 'p', 'q', U],        'p?q';
-    is [uri_split('p?q/#f/?')],    [U, U, 'p', 'q/', 'f/?'],   'p?q/#f/?';
-    is [uri_split('s://a/p?q#f')], ['s', 'a', '/p', 'q', 'f'], 's://a/p?q#f';
+    is [uri_split('p?q/#f/?')],    [U, U, 'p', 'q/', 'f/?'],   'p?q/f/?';
+    is [uri_split('s://a/p?q#f')], ['s', 'a', '/p', 'q', 'f'], 's://a/p?qf';
   };
 
   # Ensure identical output to URI::Split
   subtest 'parity' => sub{
+    my $i = 0;
     foreach my $uri (@uris) {
       my $orig = [URI::Split::uri_split($uri)];
       my $xs   = [uri_split($uri)];
-      is $xs, $orig, $uri, {orig => $orig, xs => $xs};
+      is $xs, $orig, "uris[$i]", {orig => $orig, xs => $xs};
+      ++$i;
     }
   };
 };
