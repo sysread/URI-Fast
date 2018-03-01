@@ -1,7 +1,15 @@
+use utf8;
 use Test2::V0;
 use URI::Split qw();
 use URI::Fast qw(uri uri_split);
 use Test::LeakTrace qw(no_leaks_ok);
+
+my @uris = (
+  '/foo/bar/baz',
+  'http://www.test.com',
+  'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff',
+  'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
+);
 
 subtest 'uri_split' => sub{
   my @uris = (
@@ -35,13 +43,6 @@ subtest 'uri_split' => sub{
     }
   };
 };
-
-my @uris = (
-  '/foo/bar/baz',
-  'http://www.test.com',
-  'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff',
-  'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
-);
 
 subtest 'implicit file path' => sub{
   ok my $uri = uri($uris[0]), 'ctor';
@@ -91,6 +92,15 @@ subtest 'path & query' => sub{
   is $uri->param('cccc'), 'dddd', 'param';
   is $uri->param('eeee'), 'ffff', 'param';
   is $uri->param('fnord'), U, '!param';
+
+  ok $uri->query({foo => 'bar', baz => 'bat'}), 'query(\%)';
+  is $uri->param('foo'), 'bar', 'param';
+  is $uri->param('baz'), 'bat', 'param';
+  is [sort $uri->query_keys], [sort qw(foo baz)], 'query_keys';
+
+  is $uri->query('asdf=qwerty&asdf=fnord'), 'asdf=qwerty&asdf=fnord', 'query($)';
+  is $uri->param('asdf'), ['qwerty', 'fnord'], 'param';
+  is [$uri->query_keys], ['asdf'], 'query_keys';
 };
 
 subtest 'complete' => sub{
@@ -168,10 +178,56 @@ subtest 'update param' => sub{
   ok !$uri->param('cccc'), 'old parsed values removed';
 };
 
+subtest 'percent encoding' => sub{
+  my $reserved = q{! * ' ( ) ; : @ & = + $ , / ? # [ ] %};
+  my $utf8 = "Ῥόδος¢€";
+
+  is URI::Fast::encode_reserved('asdf', ''), 'asdf', 'non-reserved';
+
+  foreach (split ' ', $reserved) {
+    is URI::Fast::encode_reserved($_, ''), sprintf('%%%02X', ord($_)), "reserved char $_";
+  }
+
+  #is URI::Fast::encode("$reserved $utf8"), URI::Encode::XS::uri_encode_utf8("$reserved $utf8"), "utf8 + reserved";
+};
+
+subtest 'utf8' => sub{
+  my $u = "Ῥόδος";
+  my $a = '%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82';
+
+  is URI::Fast::encode_utf8('$'), '$', '1 byte';
+  is URI::Fast::encode_utf8('¢'), URI::Encode::XS::uri_encode_utf8('¢'), 'encode_utf8: 2 bytes';
+  is URI::Fast::encode_utf8('€'), URI::Encode::XS::uri_encode_utf8('€'), 'encode_utf8: 3 bytes';
+  is URI::Fast::encode_utf8('􏿿'), URI::Encode::XS::uri_encode_utf8('􏿿'), 'encode_utf8: 4 bytes';
+  is URI::Fast::encode_utf8($u), $a, 'encode_utf8: string';
+
+  is URI::Fast::encode($u, ''), $a, 'encode';
+  is URI::Fast::decode($a), $u, 'decode';
+
+  ok my $uri = uri($uris[2]), 'ctor';
+
+  is $uri->auth("$u:$u\@www.$u.com:1234"), "$a:$a\@www.$a.com:1234", 'auth';
+  is $uri->usr, $u, 'usr';
+  is $uri->pwd, $u, 'pwd';
+  is $uri->host, "www.$u.com", 'host';
+
+  is $uri->path("/$u/$u"), "/$u/$u", "path";
+  is $uri->path([$u, $a]), "/$u/$a", "path";
+
+  is $uri->query("x=$a"), "x=$a", "query";
+  is $uri->param('x'), $u, 'param', $uri->get_query;
+  is $uri->query({x => $u}), "x=$a", "query", $uri->get_query;
+  is $uri->param('x'), $u, 'param', $uri->get_query;
+};
+
 subtest 'memory leaks' => sub{
+  no_leaks_ok { URI::Fast::encode('foo', '') } 'encode: no memory leaks';
+  no_leaks_ok { URI::Fast::decode('foo') } 'decode: no memory leaks';
   no_leaks_ok { my @parts = uri_split($uris[3]) } 'uri_split';
   no_leaks_ok { my $uri = uri($uris[3]) } 'ctor';
   no_leaks_ok { uri($uris[3])->scheme('stuff') } 'scheme';
+  no_leaks_ok { uri($uris[3])->auth('foo@www.Ῥόδος.com') } 'auth';
+  no_leaks_ok { uri($uris[3])->get_param('baz') } 'get_param';
   no_leaks_ok { uri($uris[3])->param('foo', 'bar') } 'param';
   no_leaks_ok { my @parts = uri($uris[3])->path } 'split path';
   no_leaks_ok { uri($uris[3])->path(['foo', 'bar']) } 'set path';
