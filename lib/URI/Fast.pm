@@ -2,6 +2,7 @@ package URI::Fast;
 
 # ABSTRACT: A fast(er) URI parser
 
+use common::sense;
 use utf8;
 use Carp;
 use URI::Encode::XS;
@@ -20,13 +21,6 @@ sub uri ($) {
   $self;
 }
 
-# Regexes used to validate characters present in string when attributes are
-# updated.
-my %LEGAL = (
-  scheme => qr/^[a-zA-Z][-.+a-zA-Z0-9]*$/,
-  port   => qr/^[0-9]+$/,
-);
-
 # Build a simple accessor for basic attributes
 foreach my $attr (qw(scheme usr pwd host port frag)) {
   my $s = "set_$attr";
@@ -34,15 +28,15 @@ foreach my $attr (qw(scheme usr pwd host port frag)) {
 
   *{__PACKAGE__ . "::$attr"} = sub {
     if (@_ == 2) {
-      if (exists $LEGAL{$attr} && $_[1] !~ $LEGAL{$attr}) {
-        croak "illegal chars in $attr";
-      }
-
       $_[0]->$s($_[1], 0);
     }
 
-    return uri_decode( $_[0]->$g() )
-      if defined wantarray;
+    if (defined wantarray) {
+      # It turns out that it is faster to call decode here than directly in
+      # url_fast.c due to the overhead of decoding utf8 and flipping the
+      # internal utf8 switch.
+      return decode( $_[0]->$g() );
+    }
   };
 }
 
@@ -71,18 +65,15 @@ sub path {
   my ($self, $val) = @_;
 
   if (@_ == 2) {
-    if (ref $val) {
-      $self->set_path('/' . join('/', @$val), 0);
-    } else {
-      $self->set_path($val, 0);
-    }
+    $val = '/' . join '/', @$val if ref $val;
+    $self->set_path($val, 0);
   }
 
   if (wantarray) {
-    return map{ uri_decode($_) } $self->split_path;
+    return $self->split_path;
   }
   elsif (defined wantarray) {
-    return uri_decode($self->get_path);
+    return $self->get_path;
   }
 }
 
@@ -118,7 +109,7 @@ sub param {
   my ($self, $key, $val) = @_;
 
   if (@_ == 3) {
-    $key = encode($key, '');
+    $key = encode_reserved($key, '');
     my $query = $self->get_query;
 
     # Wipe out current values for $key
@@ -149,18 +140,10 @@ sub param {
     : [map{ uri_decode($_) } @params];
 }
 
-# %-encodes _only_ non-ascii chars, ignoring other reserved chars. NOTE: I
-# can't believe this is actually as fast as it is given that uri_encode_utf8
-# duplicates the SV.
-
 sub utf8_decode ($) {
   local $_ = $_[0];
   s/([^[:ascii:]]+)/URI::Encode::XS::uri_decode_utf8($1)/ge;
   $_;
-}
-
-sub uri_encode ($) {
-  URI::Encode::XS::uri_encode_utf8($_[0]);
 }
 
 sub uri_decode ($) {

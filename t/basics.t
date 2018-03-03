@@ -44,6 +44,52 @@ subtest 'uri_split' => sub{
   };
 };
 
+subtest 'percent encoding' => sub{
+  my $reserved = q{! * ' ( ) ; : @ & = + $ , / ? # [ ] %};
+  my $utf8 = "Ῥόδος¢€";
+
+  is URI::Fast::encode_reserved('asdf', ''), 'asdf', 'non-reserved';
+
+  foreach (split ' ', $reserved) {
+    is URI::Fast::encode_reserved($_, ''), sprintf('%%%02X', ord($_)), "reserved char $_";
+  }
+
+  is URI::Fast::encode("$reserved $utf8", ''), URI::Encode::XS::uri_encode_utf8("$reserved $utf8"), "utf8 + reserved";
+
+  my $str = URI::Fast::encode($reserved, '');
+  is URI::Fast::decode($str), $reserved, 'decode';
+};
+
+subtest 'utf8' => sub{
+  my $u = "Ῥόδος";
+  my $a = '%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82';
+
+  is URI::Fast::encode_utf8('$'), '$', '1 byte';
+  is URI::Fast::encode_utf8('¢'), URI::Encode::XS::uri_encode_utf8('¢'), 'encode_utf8: 2 bytes';
+  is URI::Fast::encode_utf8('€'), URI::Encode::XS::uri_encode_utf8('€'), 'encode_utf8: 3 bytes';
+  is URI::Fast::encode_utf8('􏿿'), URI::Encode::XS::uri_encode_utf8('􏿿'), 'encode_utf8: 4 bytes';
+  is URI::Fast::encode_utf8($u), $a, 'encode_utf8: string';
+
+  is URI::Fast::encode($u, ''), $a, 'encode';
+  is URI::Fast::decode($a), $u, 'decode';
+
+  ok my $uri = uri($uris[2]), 'ctor';
+
+  is $uri->auth("$u:$u\@www.$u.com:1234"), "$a:$a\@www.$a.com:1234", 'auth';
+
+  is $uri->usr, $u, 'usr';
+  is $uri->pwd, $u, 'pwd';
+  is $uri->host, "www.$u.com", 'host';
+
+  is $uri->path("/$u/$u"), "/$u/$u", "path";
+  is $uri->path([$u, $a]), "/$u/$a", "path";
+
+  is $uri->query("x=$a"), "x=$a", "query";
+  is $uri->param('x'), $u, 'param', $uri->get_query;
+  is $uri->query({x => $u}), "x=$a", "query", $uri->get_query;
+  is $uri->param('x'), $u, 'param', $uri->get_query;
+};
+
 subtest 'implicit file path' => sub{
   ok my $uri = uri($uris[0]), 'ctor';
   is $uri->scheme, 'file', 'scheme';
@@ -145,10 +191,6 @@ subtest 'update auth' => sub{
   ok !$uri->usr, 'usr';
   ok !$uri->pwd, 'pwd';
   ok !$uri->port, 'port';
-
-  ok dies{ $uri->scheme('1foo') }, 'illegal scheme croaks';
-  ok dies{ $uri->scheme('http*') }, 'illegal scheme croaks';
-  ok dies{ $uri->port('asdf') }, 'illegal port croaks';
 };
 
 subtest 'update path' => sub{
@@ -157,10 +199,8 @@ subtest 'update path' => sub{
   is [$uri->path], ['some', 'path'], 'list path';
 
   is $uri->path('/foo/bar'), '/foo/bar', 'scalar path(str)';
-  is [$uri->path('/foo/bar')], ['foo', 'bar'], 'list path(str)';
   is "$uri", 'https://test.com/foo/bar?aaaa=bbbb&cccc=dddd&eeee=ffff', 'string';
 
-  is $uri->path(['baz', 'bat']), '/baz/bat', 'scalar path(list)';
   is [$uri->path(['baz', 'bat'])], ['baz', 'bat'], 'scalar path(list)';
   is "$uri", 'https://test.com/baz/bat?aaaa=bbbb&cccc=dddd&eeee=ffff', 'string';
 };
@@ -176,48 +216,6 @@ subtest 'update param' => sub{
   is $uri->query('foo=bar'), 'foo=bar', 'query(new)';
   is $uri->param('foo'), 'bar', 'new query parsed';
   ok !$uri->param('cccc'), 'old parsed values removed';
-};
-
-subtest 'percent encoding' => sub{
-  my $reserved = q{! * ' ( ) ; : @ & = + $ , / ? # [ ] %};
-  my $utf8 = "Ῥόδος¢€";
-
-  is URI::Fast::encode_reserved('asdf', ''), 'asdf', 'non-reserved';
-
-  foreach (split ' ', $reserved) {
-    is URI::Fast::encode_reserved($_, ''), sprintf('%%%02X', ord($_)), "reserved char $_";
-  }
-
-  #is URI::Fast::encode("$reserved $utf8"), URI::Encode::XS::uri_encode_utf8("$reserved $utf8"), "utf8 + reserved";
-};
-
-subtest 'utf8' => sub{
-  my $u = "Ῥόδος";
-  my $a = '%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82';
-
-  is URI::Fast::encode_utf8('$'), '$', '1 byte';
-  is URI::Fast::encode_utf8('¢'), URI::Encode::XS::uri_encode_utf8('¢'), 'encode_utf8: 2 bytes';
-  is URI::Fast::encode_utf8('€'), URI::Encode::XS::uri_encode_utf8('€'), 'encode_utf8: 3 bytes';
-  is URI::Fast::encode_utf8('􏿿'), URI::Encode::XS::uri_encode_utf8('􏿿'), 'encode_utf8: 4 bytes';
-  is URI::Fast::encode_utf8($u), $a, 'encode_utf8: string';
-
-  is URI::Fast::encode($u, ''), $a, 'encode';
-  is URI::Fast::decode($a), $u, 'decode';
-
-  ok my $uri = uri($uris[2]), 'ctor';
-
-  is $uri->auth("$u:$u\@www.$u.com:1234"), "$a:$a\@www.$a.com:1234", 'auth';
-  is $uri->usr, $u, 'usr';
-  is $uri->pwd, $u, 'pwd';
-  is $uri->host, "www.$u.com", 'host';
-
-  is $uri->path("/$u/$u"), "/$u/$u", "path";
-  is $uri->path([$u, $a]), "/$u/$a", "path";
-
-  is $uri->query("x=$a"), "x=$a", "query";
-  is $uri->param('x'), $u, 'param', $uri->get_query;
-  is $uri->query({x => $u}), "x=$a", "query", $uri->get_query;
-  is $uri->param('x'), $u, 'param', $uri->get_query;
 };
 
 subtest 'memory leaks' => sub{
