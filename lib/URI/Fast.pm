@@ -98,10 +98,7 @@ sub query {
 }
 
 sub query_keys {
-  my @keys = $_[0]->get_query_keys;
-  my %uniq;
-  @uniq{@keys} = (1) x @keys;
-  keys %uniq;
+  keys %{ $_[0]->get_query_keys };
 }
 
 sub param {
@@ -133,12 +130,12 @@ sub param {
   # No return value in void context
   return unless defined(wantarray) && $key;
 
-  my @params = $self->get_param(encode($key, ''))
-    or return;
+  my $params = $self->get_param(encode($key, ''));
+  return unless @$params;
 
-  return @params == 1
-    ? $params[0]
-    : \@params;
+  return wantarray     ? @$params
+       : @$params == 1 ? $params->[0]
+                       : $params;
 }
 
 =head1 SYNOPSIS

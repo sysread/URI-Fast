@@ -312,66 +312,35 @@ void split_path(SV* uri) {
   Inline_Stack_Done;
 }
 
-void get_query_keys(SV* uri) {
+HV* get_query_keys(SV* uri) {
   const unsigned char* src = Uri_Mem(uri, query);
   size_t vlen;
-  Inline_Stack_Vars;
-  Inline_Stack_Reset;
+  HV* out = newHV();
 
-  while (src != NULL && src[0] != '\0') {
-    if (src[0] == '&') {
-      ++src; // skip past &
-    }
-
-    Inline_Stack_Push(sv_2mortal(newSVpv(pct_decode(src, strcspn(src, "="), &vlen), vlen)));
-    src = strstr(src, "&");
+  for (src; src != NULL; src = strstr(src, "&")) {
+    if (src[0] == '&') ++src;
+    hv_store(out, pct_decode(src, strcspn(src, "="), &vlen), vlen, &PL_sv_undef, 0);
   }
 
-  Inline_Stack_Done;
+  return out;
 }
 
-void get_param(SV* uri, const char* key) {
-  const char* src = Uri_Mem(uri, query);
-  size_t vlen, brk = 0;
+AV* get_param(SV* uri, const char* key) {
+  const unsigned char* src = Uri_Mem(uri, query);
+  size_t vlen;
+  AV* out = newAV();
   SV* val;
 
-  Inline_Stack_Vars;
-  Inline_Stack_Reset;
-
-  while (src[0] != '\0') {
-    if (src[0] == '&') {
-      ++src; // skip past &
+  for (src = strstr(src, key); src != NULL; src = strstr(src, key)) {
+    src = strstr(src, "=");
+    if (src[0] == '=') {
+      val = newSVpv(pct_decode(++src, strcspn(src, "&"), &vlen), vlen);
+      SvUTF8_on(val);
+      av_push(out, val);
     }
-
-    src = strstr(src, key);
-
-    if (src == NULL) {
-      break;
-    }
-
-    brk = strcspn(src, "=");
-    src += brk;
-
-    if (src[0] == '\0') {
-      break;
-    }
-
-    if (src[0] != '=') {
-      continue;
-    }
-
-    ++src; // skip past '='
-
-    brk = strcspn(src, "&");
-    val = sv_2mortal(newSVpv(pct_decode(src, brk, &vlen), vlen));
-    SvUTF8_on(val);
-
-    Inline_Stack_Push(val);
-
-    src += brk;
   }
 
-  Inline_Stack_Done;
+  return out;
 }
 
 SV* to_string(SV* uri_obj) {

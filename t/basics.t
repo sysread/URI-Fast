@@ -1,9 +1,10 @@
 use utf8;
 use Test2::V0;
-use URI::Split qw();
-use URI::Fast qw(uri uri_split);
+use Data::Dumper;
 use Test::LeakTrace qw(no_leaks_ok);
 use URI::Encode::XS qw();
+use URI::Fast qw(uri uri_split);
+use URI::Split qw();
 
 my @uris = (
   '/foo/bar/baz',
@@ -147,7 +148,7 @@ subtest 'path & query' => sub{
 
   is $uri->query('asdf=qwerty&asdf=fnord'), 'asdf=qwerty&asdf=fnord', 'query($)';
   is $uri->param('asdf'), ['qwerty', 'fnord'], 'param';
-  is [$uri->query_keys], ['asdf'], 'query_keys';
+  is [$uri->query_keys], ['asdf'], 'query_keys', "$uri";
 };
 
 subtest 'complete' => sub{
