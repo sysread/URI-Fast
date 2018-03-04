@@ -5,7 +5,6 @@ package URI::Fast;
 use common::sense;
 use utf8;
 use Carp;
-use URI::Encode::XS;
 use Inline C => 'lib/uri_fast.c';
 use Encode qw();
 
@@ -73,7 +72,7 @@ sub path {
     return $self->split_path;
   }
   elsif (defined wantarray) {
-    return $self->get_path;
+    return decode($self->get_path);
   }
 }
 
@@ -112,10 +111,12 @@ sub param {
     $key = encode_reserved($key, '');
     my $query = $self->get_query;
 
-    # Wipe out current values for $key
-    $query =~ s/\b$key=[^&#]+&?//g;
-    $query =~ s/^&//;
-    $query =~ s/&$//;
+    if ($query =~ /$key/) {
+      # Wipe out current values for $key
+      $query =~ s/\b$key=[^&#]+&?//g;
+      $query =~ s/^&//;
+      $query =~ s/&$//;
+    }
 
     # If $val is undefined, the parameter is deleted
     if (defined $val) {
@@ -130,25 +131,14 @@ sub param {
   }
 
   # No return value in void context
-  return unless defined(wantarray);
+  return unless defined(wantarray) && $key;
 
   my @params = $self->get_param(encode($key, ''))
     or return;
 
   return @params == 1
-    ? uri_decode($params[0])
-    : [map{ uri_decode($_) } @params];
-}
-
-sub utf8_decode ($) {
-  local $_ = $_[0];
-  s/([^[:ascii:]]+)/URI::Encode::XS::uri_decode_utf8($1)/ge;
-  $_;
-}
-
-sub uri_decode ($) {
-  $_[0] =~ tr/+/ /;
-  URI::Encode::XS::uri_decode_utf8($_[0]);
+    ? $params[0]
+    : \@params;
 }
 
 =head1 SYNOPSIS

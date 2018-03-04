@@ -34,7 +34,7 @@ typedef struct {
   char scheme[16];
   char auth[264];
   char path[256];
-  char query[512];
+  char query[1024];
   char frag[32];
 
   char usr[64];
@@ -52,15 +52,15 @@ typedef struct {
  *   -note that these do not do other related cleanup (e.g. clearing auth triggering
  *    the clearing of usr/pwd/host/port)
  */
-void clear_scheme(SV* uri_obj) { memset(&((Uri(uri_obj))->scheme), '\0', 16);  }
-void clear_auth(SV* uri_obj)   { memset(&((Uri(uri_obj))->auth),   '\0', 264); }
-void clear_path(SV* uri_obj)   { memset(&((Uri(uri_obj))->path),   '\0', 256); }
-void clear_query(SV* uri_obj)  { memset(&((Uri(uri_obj))->query),  '\0', 512); }
-void clear_frag(SV* uri_obj)   { memset(&((Uri(uri_obj))->frag),   '\0', 32);  }
-void clear_usr(SV* uri_obj)    { memset(&((Uri(uri_obj))->usr),    '\0', 64);  }
-void clear_pwd(SV* uri_obj)    { memset(&((Uri(uri_obj))->pwd),    '\0', 64);  }
-void clear_host(SV* uri_obj)   { memset(&((Uri(uri_obj))->host),   '\0', 128); }
-void clear_port(SV* uri_obj)   { memset(&((Uri(uri_obj))->port),   '\0', 8);   }
+void clear_scheme(SV* uri_obj) { memset(&((Uri(uri_obj))->scheme), '\0', 16);   }
+void clear_auth(SV* uri_obj)   { memset(&((Uri(uri_obj))->auth),   '\0', 264);  }
+void clear_path(SV* uri_obj)   { memset(&((Uri(uri_obj))->path),   '\0', 256);  }
+void clear_query(SV* uri_obj)  { memset(&((Uri(uri_obj))->query),  '\0', 1024); }
+void clear_frag(SV* uri_obj)   { memset(&((Uri(uri_obj))->frag),   '\0', 32);   }
+void clear_usr(SV* uri_obj)    { memset(&((Uri(uri_obj))->usr),    '\0', 64);   }
+void clear_pwd(SV* uri_obj)    { memset(&((Uri(uri_obj))->pwd),    '\0', 64);   }
+void clear_host(SV* uri_obj)   { memset(&((Uri(uri_obj))->host),   '\0', 128);  }
+void clear_port(SV* uri_obj)   { memset(&((Uri(uri_obj))->port),   '\0', 8);    }
 
 /*
  * Scans the authorization portion of the Uri string. This must only be called
@@ -292,9 +292,9 @@ const char* set_port(SV* uri_obj, const char* value, int no_triggers) {
   return str;
 }
 
-void split_path(SV* uri_obj) {
+void split_path(SV* uri) {
   size_t len, brk, idx = 0;
-  const unsigned char* str = pct_decode(Uri_Mem(uri_obj, path), NULL, &len);
+  const unsigned char* str = pct_decode(Uri_Mem(uri, path), NULL, &len);
 
   Inline_Stack_Vars;
   Inline_Stack_Reset;
@@ -312,12 +312,9 @@ void split_path(SV* uri_obj) {
   Inline_Stack_Done;
 }
 
-void get_query_keys(SV* uri_obj) {
-  uri_t* uri = Uri(uri_obj);
-  size_t len = strlen(uri->query);
-  char*  src = uri->query;
-  SV*    tmp;
-
+void get_query_keys(SV* uri) {
+  const unsigned char* src = Uri_Mem(uri, query);
+  size_t vlen;
   Inline_Stack_Vars;
   Inline_Stack_Reset;
 
@@ -326,20 +323,17 @@ void get_query_keys(SV* uri_obj) {
       ++src; // skip past &
     }
 
-    tmp = newSVpv(src, strcspn(src, "="));
-    Inline_Stack_Push(sv_2mortal(tmp));
+    Inline_Stack_Push(sv_2mortal(newSVpv(pct_decode(src, strcspn(src, "="), &vlen), vlen)));
     src = strstr(src, "&");
   }
 
   Inline_Stack_Done;
 }
 
-void get_param(SV* uri_obj, const char* key) {
-  uri_t* uri = Uri(uri_obj);
-  size_t len = strlen(uri->query);
-  char*  src = uri->query;
-  size_t brk = 0;
-  SV*    tmp;
+void get_param(SV* uri, const char* key) {
+  const char* src = Uri_Mem(uri, query);
+  size_t vlen, brk = 0;
+  SV* val;
 
   Inline_Stack_Vars;
   Inline_Stack_Reset;
@@ -367,9 +361,13 @@ void get_param(SV* uri_obj, const char* key) {
     }
 
     ++src; // skip past '='
+
     brk = strcspn(src, "&");
-    tmp = newSVpv(src, brk);
-    Inline_Stack_Push(sv_2mortal(tmp));
+    val = sv_2mortal(newSVpv(pct_decode(src, brk, &vlen), vlen));
+    SvUTF8_on(val);
+
+    Inline_Stack_Push(val);
+
     src += brk;
   }
 
@@ -610,7 +608,11 @@ const unsigned char* pct_decode(unsigned char* in, size_t len, size_t* dest) {
 
   while (i < len && in[i] != '\0') {
     // Find the next hex
-    brk = strcspn(&in[i], "%");
+    brk = strcspn(&in[i], "+%");
+
+    if (brk + i > len) {
+      brk = len - i;
+    }
 
     // Unencoded text before the %; copy directly to out
     if (brk > 0) {
@@ -625,17 +627,19 @@ const unsigned char* pct_decode(unsigned char* in, size_t len, size_t* dest) {
     }
 
     // Try to read the hex
-    if (sscanf(&in[i], "%%%2X", &c) == 1) {
-      out[j] = (char) c;
+    if (in[i] == '+') {
+      out[j++] = ' ';
+      ++i;
+    }
+    else if (sscanf(&in[i], "%%%2X", &c) == 1) {
+      out[j++] = (char) c;
       i += 3;
     }
     // It wasn't valid; move on
     else {
-      out[j] = in[i];
+      out[j++] = in[i];
       ++i;
     }
-
-    ++j;
   }
 
   if (dest != NULL) {
@@ -657,10 +661,10 @@ SV* decode(SV* in) {
     SvUTF8_on(in);
 
     if (!sv_utf8_downgrade(in, TRUE)) {
-      croak("wide character in octet string");
+      croak("decode: wide character in octet string");
     }
 
-    src = SvPV_const_const(in, len1);
+    src = SvPV_const(in, len1);
   }
   else {
     src = SvPV_const(in, len1);

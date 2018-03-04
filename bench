@@ -1,6 +1,5 @@
 #!perl
 
-use common::sense;
 use URI;
 use URI::Split qw();
 use URI::Fast qw(uri uri_split);
@@ -8,7 +7,7 @@ use Benchmark qw(:all);
 
 my $POD;
 
-if (@ARGV[0]) {
+if ($ARGV[0]) {
   open $POD, '>', './lib/URI/Fast/Benchmarks.pod' or die $!;
 } else {
   my $str = '';
@@ -100,8 +99,8 @@ test 'Update path (array)', 300_000, {
 };
 
 test 'Parse query', 300_000, {
-  'URI' => sub{ my $uri = URI->new($urls[3]); $uri->query_form },
-  'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->param('asdf') },
+  'URI' => sub{ my $uri = URI->new($urls[3]); my %q = $uri->query_form },
+  'URI::Fast' => sub{ my $uri = uri $urls[3]; my @v = $uri->param('asdf') },
 };
 
 test 'Set query parameter', 300_000, {

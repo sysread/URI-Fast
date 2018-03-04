@@ -3,6 +3,7 @@ use Test2::V0;
 use URI::Split qw();
 use URI::Fast qw(uri uri_split);
 use Test::LeakTrace qw(no_leaks_ok);
+use URI::Encode::XS qw();
 
 my @uris = (
   '/foo/bar/baz',
