@@ -237,17 +237,16 @@ SV* query_hash(SV* uri) {
 
   while (src != NULL && src[0] != '\0') {
     key  = pct_decode(src, strcspn(src, "="), &klen);
-
     src  = strstr(src, "=");
     src += 1;
     val  = pct_decode(src, strcspn(src, "&"), &vlen);
-
     tmp  = newSVpv(val, vlen);
+
     SvUTF8_on(tmp);
 
     if (!hv_exists(out, key, klen)) {
       arr = newAV();
-      hv_store(out, key, klen, newRV((SV*) arr), 0);
+      hv_store(out, key, klen, newRV_noinc((SV*) arr), 0);
     }
     else {
       ref = hv_fetch(out, key, klen, 0);
@@ -288,8 +287,6 @@ SV* split_path(SV* uri) {
     idx += brk + 1;
   }
 
-  //free((char*) str);
-
   return newRV_noinc((SV*) arr);
 }
 
@@ -318,7 +315,7 @@ SV* get_param(SV* uri, const char* key) {
   sprintf(haystack, "&%s", Uri_Mem(uri, query));
 
   memset(needle, '\0', 32);
-  klen = sprintf(needle, "&%s=", key);
+  klen = sprintf(needle, "&%s=", pct_encode(key, 0, 0, ""));
 
   for (ptr = strstr(haystack, needle); ptr != NULL; ptr = strstr(ptr, needle)) {
     ptr += klen;
@@ -340,7 +337,7 @@ const char* set_scheme(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, scheme), str, len + 1);
-  free(str);
+  free((char*) str);
   return str;
 }
 
@@ -348,7 +345,7 @@ const char* set_auth(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode_utf8(value, 0, &len);
   strncpy(Uri_Mem(uri_obj, auth), str, len + 1);
-  free(str);
+  free((char*) str);
   if (!no_triggers) uri_scan_auth(Uri(uri_obj));
   return str;
 }
@@ -357,7 +354,7 @@ const char* set_path(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "/");
   strncpy(Uri_Mem(uri_obj, path), str, len + 1);
-  free(str);
+  free((char*) str);
   return str;
 }
 
@@ -370,7 +367,7 @@ const char* set_frag(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, frag), str, len + 1);
-  free(str);
+  free((char*) str);
   return str;
 }
 
@@ -378,7 +375,7 @@ const char* set_usr(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, usr), str, len + 1);
-  free(str);
+  free((char*) str);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
   return str;
 }
@@ -387,7 +384,7 @@ const char* set_pwd(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, pwd), str, len + 1);
-  free(str);
+  free((char*) str);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
   return str;
 }
@@ -396,7 +393,7 @@ const char* set_host(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, host), str, len + 1);
-  free(str);
+  free((char*) str);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
   return str;
 }
@@ -405,23 +402,86 @@ const char* set_port(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, port), str, len + 1);
-  free(str);
+  free((char*) str);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
   return str;
 }
 
-/*void thing(SV* uri, const char* set_key, const char* set_val) {
-  size_t klen, vlen, brk;
-  const char* src = Uri_Mem(uri, query);
-  const char* key = pct_encode(set_key, 0, &klen, "");
-  const char* val = pct_encode(set_val, 0, &vlen, "");
-  const char* out = malloc(((strlen(query) + klen + vlen) + 1) * sizeof(char));
-  memset(out, '\0', (((strlen(query) + klen + vlen) + 1) * sizeof(char)) + 1);
+void set_param(SV* uri, const char* key, AV* values) {
+  SSize_t v;
+  SV*     val;
+  SV**    ref;
+  char    dest[1024];
+  const   char* enckey;
+  const   char* encval;
+  const   char* src;
+  const   char* strval;
+  size_t  i;
+  size_t  j;
+  size_t  klen;
+  size_t  qlen = strlen(src);
+  size_t  slen;
+  size_t  vlen;
 
-  while (src != NULL && src[0] != '\0') {
-    brk = strstr(src, key);
+  src    = Uri_Mem(uri, query);
+  enckey = pct_encode(key, 0, &klen, "");
+  qlen   = strlen(src);
+  v      = av_top_index(values);
+  i      = 0;
+  j      = 0;
+
+  memset(dest, '\0', 1024);
+
+  while (i < qlen) {
+    while (strncmp(&src[i], enckey, klen) != 0) {
+      dest[j++] = src[i++];
+
+      if (i >= qlen) {
+        break;
+      }
+    }
+
+    i += strcspn(&src[i], "&");
+    if (src[i] == '&') {
+      ++i;
+    }
   }
-}*/
+
+  for (i = 0; i <= v; ++i) {
+    ref = av_fetch(values, (SSize_t) i, 0);
+
+    if (ref == NULL) {
+      break;
+    }
+
+    val = *ref;
+
+    if (j > 0) {
+      dest[j++] = '&';
+    }
+
+    strncpy(&dest[j], enckey, klen);
+    j += klen;
+
+    dest[j++] = '=';
+
+    strval = SvPV(val, slen);
+    encval = pct_encode(strval, slen, &vlen, "");
+
+    strncpy(&dest[j], encval, vlen);
+    j += vlen;
+
+    free(encval);
+  }
+
+  free(enckey);
+  clear_query(uri);
+  strncpy(Uri_Mem(uri, query), dest, j);
+}
+
+/*
+ * Other stuff
+ */
 
 SV* to_string(SV* uri_obj) {
   uri_t* uri = Uri(uri_obj);

@@ -104,32 +104,13 @@ sub param {
   my ($self, $key, $val) = @_;
 
   if (@_ == 3) {
-    $key = encode_reserved($key, '');
-    my $query = $self->get_query;
-
-    if ($query =~ /$key/) {
-      # Wipe out current values for $key
-      $query =~ s/\b$key=[^&#]+&?//g;
-      $query =~ s/^&//;
-      $query =~ s/&$//;
-    }
-
-    # If $val is undefined, the parameter is deleted
-    if (defined $val) {
-      # Encode and attach values for param to query string
-      foreach (ref $val ? @$val : ($val)) {
-        $query .= '&' if $query;
-        $query .= $key . '=' . encode_reserved($_, '');
-      }
-    }
-
-    $self->set_query(encode_utf8($query), 0);
+    $self->set_param($key, ref $val ? $val : [$val]);
   }
 
   # No return value in void context
   return unless defined(wantarray) && $key;
 
-  my $params = $self->get_param(encode($key, ''));
+  my $params = $self->get_param($key);
   return unless @$params;
 
   return wantarray     ? @$params

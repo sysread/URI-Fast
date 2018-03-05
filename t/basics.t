@@ -232,11 +232,13 @@ subtest 'memory leaks' => sub{
   no_leaks_ok { uri($uris[3])->auth('foo@www.Ῥόδος.com') } 'auth';
   no_leaks_ok { uri($uris[3])->get_param('baz') } 'get_param';
   no_leaks_ok { uri($uris[3])->param('foo', 'bar') } 'param';
+  no_leaks_ok { uri($uris[3])->param('foo', ['bar', 'baz']) } 'param';
   no_leaks_ok { uri($uris[3])->query_keys } 'query_keys';
   no_leaks_ok { my @parts = uri($uris[3])->path } 'split path';
   no_leaks_ok { uri($uris[3])->path(['foo', 'bar']) } 'set path';
   no_leaks_ok { uri($uris[3])->usr('foo') } 'set usr/regen auth';
   no_leaks_ok { uri($uris[3])->to_string } 'to_string';
+  no_leaks_ok { uri($uris[3])->query_hash } 'query_hash';
 };
 
 done_testing;
