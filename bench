@@ -108,6 +108,16 @@ test 'Set query parameter', 300_000, {
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->param('foo', 'bar') },
 };
 
+test 'Query form', 300_000, {
+  'URI' => sub{ my $uri = URI->new($urls[3]); my %q = $uri->query_form },
+  'URI::Fast' => sub{ my $uri = uri $urls[3]; my $q = $uri->query_hash },
+};
+
+test 'Query keys', 300_000, {
+  'URI' => sub{ my $uri = URI->new($urls[3]); my @k = keys %{$uri->query_form} },
+  'URI::Fast' => sub{ my $uri = uri $urls[3]; my @k = $uri->query_keys },
+};
+
 test 'Stringification', 300_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $str = "$uri" },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $str = "$uri" },

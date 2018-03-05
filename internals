@@ -2,23 +2,25 @@
 
 use URI::Fast qw(uri uri_split);
 use Benchmark qw(:all);
+use URI;
 
 my $url = 'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&baz=bar&asdf=the+quick%20brown+fox+%26+hound#foofrag';
 
 timethese 1_000_000, {
- '                 ctor' => sub{ uri $url },
- '        parse: scheme' => sub{ uri($url)->scheme },
- '       update: scheme' => sub{ uri($url)->scheme('http') },
- '          parse: auth' => sub{ uri($url)->host },
- '         update: auth' => sub{ uri($url)->host('www.test.com') },
- ' parse: path (scalar)' => sub{ scalar(uri($url)->path) },
- 'update: path (scalar)' => sub{ uri($url)->path('/foo/bar') },
- '   parse: path (list)' => sub{ uri($url)->path },
- '  update: path (list)' => sub{ uri($url)->path(['foo', 'bar']) },
- '   get param (scalar)' => sub{ uri($url)->param('slack') },
- '     get param (list)' => sub{ uri($url)->param('baz') },
- '   set param (scalar)' => sub{ uri($url)->param('foo', 'bar') },
- '     set param (list)' => sub{ uri($url)->param('foo', ['bar', 'baz']) },
- '           query keys' => sub{ uri($url)->query_keys },
- '      stringification' => sub{ uri($url)->to_string },
+ '                 ctor' => sub{ my $u = uri $url },
+ '        parse: scheme' => sub{ my $u = uri($url)->scheme },
+ '       update: scheme' => sub{ my $u = uri($url)->scheme('http') },
+ '          parse: auth' => sub{ my $u = uri($url)->host },
+ '         update: auth' => sub{ my $u = uri($url)->host('www.test.com') },
+ ' parse: path (scalar)' => sub{ my $u = scalar(uri($url)->path) },
+ 'update: path (scalar)' => sub{ my $u = uri($url)->path('/foo/bar') },
+ '   parse: path (list)' => sub{ my $u = uri($url)->path },
+ '  update: path (list)' => sub{ my $u = uri($url)->path(['foo', 'bar']) },
+ '   get param (scalar)' => sub{ my $u = uri($url)->param('slack') },
+ '     get param (list)' => sub{ my $u = uri($url)->param('baz') },
+ '   set param (scalar)' => sub{ my $u = uri($url)->param('foo', 'bar') },
+ '     set param (list)' => sub{ my $u = uri($url)->param('foo', ['bar', 'baz']) },
+ '           query keys' => sub{ my $u = uri($url)->query_keys },
+ '           query hash' => sub{ my $u = uri($url)->query_hash },
+ '      stringification' => sub{ my $u = uri($url)->to_string },
 };
