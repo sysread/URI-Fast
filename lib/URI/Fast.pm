@@ -2,7 +2,6 @@ package URI::Fast;
 
 # ABSTRACT: A fast(er) URI parser
 
-use common::sense;
 use utf8;
 use Carp;
 use Inline C => 'lib/uri_fast.c';
