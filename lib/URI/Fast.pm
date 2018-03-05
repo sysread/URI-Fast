@@ -69,7 +69,7 @@ sub path {
   }
 
   if (wantarray) {
-    return $self->split_path;
+    return @{ $self->split_path };
   }
   elsif (defined wantarray) {
     return decode($self->get_path);

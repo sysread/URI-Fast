@@ -261,18 +261,20 @@ SV* query_hash(SV* uri) {
     if (src == NULL) break;
     ++src;
 
+    free((char*) key);
     free((char*) val);
   }
 
   return newRV_noinc((SV*) out);
 }
 
-void split_path(SV* uri) {
+SV* split_path(SV* uri) {
   size_t len, brk, idx = 0;
-  const char* str = pct_decode(Uri_Mem(uri, path), 0, &len);
+  const char* str;
+  AV* arr = newAV();
+  SV* tmp;
 
-  Inline_Stack_Vars;
-  Inline_Stack_Reset;
+  str = pct_decode(Uri_Mem(uri, path), 0, &len);
 
   if (str[0] == '/') {
     ++str; // skip past leading /
@@ -280,11 +282,15 @@ void split_path(SV* uri) {
 
   while (idx < len) {
     brk = strcspn(&str[idx], "/");
-    Inline_Stack_Push(sv_2mortal(newSVpv(&str[idx], brk)));
+    tmp = newSVpv(&str[idx], brk);
+    SvUTF8_on(tmp);
+    av_push(arr, tmp);
     idx += brk + 1;
   }
 
-  Inline_Stack_Done;
+  //free((char*) str);
+
+  return newRV_noinc((SV*) arr);
 }
 
 SV* get_query_keys(SV* uri) {
@@ -334,6 +340,7 @@ const char* set_scheme(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, scheme), str, len + 1);
+  free(str);
   return str;
 }
 
@@ -341,6 +348,7 @@ const char* set_auth(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode_utf8(value, 0, &len);
   strncpy(Uri_Mem(uri_obj, auth), str, len + 1);
+  free(str);
   if (!no_triggers) uri_scan_auth(Uri(uri_obj));
   return str;
 }
@@ -349,6 +357,7 @@ const char* set_path(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "/");
   strncpy(Uri_Mem(uri_obj, path), str, len + 1);
+  free(str);
   return str;
 }
 
@@ -361,6 +370,7 @@ const char* set_frag(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, frag), str, len + 1);
+  free(str);
   return str;
 }
 
@@ -368,6 +378,7 @@ const char* set_usr(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, usr), str, len + 1);
+  free(str);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
   return str;
 }
@@ -376,6 +387,7 @@ const char* set_pwd(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, pwd), str, len + 1);
+  free(str);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
   return str;
 }
@@ -384,6 +396,7 @@ const char* set_host(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, host), str, len + 1);
+  free(str);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
   return str;
 }
@@ -392,9 +405,23 @@ const char* set_port(SV* uri_obj, const char* value, int no_triggers) {
   STRLEN len;
   const char* str = pct_encode(value, 0, &len, "");
   strncpy(Uri_Mem(uri_obj, port), str, len + 1);
+  free(str);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
   return str;
 }
+
+/*void thing(SV* uri, const char* set_key, const char* set_val) {
+  size_t klen, vlen, brk;
+  const char* src = Uri_Mem(uri, query);
+  const char* key = pct_encode(set_key, 0, &klen, "");
+  const char* val = pct_encode(set_val, 0, &vlen, "");
+  const char* out = malloc(((strlen(query) + klen + vlen) + 1) * sizeof(char));
+  memset(out, '\0', (((strlen(query) + klen + vlen) + 1) * sizeof(char)) + 1);
+
+  while (src != NULL && src[0] != '\0') {
+    brk = strstr(src, key);
+  }
+}*/
 
 SV* to_string(SV* uri_obj) {
   uri_t* uri = Uri(uri_obj);
