@@ -140,7 +140,7 @@ sub param {
 
 =head1 DESCRIPTION
 
-<URI::Fast> is a faster alternative to L<URI>. It is written in C and provides
+C<URI::Fast> is a faster alternative to L<URI>. It is written in C and provides
 basic parsing and modification of a URI.
 
 L<URI> is an excellent module; it is battle-tested, robust, and handles many
