@@ -274,11 +274,12 @@ SV* query_hash(SV* uri) {
 
 SV* split_path(SV* uri) {
   size_t len, brk, idx = 0;
-  const char* str;
+  const char *ptr, *str;
   AV* arr = newAV();
   SV* tmp;
 
-  str = pct_decode(Uri_Mem(uri, path), 0, &len);
+  ptr = pct_decode(Uri_Mem(uri, path), 0, &len);
+  str = ptr;
 
   if (str[0] == '/') {
     ++str; // skip past leading /
@@ -291,6 +292,8 @@ SV* split_path(SV* uri) {
     av_push(arr, tmp);
     idx += brk + 1;
   }
+
+  free((char*) ptr);
 
   return newRV_noinc((SV*) arr);
 }
@@ -308,14 +311,14 @@ SV* get_query_keys(SV* uri) {
 
     tmp = pct_decode(src, strcspn(src, "="), &vlen);
     hv_store(out, tmp, vlen, &PL_sv_undef, 0);
-    free(tmp);
+    free((char*) tmp);
   }
 
   return newRV_noinc((SV*) out);
 }
 
 SV* get_param(SV* uri, const char* key) {
-  const char *tmp, *src = Uri_Mem(uri, query);
+  const char *enckey, *tmp, *src = Uri_Mem(uri, query);
   char haystack[1024], needle[32];
   size_t klen, vlen;
   char* ptr;
@@ -326,7 +329,9 @@ SV* get_param(SV* uri, const char* key) {
   sprintf(haystack, "&%s", Uri_Mem(uri, query));
 
   memset(needle, '\0', 32);
+  enckey = pct_encode(key, 0, 0, "");
   klen = sprintf(needle, "&%s=", pct_encode(key, 0, 0, ""));
+  free((char*) enckey);
 
   for (ptr = strstr(haystack, needle); ptr != NULL; ptr = strstr(ptr, needle)) {
     ptr += klen;
@@ -494,10 +499,10 @@ void set_param(SV* uri, const char* key, SV* sv_values) {
     strncpy(&dest[j], encval, vlen);
     j += vlen;
 
-    free(encval);
+    free((char*) encval);
   }
 
-  free(enckey);
+  free((char*) enckey);
   clear_query(uri);
   strncpy(Uri_Mem(uri, query), dest, j);
 }
