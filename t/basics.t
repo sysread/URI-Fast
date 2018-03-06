@@ -51,14 +51,11 @@ subtest 'percent encoding' => sub{
 
   is URI::Fast::encode_reserved('asdf', ''), 'asdf', 'non-reserved';
 
-  foreach (split ' ', $reserved) {
-    is URI::Fast::encode_reserved($_, ''), sprintf('%%%02X', ord($_)), "reserved char $_";
-  }
+  is(URI::Fast::encode_reserved($_, ''), sprintf('%%%02X', ord($_)), "reserved char $_")
+    foreach split ' ', $reserved;
 
   is URI::Fast::encode("$reserved $utf8", ''), URI::Encode::XS::uri_encode_utf8("$reserved $utf8"), "utf8 + reserved";
-
-  my $str = URI::Fast::encode($reserved, '');
-  is URI::Fast::decode($str), $reserved, 'decode';
+  is URI::Fast::decode(URI::Fast::encode($reserved, '')), $reserved, 'decode';
 };
 
 subtest 'utf8' => sub{
@@ -72,6 +69,8 @@ subtest 'utf8' => sub{
   is URI::Fast::encode_utf8($u), $a, 'encode_utf8: string';
 
   is URI::Fast::encode($u, ''), $a, 'encode';
+  ok !utf8::is_utf8(URI::Fast::encode($u, '')), 'encode: result is not flagged utf8';
+
   is URI::Fast::decode($a), $u, 'decode';
 
   ok my $uri = uri($uris[2]), 'ctor';
@@ -119,42 +118,6 @@ subtest 'simple' => sub{
   ok !$uri->pwd, 'pwd';
   is $uri->host, 'www.test.com', 'host';
   ok !$uri->port, 'port';
-};
-
-subtest 'path & query' => sub{
-  ok my $uri = uri($uris[2]), 'ctor';
-  is $uri->scheme, 'https', 'scheme';
-  is $uri->auth, 'test.com', 'auth';
-  is $uri->path, '/some/path', 'path';
-  is [$uri->path], ['some', 'path'], 'path';
-  is $uri->query, 'aaaa=bbbb&cccc=dddd&eeee=ffff', 'query';
-  ok !$uri->frag, 'frag';
-
-  ok !$uri->usr, 'usr';
-  ok !$uri->pwd, 'pwd';
-  is $uri->host, 'test.com', 'host';
-  ok !$uri->port, 'port';
-
-  is $uri->param('aaaa'), 'bbbb', 'param';
-  is $uri->param('cccc'), 'dddd', 'param';
-  is $uri->param('eeee'), 'ffff', 'param';
-  is $uri->param('fnord'), U, '!param';
-
-  ok $uri->query({foo => 'bar', baz => 'bat'}), 'query(\%)';
-  is $uri->param('foo'), 'bar', 'param';
-  is $uri->param('baz'), 'bat', 'param';
-  is [sort $uri->query_keys], [sort qw(foo baz)], 'query_keys';
-
-  ok !$uri->param('foo', undef), 'unset';
-  is [$uri->query_keys], ['baz'], 'query_keys';
-
-  is $uri->query('asdf=qwerty&asdf=fnord'), 'asdf=qwerty&asdf=fnord', 'query($)';
-  is $uri->param('asdf'), ['qwerty', 'fnord'], 'param';
-
-  is [$uri->query_keys], ['asdf'], 'query_keys', "$uri";
-
-  $uri->query('foo=barbar&bazbaz=bat&foo=blah');
-  is $uri->query_hash, {foo => ['barbar', 'blah'], bazbaz => ['bat']}, 'query_hash';
 };
 
 subtest 'complete' => sub{
@@ -213,17 +176,30 @@ subtest 'update path' => sub{
   is "$uri", 'https://test.com/baz/bat?aaaa=bbbb&cccc=dddd&eeee=ffff', 'string';
 };
 
-subtest 'update param' => sub{
+subtest 'path & query' => sub{
   ok my $uri = uri($uris[2]), 'ctor';
-  is $uri->param('cccc'), 'dddd', 'param(k)';
-  is $uri->param('cccc', 'qwerty'), 'qwerty', 'param(k,v)';
-  is $uri->param('cccc'), 'qwerty', 'param(k)';
-  is $uri->query, 'aaaa=bbbb&eeee=ffff&cccc=qwerty', 'query';
-  is "$uri", 'https://test.com/some/path?aaaa=bbbb&eeee=ffff&cccc=qwerty', 'string';
 
-  is $uri->query('foo=bar'), 'foo=bar', 'query(new)';
-  is $uri->param('foo'), 'bar', 'new query parsed';
-  ok !$uri->param('cccc'), 'old parsed values removed';
+  is $uri->param('aaaa'), 'bbbb', 'param';
+  is $uri->param('cccc'), 'dddd', 'param';
+  is $uri->param('eeee'), 'ffff', 'param';
+  is $uri->param('fnord'), U, '!param';
+
+  ok $uri->query({foo => 'bar', baz => 'bat'}), 'query(\%)';
+  is $uri->param('foo'), 'bar', 'param';
+  is $uri->param('baz'), 'bat', 'param';
+  is [sort $uri->query_keys], [sort qw(foo baz)], 'query_keys';
+  is "$uri", 'https://test.com/some/path?foo=bar&baz=bat', 'string';
+
+  ok !$uri->param('foo', undef), 'unset';
+  is [$uri->query_keys], ['baz'], 'query_keys';
+
+  is $uri->query('asdf=qwerty&asdf=fnord'), 'asdf=qwerty&asdf=fnord', 'query($)';
+  is $uri->param('asdf'), ['qwerty', 'fnord'], 'param';
+
+  is [$uri->query_keys], ['asdf'], 'query_keys', "$uri";
+
+  $uri->query('foo=barbar&bazbaz=bat&foo=blah');
+  is $uri->query_hash, {foo => ['barbar', 'blah'], bazbaz => ['bat']}, 'query_hash';
 };
 
 subtest 'memory leaks' => sub{
