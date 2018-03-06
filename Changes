@@ -1,5 +1,6 @@
 {{$NEXT}}
 -UTF-8 support
+-New methods: query_keys, query_hash, encode, decode
 -Many methods rewritten in C/XS to make up for the added cost of UTF-8 support
 -Switch tests from using Test2::Bundle::Extended to Test2::V0
 -Bugfix: fix some missing test dependencies on restricted smoker setups
