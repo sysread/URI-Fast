@@ -2,7 +2,7 @@ requires 'perl', '5.010';
 
 requires 'Carp';
 requires 'Exporter';
-requires 'Inline::C' => '0.80';
+requires 'Inline::C' => '0.78';
 
 on test => sub {
   requires 'Test2'           => '1.302125';
