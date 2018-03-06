@@ -4,7 +4,6 @@ package URI::Fast;
 
 use utf8;
 use Carp;
-use Inline 'INFO';
 use Inline C => 'lib/uri_fast.c';
 
 require Exporter;

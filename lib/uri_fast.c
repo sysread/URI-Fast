@@ -291,13 +291,19 @@ SV* split_path(SV* uri) {
 }
 
 SV* get_query_keys(SV* uri) {
-  const char* src = Uri_Mem(uri, query);
+  const char* src;
+  const char* tmp;
   size_t vlen;
   HV* out = newHV();
 
-  for (; src != NULL; src = strstr(src, "&")) {
-    if (src[0] == '&') ++src;
-    hv_store(out, pct_decode(src, strcspn(src, "="), &vlen), vlen, &PL_sv_undef, 0);
+  for (src = Uri_Mem(uri, query); src != NULL && src[0] != '\0'; src = strstr(src, "&")) {
+    if (src[0] == '&') {
+      ++src;
+    }
+
+    tmp = pct_decode(src, strcspn(src, "="), &vlen);
+    hv_store(out, tmp, vlen, &PL_sv_undef, 0);
+    free(tmp);
   }
 
   return newRV_noinc((SV*) out);
