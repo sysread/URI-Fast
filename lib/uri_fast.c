@@ -681,13 +681,13 @@ const char* pct_encode(const char* src, size_t len, size_t *dest, const char* al
 
 SV* encode(SV* in, const char* allowed) {
   STRLEN len1, len2;
-  const char* src;
-  const char* dest;
+  const char *src, *dest;
   SV* out;
 
   src  = SvPV_const(in, len1);
   dest = pct_encode(src, len1, &len2, allowed);
   out  = newSVpv(dest, len2);
+  sv_utf8_downgrade(out, FALSE);
 
   free((char*) dest);
 
@@ -718,6 +718,7 @@ SV* encode_utf8(SV* in) {
   src  = SvPV_const(in, len1);
   dest = pct_encode_utf8(src, len1, &len2);
   out  = newSVpv(dest, len2);
+  sv_utf8_downgrade(out, FALSE);
 
   free((char*) dest);
 
