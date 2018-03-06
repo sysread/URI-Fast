@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.07 2018-03-06
 -UTF-8 support
 -New methods: query_keys, query_hash, encode, decode
 -Many methods rewritten in C/XS to make up for the added cost of UTF-8 support
