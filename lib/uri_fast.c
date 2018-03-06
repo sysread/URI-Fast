@@ -12,6 +12,11 @@
 #define Newx(v,n,t) New(0,v,n,t)
 #endif
 
+// av_top_index not available on Perls < 5.18
+#ifndef av_top_index
+#define av_top_index(av) av_len(av)
+#endif
+
 #ifndef Uri
 #define Uri(obj) ((uri_t*) SvIV(SvRV(obj)))
 #endif
@@ -434,7 +439,7 @@ void set_param(SV* uri, const char* key, SV* sv_values) {
   enckey    = pct_encode(key, 0, &klen, "");
   qlen      = strlen(src);
   av_values = (AV*) SvRV(sv_values);
-  v         = av_len(av_values); // av_top_index not supported on perls < 5.18
+  v         = av_top_index(av_values);
   i         = 0;
   j         = 0;
 
