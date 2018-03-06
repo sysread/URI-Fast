@@ -273,7 +273,7 @@ decoded of both reserved and non-ASCII characters.
 Percent-encodes a string for use in a URI. By default, both reserved and UTF-8
 chars (C<! * ' ( ) ; : @ & = + $ , / ? # [ ] %>) are encoded.
 
-A second (required) parameter provides a string containing any characters the
+A second (optional) parameter provides a string containing any characters the
 caller does not wish to be decoded. An empty string will result in the default
 behavior described above.
 

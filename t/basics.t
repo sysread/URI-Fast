@@ -54,8 +54,10 @@ subtest 'percent encoding' => sub{
   is(URI::Fast::encode_reserved($_, ''), sprintf('%%%02X', ord($_)), "reserved char $_")
     foreach split ' ', $reserved;
 
-  is URI::Fast::encode("$reserved $utf8", ''), URI::Encode::XS::uri_encode_utf8("$reserved $utf8"), "utf8 + reserved";
-  is URI::Fast::decode(URI::Fast::encode($reserved, '')), $reserved, 'decode';
+  is URI::Fast::encode("$reserved $utf8"), URI::Encode::XS::uri_encode_utf8("$reserved $utf8"), "utf8 + reserved";
+  is URI::Fast::decode(URI::Fast::encode($reserved)), $reserved, 'decode';
+
+  is URI::Fast::encode(" &", "&"), "%20&", "encode: allowed chars";
 };
 
 subtest 'utf8' => sub{
@@ -68,8 +70,8 @@ subtest 'utf8' => sub{
   is URI::Fast::encode_utf8('􏿿'), URI::Encode::XS::uri_encode_utf8('􏿿'), 'encode_utf8: 4 bytes';
   is URI::Fast::encode_utf8($u), $a, 'encode_utf8: string';
 
-  is URI::Fast::encode($u, ''), $a, 'encode';
-  ok !utf8::is_utf8(URI::Fast::encode($u, '')), 'encode: result is not flagged utf8';
+  is URI::Fast::encode($u), $a, 'encode';
+  ok !utf8::is_utf8(URI::Fast::encode($u)), 'encode: result is not flagged utf8';
 
   is URI::Fast::decode($a), $u, 'decode';
 
@@ -206,21 +208,26 @@ subtest 'path & query' => sub{
 };
 
 subtest 'memory leaks' => sub{
-  no_leaks_ok { my $s = URI::Fast::encode('foo', '') } 'encode: no memory leaks';
+  no_leaks_ok { my $s = URI::Fast::encode('foo') } 'encode: no memory leaks';
   no_leaks_ok { my $s = URI::Fast::decode('foo') } 'decode: no memory leaks';
+
   no_leaks_ok { my @parts = uri_split($uris[3]) } 'uri_split';
+
   no_leaks_ok { my $uri = uri($uris[3]) } 'ctor';
-  no_leaks_ok { uri($uris[3])->scheme('stuff') } 'scheme';
-  no_leaks_ok { uri($uris[3])->auth('foo@www.Ῥόδος.com') } 'auth';
-  no_leaks_ok { uri($uris[3])->get_param('baz') } 'get_param';
-  no_leaks_ok { uri($uris[3])->param('foo', 'bar') } 'param';
-  no_leaks_ok { uri($uris[3])->param('foo', ['bar', 'baz']) } 'param';
-  no_leaks_ok { uri($uris[3])->query_keys } 'query_keys';
-  no_leaks_ok { my @parts = uri($uris[3])->path } 'split path';
-  no_leaks_ok { uri($uris[3])->path(['foo', 'bar']) } 'set path';
-  no_leaks_ok { uri($uris[3])->usr('foo') } 'set usr/regen auth';
-  no_leaks_ok { uri($uris[3])->to_string } 'to_string';
-  no_leaks_ok { uri($uris[3])->query_hash } 'query_hash';
+
+  my $uri = uri $uris[3];
+
+  foreach my $acc (qw(scheme auth path query frag usr pwd host port)) {
+    no_leaks_ok { $uri->$acc() } "getter: $acc";
+    no_leaks_ok { $uri->$acc("foo") } "setter: $acc";
+  }
+
+  no_leaks_ok { my @parts = $uri->path } 'split path';
+  no_leaks_ok { $uri->param('foo', 'bar') } 'param';
+  no_leaks_ok { $uri->param('foo', ['bar', 'baz']) } 'param';
+  no_leaks_ok { $uri->query_keys } 'query_keys';
+  no_leaks_ok { $uri->query_hash } 'query_hash';
+  no_leaks_ok { $uri->to_string } 'to_string';
 };
 
 done_testing;

@@ -33,7 +33,7 @@ const char* pct_encode_utf8(const char*, size_t, size_t*);
 const char* pct_encode(const char*, size_t, size_t*, const char*);
 
 SV* decode(SV*);
-SV* encode(SV*, const char*);
+SV* encode(SV*, ...);
 SV* encode_reserved(SV*, const char*);
 SV* encode_utf8(SV*);
 
@@ -684,7 +684,32 @@ const char* pct_encode(const char* src, size_t len, size_t *dest, const char* al
   return out;
 }
 
-SV* encode(SV* in, const char* allowed) {
+SV* encode(SV* in, ...) {
+  STRLEN len1, len2;
+  const char *src, *dest, *allowed;
+  SV* out;
+
+  Inline_Stack_Vars;
+
+  if (Inline_Stack_Items > 1) {
+    allowed = SvPV(Inline_Stack_Item(1), len1);
+  } else {
+    allowed = "";
+  }
+
+  Inline_Stack_Done;
+
+  src  = SvPV_const(in, len1);
+  dest = pct_encode(src, len1, &len2, allowed);
+  out  = newSVpv(dest, len2);
+  sv_utf8_downgrade(out, FALSE);
+
+  free((char*) dest);
+
+  return out;
+}
+
+SV* encode2(SV* in, const char* allowed) {
   STRLEN len1, len2;
   const char *src, *dest;
   SV* out;
