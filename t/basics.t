@@ -183,18 +183,21 @@ subtest 'path & query' => sub{
   is $uri->param('cccc'), 'dddd', 'param';
   is $uri->param('eeee'), 'ffff', 'param';
   is $uri->param('fnord'), U, '!param';
+  is $uri->query_hash, {aaaa => ['bbbb'], cccc => ['dddd'], eeee => ['ffff']}, 'query_hash';
 
   ok $uri->query({foo => 'bar', baz => 'bat'}), 'query(\%)';
   is $uri->param('foo'), 'bar', 'param';
   is $uri->param('baz'), 'bat', 'param';
   is [sort $uri->query_keys], [sort qw(foo baz)], 'query_keys';
-  is "$uri", 'https://test.com/some/path?foo=bar&baz=bat', 'string';
+  is $uri->query_hash, {foo => ['bar'], baz => ['bat']}, 'query_hash';
 
   ok !$uri->param('foo', undef), 'unset';
   is [$uri->query_keys], ['baz'], 'query_keys';
+  is $uri->query_hash, {baz => ['bat']}, 'query_hash';
 
   is $uri->query('asdf=qwerty&asdf=fnord'), 'asdf=qwerty&asdf=fnord', 'query($)';
   is $uri->param('asdf'), ['qwerty', 'fnord'], 'param';
+  is $uri->query_hash, {asdf => ['qwerty', 'fnord']}, 'query_hash';
 
   is [$uri->query_keys], ['asdf'], 'query_keys', "$uri";
 
