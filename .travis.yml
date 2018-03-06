@@ -26,5 +26,8 @@ install:
    - cpanm --quiet --notest Devel::Cover::Report::Coveralls
    - cpanm --quiet --notest --installdeps .
 
+script:
+  perl Makefile.PL && make test TEST_VERBOSE=1
+
 notifications:
   email: false
