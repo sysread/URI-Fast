@@ -27,7 +27,7 @@ install:
    - cpanm --quiet --notest --installdeps .
 
 script:
-  perl Makefile.PL && make test TEST_VERBOSE=1
+  perl Makefile.PL && make test
 
 notifications:
   email: false
