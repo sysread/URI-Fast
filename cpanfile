@@ -2,8 +2,7 @@ requires 'perl', '5.010';
 
 requires 'Carp';
 requires 'Exporter';
-requires 'Inline::C';
-requires 'URI::Encode::XS', '0.07';
+requires 'Inline::C' => '0.80';
 
 on test => sub {
   requires 'Test2'           => '1.302125';
@@ -12,4 +11,5 @@ on test => sub {
   requires 'Test::LeakTrace' => '0.16';
   requires 'Test::Pod'       => 1.41;
   requires 'URI::Split'      => 0;
+  requires 'URI::Encode::XS' => '0.07';
 };

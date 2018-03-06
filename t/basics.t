@@ -1,6 +1,5 @@
 use utf8;
 use Test2::V0;
-use Data::Dumper;
 use Test::LeakTrace qw(no_leaks_ok);
 use URI::Encode::XS qw();
 use URI::Fast qw(uri uri_split);
