@@ -434,7 +434,8 @@ void set_param(SV* uri, const char* key, SV* sv_values) {
   enckey    = pct_encode(key, 0, &klen, "");
   qlen      = strlen(src);
   av_values = (AV*) SvRV(sv_values);
-  v         = av_top_index(av_values);
+  //v         = av_top_index(av_values);
+  v         = av_len(av_values);
   i         = 0;
   j         = 0;
 
