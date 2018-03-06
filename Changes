@@ -1,4 +1,6 @@
 {{$NEXT}}
+-UTF-8 support
+-Many methods rewritten in C/XS to make up for the added cost of UTF-8 support
 -Switch tests from using Test2::Bundle::Extended to Test2::V0
 -Bugfix: fix some missing test dependencies on restricted smoker setups
 -Bugfix: some unit tests were using the uri being tested as the test name,

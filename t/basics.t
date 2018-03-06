@@ -121,9 +121,7 @@ subtest 'simple' => sub{
   ok !$uri->port, 'port';
 };
 
-#subtest 'path & query' => sub{
-do {
-  note 'path & query';
+subtest 'path & query' => sub{
   ok my $uri = uri($uris[2]), 'ctor';
   is $uri->scheme, 'https', 'scheme';
   is $uri->auth, 'test.com', 'auth';
@@ -158,7 +156,6 @@ do {
   $uri->query('foo=barbar&bazbaz=bat&foo=blah');
   is $uri->query_hash, {foo => ['barbar', 'blah'], bazbaz => ['bat']}, 'query_hash';
 };
-#};
 
 subtest 'complete' => sub{
   ok my $uri = uri($uris[3]), 'ctor';
