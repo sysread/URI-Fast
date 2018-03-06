@@ -211,12 +211,12 @@ The path may also be updated using either a string or an array ref of segments:
 
 The complete query string. Does not include the leading C<?>.
 
-=head2 query_keys
+=head3 query_keys
 
 Does a fast scan of the query string and returns a list of unique parameter
 names that appear in the query string.
 
-=head2 query_hash
+=head3 query_hash
 
 Scans the query string and returns a hash ref of key/value pairs. Values are
 returned as an array ref, as keys may appear multiple times.
