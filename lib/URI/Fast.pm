@@ -104,7 +104,11 @@ sub param {
   my ($self, $key, $val) = @_;
 
   if (@_ == 3) {
-    $self->set_param($key, ref $val ? $val : [$val]);
+    $val = ref     $val ? $val
+         : defined $val ? [$val]
+         : [];
+
+    $self->set_param($key, $val);
   }
 
   # No return value in void context

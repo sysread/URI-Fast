@@ -407,7 +407,7 @@ const char* set_port(SV* uri_obj, const char* value, int no_triggers) {
   return str;
 }
 
-void set_param(SV* uri, const char* key, AV* values) {
+void set_param(SV* uri, const char* key, SV* sv_values) {
   SSize_t v;
   SV*     val;
   SV**    ref;
@@ -422,13 +422,15 @@ void set_param(SV* uri, const char* key, AV* values) {
   size_t  qlen = strlen(src);
   size_t  slen;
   size_t  vlen;
+  AV*     av_values;
 
-  src    = Uri_Mem(uri, query);
-  enckey = pct_encode(key, 0, &klen, "");
-  qlen   = strlen(src);
-  v      = av_top_index(values);
-  i      = 0;
-  j      = 0;
+  src       = Uri_Mem(uri, query);
+  enckey    = pct_encode(key, 0, &klen, "");
+  qlen      = strlen(src);
+  av_values = (AV*) SvRV(sv_values);
+  v         = av_top_index(av_values);
+  i         = 0;
+  j         = 0;
 
   memset(dest, '\0', 1024);
 
@@ -442,13 +444,19 @@ void set_param(SV* uri, const char* key, AV* values) {
     }
 
     i += strcspn(&src[i], "&");
+
     if (src[i] == '&') {
       ++i;
     }
   }
 
+  if (dest[j - 1] == '&') {
+    dest[j] = '\0';
+    --j;
+  }
+
   for (i = 0; i <= v; ++i) {
-    ref = av_fetch(values, (SSize_t) i, 0);
+    ref = av_fetch(av_values, (SSize_t) i, 0);
 
     if (ref == NULL) {
       break;
@@ -456,7 +464,14 @@ void set_param(SV* uri, const char* key, AV* values) {
 
     val = *ref;
 
-    if (j > 0) {
+    if (!SvOK(val)) {
+      break;
+    }
+
+    strval = SvPV(val, slen);
+    encval = pct_encode(strval, slen, &vlen, "");
+
+    if (j > 0 && dest[j] != '&') {
       dest[j++] = '&';
     }
 
@@ -464,9 +479,6 @@ void set_param(SV* uri, const char* key, AV* values) {
     j += klen;
 
     dest[j++] = '=';
-
-    strval = SvPV(val, slen);
-    encval = pct_encode(strval, slen, &vlen, "");
 
     strncpy(&dest[j], encval, vlen);
     j += vlen;

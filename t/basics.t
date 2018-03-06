@@ -146,8 +146,12 @@ subtest 'path & query' => sub{
   is $uri->param('baz'), 'bat', 'param';
   is [sort $uri->query_keys], [sort qw(foo baz)], 'query_keys';
 
+  ok !$uri->param('foo', undef), 'unset';
+  is [$uri->query_keys], ['baz'], 'query_keys';
+
   is $uri->query('asdf=qwerty&asdf=fnord'), 'asdf=qwerty&asdf=fnord', 'query($)';
   is $uri->param('asdf'), ['qwerty', 'fnord'], 'param';
+
   is [$uri->query_keys], ['asdf'], 'query_keys', "$uri";
 
   $uri->query('foo=barbar&bazbaz=bat&foo=blah');
