@@ -13,22 +13,22 @@ L<perlbrew|https://perlbrew.pl>.
 =head2 Constructor
 
                             Rate            URI      URI::Fast
-              URI       100000/s             --           -88%
-        URI::Fast       819672/s           720%             --
+              URI        95057/s             --           -88%
+        URI::Fast       806452/s           748%             --
 
 
 =head2 Parse scheme
 
                             Rate            URI      URI::Fast
-              URI        86356/s             --           -88%
-        URI::Fast       735294/s           751%             --
+              URI        83472/s             --           -89%
+        URI::Fast       735294/s           781%             --
 
 
 =head2 Update scheme
 
                             Rate            URI      URI::Fast
-              URI        50150/s             --           -91%
-        URI::Fast       588235/s          1073%             --
+              URI        48356/s             --           -92%
+        URI::Fast       595238/s          1131%             --
 
 
 =head2 Parse authorization
@@ -48,15 +48,15 @@ L<perlbrew|https://perlbrew.pl>.
 =head2 Parse path (scalar)
 
                             Rate            URI      URI::Fast
-              URI        78125/s             --           -82%
-        URI::Fast       442478/s           466%             --
+              URI        85324/s             --           -82%
+        URI::Fast       485437/s           469%             --
 
 
 =head2 Parse path (list)
 
                             Rate            URI      URI::Fast
-              URI        58275/s             --           -79%
-        URI::Fast       279330/s           379%             --
+              URI        56433/s             --           -81%
+        URI::Fast       292398/s           418%             --
 
 
 =head2 Update path (scalar)
@@ -69,15 +69,15 @@ L<perlbrew|https://perlbrew.pl>.
 =head2 Update path (array)
 
                             Rate            URI      URI::Fast
-              URI        65617/s             --           -81%
-        URI::Fast       347222/s           429%             --
+              URI        63371/s             --           -83%
+        URI::Fast       367647/s           480%             --
 
 
 =head2 Parse query
 
                             Rate            URI      URI::Fast
-              URI        36955/s             --           -86%
-        URI::Fast       255102/s           590%             --
+              URI        37425/s             --           -86%
+        URI::Fast       265957/s           611%             --
 
 
 =head2 Set query parameter
@@ -90,8 +90,8 @@ L<perlbrew|https://perlbrew.pl>.
 =head2 Query form
 
                             Rate            URI      URI::Fast
-              URI        37425/s             --           -82%
-        URI::Fast       203252/s           443%             --
+              URI        37010/s             --           -82%
+        URI::Fast       201613/s           445%             --
 
 
 =head2 Query keys
@@ -104,8 +104,8 @@ L<perlbrew|https://perlbrew.pl>.
 =head2 Stringification
 
                             Rate            URI      URI::Fast
-              URI        97087/s             --           -75%
-        URI::Fast       381679/s           293%             --
+              URI        95785/s             --           -75%
+        URI::Fast       384615/s           302%             --
 
 
 =head2 uri_split
