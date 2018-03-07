@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.08 2018-03-07
 -Fix test dependency version causing cpan tester failures
 
 0.07 2018-03-06
