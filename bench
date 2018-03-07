@@ -1,9 +1,10 @@
 #!perl
 
-use URI;
-use URI::Split qw();
-use URI::Fast qw(uri uri_split);
 use Benchmark qw(:all);
+use URI::Encode::XS qw(uri_encode_utf8 uri_decode_utf8);
+use URI::Fast qw(uri uri_split);
+use URI::Split qw();
+use URI;
 
 my $POD;
 
@@ -34,6 +35,9 @@ my @urls = (
   'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff',
   'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
 );
+
+my $encode_input = "Ῥόδος¢€" . q{! * ' ( ) ; : @ & = + $ , / ? # [ ] %} x 10;
+my $decode_input = URI::Fast::encode($encode_input);
 
 sub test {
   my ($msg, $count, $tests) = @_;
@@ -126,6 +130,16 @@ test 'Stringification', 500_000, {
 test 'uri_split', 500_000, {
   'URI::Split' => sub{ my @uri = URI::Split::uri_split($urls[3]) },
   'URI::Fast' => sub{ my @uri = uri_split($urls[3]) },
+};
+
+test 'Encode', 2_000_000, {
+  'URI::Encode::XS' => sub{ uri_encode_utf8($encode_input) },
+  'URI::Fast' => sub{ URI::Fast::encode($encode_input) },
+};
+
+test 'Decode', 2_000_000, {
+  'URI::Encode::XS' => sub{ uri_decode_utf8($decode_input) },
+  'URI::Fast' => sub{ URI::Fast::decode($decode_input) },
 };
 
 close $POD;

@@ -25,17 +25,202 @@
 #define Uri_Mem(obj, member) (Uri(obj)->member)
 #endif
 
-const char* pct_decode(const char*, size_t, size_t*);
-size_t pct_decode_char(const char*, char*);
+/*
+ * Percent encoding
+ */
 
-const char* pct_encode_reserved(const char*, size_t, size_t*, const char*);
-const char* pct_encode_utf8(const char*, size_t, size_t*);
-const char* pct_encode(const char*, size_t, size_t*, const char*);
+inline
+char is_allowed(char c, const char* allowed, size_t len) {
+  size_t i;
+  for (i = 0; i < len; ++i) {
+    if (c == allowed[i]) {
+      return 1;
+    }
+  }
 
-SV* decode(SV*);
-SV* encode(SV*, ...);
-SV* encode_reserved(SV*, const char*);
-SV* encode_utf8(SV*);
+  return 0;
+}
+
+// Taken with respect from URI::Escape::XS. Adapted to accept a configurable
+// string of permissible characters.
+#define _______ "\0\0\0\0"
+static const char uri_encode_tbl[ sizeof(U32) * 0x100 ] = {
+/*  0       1       2       3       4       5       6       7       8       9       a       b       c       d       e       f                        */
+    "%00\0" "%01\0" "%02\0" "%03\0" "%04\0" "%05\0" "%06\0" "%07\0" "%08\0" "%09\0" "%0A\0" "%0B\0" "%0C\0" "%0D\0" "%0E\0" "%0F\0"  /* 0:   0 ~  15 */
+    "%10\0" "%11\0" "%12\0" "%13\0" "%14\0" "%15\0" "%16\0" "%17\0" "%18\0" "%19\0" "%1A\0" "%1B\0" "%1C\0" "%1D\0" "%1E\0" "%1F\0"  /* 1:  16 ~  31 */
+    "%20\0" "%21\0" "%22\0" "%23\0" "%24\0" "%25\0" "%26\0" "%27\0" "%28\0" "%29\0" "%2A\0" "%2B\0" "%2C\0" _______ _______ "%2F\0"  /* 2:  32 ~  47 */
+    _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ "%3A\0" "%3B\0" "%3C\0" "%3D\0" "%3E\0" "%3F\0"  /* 3:  48 ~  63 */
+    "%40\0" _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______  /* 4:  64 ~  79 */
+    _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ "%5B\0" "%5C\0" "%5D\0" "%5E\0" _______  /* 5:  80 ~  95 */
+    "%60\0" _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______  /* 6:  96 ~ 111 */
+    _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ "%7B\0" "%7C\0" "%7D\0" _______ "%7F\0"  /* 7: 112 ~ 127 */
+    "%80\0" "%81\0" "%82\0" "%83\0" "%84\0" "%85\0" "%86\0" "%87\0" "%88\0" "%89\0" "%8A\0" "%8B\0" "%8C\0" "%8D\0" "%8E\0" "%8F\0"  /* 8: 128 ~ 143 */
+    "%90\0" "%91\0" "%92\0" "%93\0" "%94\0" "%95\0" "%96\0" "%97\0" "%98\0" "%99\0" "%9A\0" "%9B\0" "%9C\0" "%9D\0" "%9E\0" "%9F\0"  /* 9: 144 ~ 159 */
+    "%A0\0" "%A1\0" "%A2\0" "%A3\0" "%A4\0" "%A5\0" "%A6\0" "%A7\0" "%A8\0" "%A9\0" "%AA\0" "%AB\0" "%AC\0" "%AD\0" "%AE\0" "%AF\0"  /* A: 160 ~ 175 */
+    "%B0\0" "%B1\0" "%B2\0" "%B3\0" "%B4\0" "%B5\0" "%B6\0" "%B7\0" "%B8\0" "%B9\0" "%BA\0" "%BB\0" "%BC\0" "%BD\0" "%BE\0" "%BF\0"  /* B: 176 ~ 191 */
+    "%C0\0" "%C1\0" "%C2\0" "%C3\0" "%C4\0" "%C5\0" "%C6\0" "%C7\0" "%C8\0" "%C9\0" "%CA\0" "%CB\0" "%CC\0" "%CD\0" "%CE\0" "%CF\0"  /* C: 192 ~ 207 */
+    "%D0\0" "%D1\0" "%D2\0" "%D3\0" "%D4\0" "%D5\0" "%D6\0" "%D7\0" "%D8\0" "%D9\0" "%DA\0" "%DB\0" "%DC\0" "%DD\0" "%DE\0" "%DF\0"  /* D: 208 ~ 223 */
+    "%E0\0" "%E1\0" "%E2\0" "%E3\0" "%E4\0" "%E5\0" "%E6\0" "%E7\0" "%E8\0" "%E9\0" "%EA\0" "%EB\0" "%EC\0" "%ED\0" "%EE\0" "%EF\0"  /* E: 224 ~ 239 */
+    "%F0\0" "%F1\0" "%F2\0" "%F3\0" "%F4\0" "%F5\0" "%F6\0" "%F7\0" "%F8\0" "%F9\0" "%FA\0" "%FB\0" "%FC\0" "%FD\0" "%FE\0" "%FF"    /* F: 240 ~ 255 */
+};
+#undef _______
+
+size_t uri_encode(const char* in, size_t len, char* out, const char* allow, size_t allow_len) {
+  size_t i = 0;
+  size_t j = 0;
+  char   octet;
+  U32    code;
+
+  if (len == 0) {
+    len = strlen((char*) in);
+  }
+
+  while (i < len) {
+    octet = in[i++];
+
+    if (is_allowed(octet, allow, allow_len)) {
+      out[j++] = octet;
+    }
+    else {
+      code = ((U32*) uri_encode_tbl)[(unsigned char) octet];
+
+      if (code) {
+        *((U32*) &out[j]) = code;
+        j += 3;
+      }
+      else {
+        out[j++] = octet;
+      }
+    }
+  }
+
+  out[j] = '\0';
+
+  return j;
+}
+
+#define __ 0xFF
+static const unsigned char hex[0x100] = {
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 00-0F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 10-1F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 20-2F */
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9,__,__,__,__,__,__, /* 30-3F */
+  __,10,11,12,13,14,15,__,__,__,__,__,__,__,__,__, /* 40-4F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 50-5F */
+  __,10,11,12,13,14,15,__,__,__,__,__,__,__,__,__, /* 60-6F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 70-7F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 80-8F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 90-9F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* A0-AF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* B0-BF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* C0-CF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* D0-DF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* E0-EF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* F0-FF */
+};
+#undef __
+
+size_t uri_decode(const char *in, size_t len, char *out) {
+  size_t i = 0, j = 0;
+  unsigned char v1, v2;
+  int copy_char;
+
+  if (len == 0) {
+    len = strlen((char*) in);
+  }
+
+  while (i < len) {
+    copy_char = 1;
+
+    if (in[i] == '+') {
+      out[j] = ' ';
+      ++i;
+      ++j;
+      copy_char = 0;
+    }
+    else if (in[i] == '%' && i + 2 < len) {
+      v1 = hex[ (unsigned char)in[i+1] ];
+      v2 = hex[ (unsigned char)in[i+2] ];
+
+      /* skip invalid hex sequences */
+      if ((v1 | v2) != 0xFF) {
+        out[j] = (v1 << 4) | v2;
+        ++j;
+        i += 3;
+        copy_char = 0;
+      }
+    }
+    if (copy_char) {
+      out[j] = in[i];
+      ++i;
+      ++j;
+    }
+  }
+
+  out[j] = '\0';
+
+  return j;
+}
+
+// EOT (end of theft)
+
+SV* encode(SV* in, ...) {
+  size_t ilen, olen, alen;
+  const char *allowed;
+  const char *src = SvPV_const(in, ilen);
+  char dest[(ilen * 3) + 1];
+  SV* out;
+
+  Inline_Stack_Vars;
+
+  if (Inline_Stack_Items > 1) {
+    allowed = SvPV(Inline_Stack_Item(1), alen);
+  } else {
+    allowed = "";
+    alen = 0;
+  }
+
+  Inline_Stack_Done;
+
+  olen = uri_encode(src, ilen, dest, allowed, alen);
+  out  = newSVpv(dest, olen);
+  sv_utf8_downgrade(out, FALSE);
+
+  return out;
+}
+
+SV* decode(SV* in) {
+  size_t ilen, olen;
+  const char* src;
+  SV*   out;
+
+  if (SvUTF8(in)) {
+    in = sv_mortalcopy(in);
+
+    SvUTF8_on(in);
+
+    if (!sv_utf8_downgrade(in, TRUE)) {
+      croak("decode: wide character in octet string");
+    }
+
+    src = SvPV_const(in, ilen);
+  }
+  else {
+    src = SvPV_const(in, ilen);
+  }
+
+  char dest[ilen + 1];
+
+  olen = uri_decode(src, ilen, dest);
+  out  = newSVpv(dest, olen);
+  SvUTF8_on(out);
+
+  return out;
+}
+
+/*
+ * Internal API
+ */
 
 typedef struct {
   char scheme[16];
@@ -49,10 +234,6 @@ typedef struct {
   char host[128];
   char port[8];
 } uri_t;
-
-/*
- * Internal API
- */
 
 /*
  * Clearers
@@ -121,7 +302,7 @@ void uri_scan_auth (uri_t* uri) {
 /*
  * Scans a Uri string and populates the uri_t struct.
  */
-void uri_scan(uri_t* uri, const char* src, STRLEN len) {
+void uri_scan(uri_t* uri, const char* src, size_t len) {
   size_t idx = 0;
   size_t brk = 0;
 
@@ -231,22 +412,25 @@ const char* get_port(SV* uri_obj)   { return Uri_Mem(uri_obj, port); }
 
 SV* query_hash(SV* uri) {
   const char* src = Uri_Mem(uri, query);
-  const char* key;
-  const char* val;
-  size_t klen;
-  size_t vlen;
+  size_t klen, vlen, idx;
   HV*  out = newHV();
-  SV** ref;
   AV*  arr;
+  SV** ref;
   SV*  tmp;
 
   while (src != NULL && src[0] != '\0') {
-    key  = pct_decode(src, strcspn(src, "="), &klen);
-    src  = strstr(src, "=");
-    src += 1;
-    val  = pct_decode(src, strcspn(src, "&"), &vlen);
-    tmp  = newSVpv(val, vlen);
+    idx = strcspn(src, "=");
+    char key[idx + 1];
+    klen = uri_decode(src, idx, key);
 
+    src = strstr(src, "=");
+    src += 1;
+
+    idx = strcspn(src, "&");
+    char val[idx + 1];
+    vlen = uri_decode(src, idx, val);
+
+    tmp = newSVpv(val, vlen);
     SvUTF8_on(tmp);
 
     if (!hv_exists(out, key, klen)) {
@@ -264,22 +448,20 @@ SV* query_hash(SV* uri) {
     src = strstr(src, "&");
     if (src == NULL) break;
     ++src;
-
-    free((char*) key);
-    free((char*) val);
   }
 
   return newRV_noinc((SV*) out);
 }
 
 SV* split_path(SV* uri) {
-  size_t len, brk, idx = 0;
-  const char *ptr, *str;
+  size_t brk, idx = 0;
   AV* arr = newAV();
   SV* tmp;
 
-  ptr = pct_decode(Uri_Mem(uri, path), 0, &len);
-  str = ptr;
+  size_t path_len = strlen(Uri_Mem(uri, path));
+  char part[path_len + 1];
+  size_t len = uri_decode(Uri_Mem(uri, path), path_len, part);
+  char *str = part;
 
   if (str[0] == '/') {
     ++str; // skip past leading /
@@ -293,15 +475,12 @@ SV* split_path(SV* uri) {
     idx += brk + 1;
   }
 
-  free((char*) ptr);
-
   return newRV_noinc((SV*) arr);
 }
 
 SV* get_query_keys(SV* uri) {
   const char* src;
-  const char* tmp;
-  size_t vlen;
+  size_t vlen, idx;
   HV* out = newHV();
 
   for (src = Uri_Mem(uri, query); src != NULL && src[0] != '\0'; src = strstr(src, "&")) {
@@ -309,37 +488,40 @@ SV* get_query_keys(SV* uri) {
       ++src;
     }
 
-    tmp = pct_decode(src, strcspn(src, "="), &vlen);
+    idx = strcspn(src, "=");
+    char tmp[idx + 1];
+    vlen = uri_decode(src, idx, tmp);
     hv_store(out, tmp, vlen, &PL_sv_undef, 0);
-    free((char*) tmp);
   }
 
   return newRV_noinc((SV*) out);
 }
 
 SV* get_param(SV* uri, const char* key) {
-  const char *enckey, *tmp, *src = Uri_Mem(uri, query);
+  const char *tmp, *src = Uri_Mem(uri, query);
   char haystack[1024], needle[32];
-  size_t klen, vlen;
+  size_t klen, vlen, idx;
   char* ptr;
   AV* out = newAV();
   SV* val;
 
+  needle[0] = '&';
+  klen = 1 + uri_encode(key, 0, &needle[1], "", 0);
+  needle[klen++] = '=';
+  needle[klen] = '\0';
+
   memset(haystack, '\0', 1024);
   sprintf(haystack, "&%s", Uri_Mem(uri, query));
 
-  memset(needle, '\0', 32);
-  enckey = pct_encode(key, 0, 0, "");
-  klen = sprintf(needle, "&%s=", pct_encode(key, 0, 0, ""));
-  free((char*) enckey);
-
   for (ptr = strstr(haystack, needle); ptr != NULL; ptr = strstr(ptr, needle)) {
     ptr += klen;
-    tmp = pct_decode(ptr, strcspn(ptr, "&"), &vlen);
+    idx = strcspn(ptr, "&");
+
+    char tmp[idx + 1];
+    vlen = uri_decode(ptr, idx, tmp);
     val = newSVpv(tmp, vlen);
     SvUTF8_on(val);
     av_push(out, val);
-    free((char*) tmp);
   }
 
   return newRV_noinc((SV*) out);
@@ -350,28 +532,19 @@ SV* get_param(SV* uri, const char* key) {
  */
 
 const char* set_scheme(SV* uri_obj, const char* value, int no_triggers) {
-  STRLEN len;
-  const char* str = pct_encode(value, 0, &len, "");
-  strncpy(Uri_Mem(uri_obj, scheme), str, len + 1);
-  free((char*) str);
-  return str;
+  uri_encode(value, 0, Uri_Mem(uri_obj, scheme), "", 0);
+  return Uri_Mem(uri_obj, scheme);
 }
 
 const char* set_auth(SV* uri_obj, const char* value, int no_triggers) {
-  STRLEN len;
-  const char* str = pct_encode_utf8(value, 0, &len);
-  strncpy(Uri_Mem(uri_obj, auth), str, len + 1);
-  free((char*) str);
+  uri_encode(value, 0, Uri_Mem(uri_obj, auth), ":@", 2);
   if (!no_triggers) uri_scan_auth(Uri(uri_obj));
-  return str;
+  return Uri_Mem(uri_obj, auth);
 }
 
 const char* set_path(SV* uri_obj, const char* value, int no_triggers) {
-  STRLEN len;
-  const char* str = pct_encode(value, 0, &len, "/");
-  strncpy(Uri_Mem(uri_obj, path), str, len + 1);
-  free((char*) str);
-  return str;
+  uri_encode(value, 0, Uri_Mem(uri_obj, path), "/", 1);
+  return Uri_Mem(uri_obj, path);
 }
 
 const char* set_query(SV* uri_obj, const char* value, int no_triggers) {
@@ -380,76 +553,48 @@ const char* set_query(SV* uri_obj, const char* value, int no_triggers) {
 }
 
 const char* set_frag(SV* uri_obj, const char* value, int no_triggers) {
-  STRLEN len;
-  const char* str = pct_encode(value, 0, &len, "");
-  strncpy(Uri_Mem(uri_obj, frag), str, len + 1);
-  free((char*) str);
-  return str;
+  uri_encode(value, 0, Uri_Mem(uri_obj, frag), "", 0);
+  return Uri_Mem(uri_obj, frag);
 }
 
 const char* set_usr(SV* uri_obj, const char* value, int no_triggers) {
-  STRLEN len;
-  const char* str = pct_encode(value, 0, &len, "");
-  strncpy(Uri_Mem(uri_obj, usr), str, len + 1);
-  free((char*) str);
+  uri_encode(value, 0, Uri_Mem(uri_obj, usr), "", 0);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
-  return str;
+  return Uri_Mem(uri_obj, usr);
 }
 
 const char* set_pwd(SV* uri_obj, const char* value, int no_triggers) {
-  STRLEN len;
-  const char* str = pct_encode(value, 0, &len, "");
-  strncpy(Uri_Mem(uri_obj, pwd), str, len + 1);
-  free((char*) str);
+  uri_encode(value, 0, Uri_Mem(uri_obj, pwd), "", 0);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
-  return str;
+  return Uri_Mem(uri_obj, pwd);
 }
 
 const char* set_host(SV* uri_obj, const char* value, int no_triggers) {
-  STRLEN len;
-  const char* str = pct_encode(value, 0, &len, "");
-  strncpy(Uri_Mem(uri_obj, host), str, len + 1);
-  free((char*) str);
+  uri_encode(value, 0, Uri_Mem(uri_obj, host), "", 0);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
-  return str;
+  return Uri_Mem(uri_obj, host);
 }
 
 const char* set_port(SV* uri_obj, const char* value, int no_triggers) {
-  STRLEN len;
-  const char* str = pct_encode(value, 0, &len, "");
-  strncpy(Uri_Mem(uri_obj, port), str, len + 1);
-  free((char*) str);
+  uri_encode(value, 0, Uri_Mem(uri_obj, port), "", 0);
   if (!no_triggers) uri_build_auth(Uri(uri_obj));
-  return str;
+  return Uri_Mem(uri_obj, port);
 }
 
 void set_param(SV* uri, const char* key, SV* sv_values) {
-  SSize_t v;
-  SV*     val;
-  SV**    ref;
   char    dest[1024];
-  const   char* enckey;
-  const   char* encval;
-  const   char* src;
-  const   char* strval;
-  size_t  i;
-  size_t  j;
-  size_t  klen;
-  size_t  qlen = strlen(src);
-  size_t  slen;
-  size_t  vlen;
+  const   char *src = Uri_Mem(uri, query), *strval;
+  size_t  klen, vlen, slen, qlen = strlen(src), avlen, i = 0, j = 0;
   AV*     av_values;
+  SV**    ref;
 
-  src       = Uri_Mem(uri, query);
-  enckey    = pct_encode(key, 0, &klen, "");
-  qlen      = strlen(src);
+  char enckey[(3 * strlen(key)) + 1];
+  klen = uri_encode(key, 0, enckey, "", 0);
+
   av_values = (AV*) SvRV(sv_values);
-  v         = av_top_index(av_values);
-  i         = 0;
-  j         = 0;
+  avlen = av_top_index(av_values);
 
-  memset(dest, '\0', 1024);
-
+  // Copy the old query, skipping the key to be updated
   while (i < qlen) {
     while (strncmp(&src[i], enckey, klen) != 0) {
       dest[j++] = src[i++];
@@ -466,26 +611,20 @@ void set_param(SV* uri, const char* key, SV* sv_values) {
     }
   }
 
+  // Back up if the last char added was a &. The code below assumes that any
+  // terminal & will be at dest[j].
   if (dest[j - 1] == '&') {
-    dest[j] = '\0';
     --j;
   }
 
-  for (i = 0; i <= v; ++i) {
+  for (i = 0; i <= avlen; ++i) {
     ref = av_fetch(av_values, (SSize_t) i, 0);
+    if (ref == NULL) break;
+    if (!SvOK(*ref)) break;
 
-    if (ref == NULL) {
-      break;
-    }
-
-    val = *ref;
-
-    if (!SvOK(val)) {
-      break;
-    }
-
-    strval = SvPV(val, slen);
-    encval = pct_encode(strval, slen, &vlen, "");
+    strval = SvPV(*ref, slen);
+    char encval[(3 * slen) + 1];
+    vlen = uri_encode(strval, slen, encval, "", 0);
 
     if (j > 0 && dest[j] != '&') {
       dest[j++] = '&';
@@ -498,11 +637,8 @@ void set_param(SV* uri, const char* key, SV* sv_values) {
 
     strncpy(&dest[j], encval, vlen);
     j += vlen;
-
-    free((char*) encval);
   }
 
-  free((char*) enckey);
   clear_query(uri);
   strncpy(Uri_Mem(uri, query), dest, j);
 }
@@ -547,7 +683,7 @@ void explain(SV* uri_obj) {
 
 SV* new(const char* class, SV* uri_str) {
   const char* src;
-  STRLEN len;
+  size_t len;
   uri_t* uri;
   SV*    obj;
   SV*    obj_ref;
@@ -584,278 +720,10 @@ void DESTROY(SV* uri_obj) {
  * Extras
  */
 
-inline
-char is_allowed(char c, const char* allowed, size_t len) {
-  size_t i;
-  for (i = 0; i < len; ++i) {
-    if (c == allowed[i]) {
-      return 1;
-    }
-  }
-
-  return 0;
-}
-
-const char* pct_encode_utf8(const char* src, size_t len, size_t* dest) {
-  const unsigned char* in = (unsigned char*) src;
-  char*  out;
-  char   bytes = 0;
-  size_t i = 0;
-  size_t j = 0;
-
-  if (len == 0) {
-    len = strlen((char*) in);
-  }
-
-  out = malloc(((len * 3) + 1) * sizeof(char));
-  memset(out, '\0', (sizeof(char) * len * 3) + 1);
-
-  for (i = 0; i < len && in[i] != '\0'; ++i) {
-    bytes = (in[i] >= 0   && in[i] <= 127) ? 1
-          : (in[i] >= 192 && in[i] <= 223) ? 2
-          : (in[i] >= 224 && in[i] <= 239) ? 3
-          : (in[i] >= 240 && in[i] <= 247) ? 4
-          : (in[i] >= 248 && in[i] <= 251) ? 5
-          : (in[i] == 252 || in[i] == 253) ? 6
-          : 0;
-
-    if (bytes > 1) {
-      j += sprintf(&out[j], "%%%02X", in[i]);
-
-      while (bytes-- > 1) {
-        j += sprintf(&out[j], "%%%02X", in[++i]);
-      }
-    }
-    else {
-      out[j++] = in[i];
-    }
-  }
-
-  if (dest != NULL) {
-    *dest = j;
-  }
-
-  return out;
-}
-
-const char* pct_encode_reserved(const char* in, size_t len, size_t* dest, const char* allowed) {
-  char* out;
-  size_t i = 0;
-  size_t j = 0;
-  size_t k = strlen((char*) allowed);
-  size_t l = 0;
-
-  if (len == 0) {
-    len = strlen((char*) in);
-  }
-
-  out = malloc(((len * 3) + 1) * sizeof(char));
-  memset(out, '\0', (sizeof(char) * len * 3) + 1);
-
-  for (i = 0; i < len && in[i] != '\0'; ++i) {
-    switch (in[i]) {
-      case ':': case '@': case '&': case '=': case '?':  case '#':
-      case '(': case ')': case '[': case ']': case '\'': case '/':
-      case '+': case '!': case '*': case ';': case '$':  case ',':
-      case '%': case ' ':
-        if (k == 0 || is_allowed(in[i], allowed, k) == 0) {
-          j += sprintf(&out[j], "%%%02X", in[i]);
-          break;
-        }
-        // fall through otherwise
-      default:
-        out[j++] = in[i];
-        break;
-    }
-  }
-
-  if (dest != NULL) {
-    *dest = j;
-  }
-
-  return out;
-}
-
-const char* pct_encode(const char* src, size_t len, size_t *dest, const char* allowed) {
-  size_t rdest = 0;
-  const char* res = pct_encode_reserved(src, len, &rdest, allowed);
-  const char* out = pct_encode_utf8(res, rdest, dest);
-  free((char*) res);
-  return out;
-}
-
-SV* encode(SV* in, ...) {
-  STRLEN len1, len2;
-  const char *src, *dest, *allowed;
-  SV* out;
-
-  Inline_Stack_Vars;
-
-  if (Inline_Stack_Items > 1) {
-    allowed = SvPV(Inline_Stack_Item(1), len1);
-  } else {
-    allowed = "";
-  }
-
-  Inline_Stack_Done;
-
-  src  = SvPV_const(in, len1);
-  dest = pct_encode(src, len1, &len2, allowed);
-  out  = newSVpv(dest, len2);
-  sv_utf8_downgrade(out, FALSE);
-
-  free((char*) dest);
-
-  return out;
-}
-
-SV* encode2(SV* in, const char* allowed) {
-  STRLEN len1, len2;
-  const char *src, *dest;
-  SV* out;
-
-  src  = SvPV_const(in, len1);
-  dest = pct_encode(src, len1, &len2, allowed);
-  out  = newSVpv(dest, len2);
-  sv_utf8_downgrade(out, FALSE);
-
-  free((char*) dest);
-
-  return out;
-}
-
-SV* encode_reserved(SV* in, const char* allowed) {
-  STRLEN len1, len2;
-  const char* src;
-  const char* dest;
-  SV* out;
-
-  src  = SvPV_const(in, len1);
-  dest = pct_encode_reserved(src, len1, &len2, allowed);
-  out  = newSVpv(dest, len2);
-
-  free((char*) dest);
-
-  return out;
-}
-
-SV* encode_utf8(SV* in) {
-  STRLEN len1, len2;
-  const char* src;
-  const char* dest;
-  SV* out;
-
-  src  = SvPV_const(in, len1);
-  dest = pct_encode_utf8(src, len1, &len2);
-  out  = newSVpv(dest, len2);
-  sv_utf8_downgrade(out, FALSE);
-
-  free((char*) dest);
-
-  return out;
-}
-
-size_t pct_decode_char(const char* in, char* out) {
-  size_t consumed = 1;
-  unsigned int c;
-
-  switch (in[0]) {
-    case '+':
-      out[0] = ' ';
-      break;
-    case '%':
-      if (sscanf(in, "%%%2X", &c) == 1) {
-        out[0] = (char) c;
-        consumed = 3;
-        break;
-      }
-    default:
-      out[0] = in[0];
-      break;
-  }
-
-  return consumed;
-}
-
-const char* pct_decode(const char* in, size_t len, size_t* dest) {
-  char* out;
-  unsigned int c;
-  size_t i, j, brk;
-
-  if (len == 0) {
-    len = strlen((char*) in);
-  }
-
-  out = malloc((len + 1) * sizeof(char));
-  memset(out, '\0', (sizeof(char) * len) + 1);
-
-  i = 0;
-  j = 0;
-
-  while (i < len && in[i] != '\0') {
-    // Find the next hex
-    brk = strcspn(&in[i], "+%");
-
-    if (brk + i > len) {
-      brk = len - i;
-    }
-
-    // Unencoded text before the %; copy directly to out
-    if (brk > 0) {
-      strncpy(&out[j], &in[i], brk);
-      i += brk; // move forward to the %
-      j += brk;
-
-      // Did that eat the entire input string?
-      if (i >= len) {
-        break;
-      }
-    }
-
-    i += pct_decode_char(&in[i], &out[j++]);
-  }
-
-  if (dest != NULL) {
-    *dest = j;
-  }
-
-  return out;
-}
-
-SV* decode(SV* in) {
-  STRLEN len1, len2;
-  const char* src;
-  const char* dest;
-  SV*   out;
-
-  if (SvUTF8(in)) {
-    in = sv_mortalcopy(in);
-
-    SvUTF8_on(in);
-
-    if (!sv_utf8_downgrade(in, TRUE)) {
-      croak("decode: wide character in octet string");
-    }
-
-    src = SvPV_const(in, len1);
-  }
-  else {
-    src = SvPV_const(in, len1);
-  }
-
-  dest = pct_decode(src, len1, &len2);
-  out  = newSVpv(dest, len2);
-  SvUTF8_on(out);
-
-  free((char*) dest);
-
-  return out;
-}
-
 void uri_split(SV* uri) {
   size_t idx = 0;
   size_t brk = 0;
-  STRLEN len;
+  size_t len;
   const char* src = SvPV_const(uri, len);
 
   Inline_Stack_Vars;

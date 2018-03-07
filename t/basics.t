@@ -12,86 +12,6 @@ my @uris = (
   'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
 );
 
-subtest 'uri_split' => sub{
-  my @uris = (
-    '/foo/bar/baz',
-    'file:///foo/bar/baz',
-    'http://www.test.com',
-    'http://www.test.com?foo=bar',
-    'http://www.test.com#bar',
-    'http://www.test.com/some/path',
-    'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff',
-    'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
-    'https://user:pwd@www.test.com:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
-  );
-
-  # From URI::Split's test suite
-  subtest 'equivalence' => sub{
-    is [uri_split('p')],           [U, U, 'p', U, U],          'p';
-    is [uri_split('p?q')],         [U, U, 'p', 'q', U],        'p?q';
-    is [uri_split('p?q/#f/?')],    [U, U, 'p', 'q/', 'f/?'],   'p?q/f/?';
-    is [uri_split('s://a/p?q#f')], ['s', 'a', '/p', 'q', 'f'], 's://a/p?qf';
-  };
-
-  # Ensure identical output to URI::Split
-  subtest 'parity' => sub{
-    my $i = 0;
-    foreach my $uri (@uris) {
-      my $orig = [URI::Split::uri_split($uri)];
-      my $xs   = [uri_split($uri)];
-      is $xs, $orig, "uris[$i]", {orig => $orig, xs => $xs};
-      ++$i;
-    }
-  };
-};
-
-subtest 'percent encoding' => sub{
-  my $reserved = q{! * ' ( ) ; : @ & = + $ , / ? # [ ] %};
-  my $utf8 = "Ῥόδος¢€";
-
-  is URI::Fast::encode_reserved('asdf', ''), 'asdf', 'non-reserved';
-
-  is(URI::Fast::encode_reserved($_, ''), sprintf('%%%02X', ord($_)), "reserved char $_")
-    foreach split ' ', $reserved;
-
-  is URI::Fast::encode("$reserved $utf8"), uri_encode_utf8("$reserved $utf8"), "utf8 + reserved";
-  is URI::Fast::decode(URI::Fast::encode($reserved)), $reserved, 'decode';
-
-  is URI::Fast::encode(" &", "&"), "%20&", "encode: allowed chars";
-};
-
-subtest 'utf8' => sub{
-  my $u = "Ῥόδος";
-  my $a = '%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82';
-
-  is URI::Fast::encode_utf8('$'), '$', '1 byte';
-  is URI::Fast::encode_utf8('¢'), uri_encode_utf8('¢'), 'encode_utf8: 2 bytes';
-  is URI::Fast::encode_utf8('€'), uri_encode_utf8('€'), 'encode_utf8: 3 bytes';
-  is URI::Fast::encode_utf8('􏿿'), uri_encode_utf8('􏿿'), 'encode_utf8: 4 bytes';
-  is URI::Fast::encode_utf8($u), $a, 'encode_utf8: string';
-
-  is URI::Fast::encode($u), $a, 'encode';
-  ok !utf8::is_utf8(URI::Fast::encode($u)), 'encode: result is not flagged utf8';
-
-  is URI::Fast::decode($a), $u, 'decode';
-
-  ok my $uri = uri($uris[2]), 'ctor';
-
-  is $uri->auth("$u:$u\@www.$u.com:1234"), "$a:$a\@www.$a.com:1234", 'auth';
-
-  is $uri->usr, $u, 'usr';
-  is $uri->pwd, $u, 'pwd';
-  is $uri->host, "www.$u.com", 'host';
-
-  is $uri->path("/$u/$u"), "/$u/$u", "path";
-  is $uri->path([$u, $a]), "/$u/$a", "path";
-
-  is $uri->query("x=$a"), "x=$a", "query";
-  is $uri->param('x'), $u, 'param', $uri->get_query;
-  is $uri->query({x => $u}), "x=$a", "query", $uri->get_query;
-  is $uri->param('x'), $u, 'param', $uri->get_query;
-};
-
 subtest 'implicit file path' => sub{
   ok my $uri = uri($uris[0]), 'ctor';
   is $uri->scheme, 'file', 'scheme';
@@ -178,7 +98,7 @@ subtest 'update path' => sub{
   is "$uri", 'https://test.com/baz/bat?aaaa=bbbb&cccc=dddd&eeee=ffff', 'string';
 };
 
-subtest 'path & query' => sub{
+subtest 'query' => sub{
   ok my $uri = uri($uris[2]), 'ctor';
 
   is $uri->param('aaaa'), 'bbbb', 'param';
@@ -205,6 +125,39 @@ subtest 'path & query' => sub{
 
   $uri->query('foo=barbar&bazbaz=bat&foo=blah');
   is $uri->query_hash, {foo => ['barbar', 'blah'], bazbaz => ['bat']}, 'query_hash';
+};
+
+subtest 'uri_split' => sub{
+  my @uris = (
+    '/foo/bar/baz',
+    'file:///foo/bar/baz',
+    'http://www.test.com',
+    'http://www.test.com?foo=bar',
+    'http://www.test.com#bar',
+    'http://www.test.com/some/path',
+    'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff',
+    'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
+    'https://user:pwd@www.test.com:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
+  );
+
+  # From URI::Split's test suite
+  subtest 'equivalence' => sub{
+    is [uri_split('p')],           [U, U, 'p', U, U],          'p';
+    is [uri_split('p?q')],         [U, U, 'p', 'q', U],        'p?q';
+    is [uri_split('p?q/#f/?')],    [U, U, 'p', 'q/', 'f/?'],   'p?q/f/?';
+    is [uri_split('s://a/p?q#f')], ['s', 'a', '/p', 'q', 'f'], 's://a/p?qf';
+  };
+
+  # Ensure identical output to URI::Split
+  subtest 'parity' => sub{
+    my $i = 0;
+    foreach my $uri (@uris) {
+      my $orig = [URI::Split::uri_split($uri)];
+      my $xs   = [uri_split($uri)];
+      is $xs, $orig, "uris[$i]", {orig => $orig, xs => $xs};
+      ++$i;
+    }
+  };
 };
 
 subtest 'memory leaks' => sub{
