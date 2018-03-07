@@ -11,5 +11,5 @@ on test => sub {
   requires 'Test::LeakTrace' => '0.16';
   requires 'Test::Pod'       => 1.41;
   requires 'URI::Split'      => 0;
-  requires 'URI::Encode::XS' => '0.07';
+  requires 'URI::Encode::XS' => '0.11';
 };

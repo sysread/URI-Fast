@@ -1,7 +1,7 @@
 use utf8;
 use Test2::V0;
 use Test::LeakTrace qw(no_leaks_ok);
-use URI::Encode::XS qw();
+use URI::Encode::XS qw(uri_encode_utf8 uri_decode_utf8);
 use URI::Fast qw(uri uri_split);
 use URI::Split qw();
 
@@ -54,7 +54,7 @@ subtest 'percent encoding' => sub{
   is(URI::Fast::encode_reserved($_, ''), sprintf('%%%02X', ord($_)), "reserved char $_")
     foreach split ' ', $reserved;
 
-  is URI::Fast::encode("$reserved $utf8"), URI::Encode::XS::uri_encode_utf8("$reserved $utf8"), "utf8 + reserved";
+  is URI::Fast::encode("$reserved $utf8"), uri_encode_utf8("$reserved $utf8"), "utf8 + reserved";
   is URI::Fast::decode(URI::Fast::encode($reserved)), $reserved, 'decode';
 
   is URI::Fast::encode(" &", "&"), "%20&", "encode: allowed chars";
@@ -65,9 +65,9 @@ subtest 'utf8' => sub{
   my $a = '%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82';
 
   is URI::Fast::encode_utf8('$'), '$', '1 byte';
-  is URI::Fast::encode_utf8('¢'), URI::Encode::XS::uri_encode_utf8('¢'), 'encode_utf8: 2 bytes';
-  is URI::Fast::encode_utf8('€'), URI::Encode::XS::uri_encode_utf8('€'), 'encode_utf8: 3 bytes';
-  is URI::Fast::encode_utf8('􏿿'), URI::Encode::XS::uri_encode_utf8('􏿿'), 'encode_utf8: 4 bytes';
+  is URI::Fast::encode_utf8('¢'), uri_encode_utf8('¢'), 'encode_utf8: 2 bytes';
+  is URI::Fast::encode_utf8('€'), uri_encode_utf8('€'), 'encode_utf8: 3 bytes';
+  is URI::Fast::encode_utf8('􏿿'), uri_encode_utf8('􏿿'), 'encode_utf8: 4 bytes';
   is URI::Fast::encode_utf8($u), $a, 'encode_utf8: string';
 
   is URI::Fast::encode($u), $a, 'encode';
