@@ -1,4 +1,7 @@
 {{$NEXT}}
+-constructor is more efficient
+-set_param does less copying, uses less memory
+-Bugfix: set_param incorrctly placed (or did not place) ampersands in some edge cases
 -Kwalitee fixes
 -Fix missing entries in v0.08's change log (oops)
 

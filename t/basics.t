@@ -61,70 +61,166 @@ subtest 'complete' => sub{
   is $uri->param('asdf'), 'the quick brown fox & hound', 'param';
 };
 
-subtest 'update auth' => sub{
-  ok my $uri = uri($uris[1]), 'ctor';
-  ok !$uri->usr, 'usr';
-  ok !$uri->pwd, 'pwd';
-  ok !$uri->port, 'port';
-
-  is $uri->pwd('secret'), 'secret', 'pwd(v)';
-  is $uri->auth, 'www.test.com', 'auth';
-  is "$uri", 'http://www.test.com', 'string';
-
-  is $uri->usr('someone'), 'someone', 'usr(v)';
-  is $uri->auth, 'someone:secret@www.test.com', 'auth';
-  is "$uri", 'http://someone:secret@www.test.com', 'string';
-
-  is $uri->port(1234), 1234, 'port(v)';
-  is $uri->auth, 'someone:secret@www.test.com:1234', 'auth';
-  is "$uri", 'http://someone:secret@www.test.com:1234', 'string';
-
-  is $uri->auth('www.nottest.com'), 'www.nottest.com', 'auth(new)';
-  is $uri->host, 'www.nottest.com', 'host';
-  ok !$uri->usr, 'usr';
-  ok !$uri->pwd, 'pwd';
-  ok !$uri->port, 'port';
+subtest 'scheme' => sub{
+  my $uri = uri $uris[3];
+  is $uri->scheme, 'https', 'get';
+  is $uri->scheme('http'), 'http', 'set';
+  is $uri->scheme, 'http', 'get';
 };
 
-subtest 'update path' => sub{
+subtest 'auth' => sub{
+  my $uri = uri $uris[3];
+  is $uri->auth, 'user:pwd@192.168.0.1:8000', 'get';
+
+  subtest 'scalar' => sub{
+    my $uri = uri $uris[3];
+    is $uri->auth('some:one@www.test.com:1234'), 'some:one@www.test.com:1234', 'set';
+    is $uri->auth('some:one@www.test.com:1234'), 'some:one@www.test.com:1234', 'get';
+    is $uri->usr, 'some', 'updated: usr';
+    is $uri->pwd, 'one', 'updated: pwd';
+    is $uri->host, 'www.test.com', 'updated: hsot';
+    is $uri->port, '1234', 'updated: port';
+  };
+
+  subtest 'hash' => sub{
+    my $uri = uri $uris[3];
+    is $uri->auth({usr => 'some', pwd => 'one', host => 'www.test.com', port => '1234'}), 'some:one@www.test.com:1234', 'set';
+    is $uri->auth('some:one@www.test.com:1234'), 'some:one@www.test.com:1234', 'get';
+    is $uri->usr, 'some', 'updated: usr';
+    is $uri->pwd, 'one', 'updated: pwd';
+    is $uri->host, 'www.test.com', 'updated: hsot';
+    is $uri->port, '1234', 'updated: port';
+  };
+
+  subtest 'usr' => sub {
+    my $uri = uri $uris[1];
+    is $uri->usr, '', 'get (empty)';
+    is $uri->usr('foo'), 'foo', 'set';
+    is $uri->usr, 'foo', 'get';
+    is $uri->auth, 'foo@www.test.com', 'updated: auth';
+  };
+
+  subtest 'pwd' => sub {
+    my $uri = uri $uris[1];
+    is $uri->pwd, '', 'get (empty)';
+    is $uri->pwd('foo'), 'foo', 'set';
+    is $uri->pwd, 'foo', 'get';
+    is $uri->auth, 'www.test.com', 'auth has no pwd w/o host';
+    $uri->usr('bar');
+    is $uri->auth, 'bar:foo@www.test.com', 'auth has pwd w/ host';
+  };
+
+  subtest 'host' => sub {
+    my $uri = uri $uris[1];
+    is $uri->host, 'www.test.com', 'get';
+    is $uri->host('foo'), 'foo', 'set';
+    is $uri->host, 'foo', 'get';
+    is $uri->auth, 'foo', 'updated: auth';
+  };
+
+  subtest 'port' => sub {
+    my $uri = uri $uris[1];
+    is $uri->port, '', 'get (empty)';
+    is $uri->port('1234'), '1234', 'set';
+    is $uri->port, '1234', 'get';
+    is $uri->auth, 'www.test.com:1234', 'updated: auth';
+  };
+};
+
+subtest 'path' => sub{
   ok my $uri = uri($uris[2]), 'ctor';
-  is $uri->path, '/some/path', 'scalar path';
-  is [$uri->path], ['some', 'path'], 'list path';
+  is $uri->path, '/some/path', 'get (scalar)';
+  is [$uri->path], [qw(some path)], 'get (list)';
 
-  is $uri->path('/foo/bar'), '/foo/bar', 'scalar path(str)';
-  is "$uri", 'https://test.com/foo/bar?aaaa=bbbb&cccc=dddd&eeee=ffff', 'string';
+  is $uri->path('/foo/bar'), '/foo/bar', 'set (scalar)';
+  is $uri->path, '/foo/bar', 'get (scalar)';
+  is [$uri->path], [qw(foo bar)], 'get (list)';
 
-  is [$uri->path(['baz', 'bat'])], ['baz', 'bat'], 'scalar path(list)';
-  is "$uri", 'https://test.com/baz/bat?aaaa=bbbb&cccc=dddd&eeee=ffff', 'string';
+  is $uri->path([qw(baz bat)]), '/baz/bat', 'set (array)';
+  is $uri->path, '/baz/bat', 'get (scalar)';
+  is [$uri->path], [qw(baz bat)], 'get (list)';
 };
 
 subtest 'query' => sub{
   ok my $uri = uri($uris[2]), 'ctor';
+  is $uri->query, 'aaaa=bbbb&cccc=dddd&eeee=ffff', 'get (scalar)';
+  is { $uri->query }, {aaaa => ['bbbb'], cccc => ['dddd'], eeee => ['ffff']}, 'get (list)';
 
-  is $uri->param('aaaa'), 'bbbb', 'param';
-  is $uri->param('cccc'), 'dddd', 'param';
-  is $uri->param('eeee'), 'ffff', 'param';
-  is $uri->param('fnord'), U, '!param';
-  is $uri->query_hash, {aaaa => ['bbbb'], cccc => ['dddd'], eeee => ['ffff']}, 'query_hash';
+  is $uri->query('foo=bar'), 'foo=bar', 'set (scalar)';
+  is $uri->query, 'foo=bar', 'get (scalar)';
+  is { $uri->query }, {foo => ['bar']}, 'get (list)';
 
-  ok $uri->query({foo => 'bar', baz => 'bat'}), 'query(\%)';
-  is $uri->param('foo'), 'bar', 'param';
-  is $uri->param('baz'), 'bat', 'param';
-  is [sort $uri->query_keys], [sort qw(foo baz)], 'query_keys';
-  is $uri->query_hash, {foo => ['bar'], baz => ['bat']}, 'query_hash';
+  is $uri->query({baz => 'bat'}), 'baz=bat', 'set (hash ref)';
+  is $uri->query, 'baz=bat', 'get (scalar)';
+  is { $uri->query }, {baz => ['bat']}, 'set (scalar)';
 
-  ok !$uri->param('foo', undef), 'unset';
-  is [$uri->query_keys], ['baz'], 'query_keys';
-  is $uri->query_hash, {baz => ['bat']}, 'query_hash';
+  is $uri->query({fnord => [qw(foo bar)]}), 'fnord=foo&fnord=bar', 'set (hash ref w/ multiple values per key)';
+  is $uri->query, 'fnord=foo&fnord=bar', 'get (scalar)';
+  is { $uri->query }, {fnord => [qw(foo bar)]}, 'get (list)';
 
-  is $uri->query('asdf=qwerty&asdf=fnord'), 'asdf=qwerty&asdf=fnord', 'query($)';
-  is $uri->param('asdf'), ['qwerty', 'fnord'], 'param';
-  is $uri->query_hash, {asdf => ['qwerty', 'fnord']}, 'query_hash';
+  subtest 'param' => sub{
+    my $uri = uri 'http://www.test.com?foo=bar&foo=baz&fnord=slack';
+    is $uri->param('foo'), [qw(bar baz)], 'get (scalar): multiple values as array ref';
+    is $uri->param('fnord'), 'slack', 'get (scalar): single value as scalar';
+    is [$uri->param('foo')], [qw(bar baz)], 'get (list)';
 
-  is [$uri->query_keys], ['asdf'], 'query_keys', "$uri";
+    subtest 'unset' => sub {
+      is $uri->param('foo', undef), U, 'set';
+      is $uri->param('foo'), U, 'get';
+      is $uri->query, 'fnord=slack', 'updated: query';
+    };
 
-  $uri->query('foo=barbar&bazbaz=bat&foo=blah');
-  is $uri->query_hash, {foo => ['barbar', 'blah'], bazbaz => ['bat']}, 'query_hash';
+    subtest 'set: string' => sub {
+      is $uri->param('foo', 'bar'), 'bar', 'set (scalar, single value)';
+      is $uri->param('foo'), 'bar', 'get';
+      is $uri->query, 'fnord=slack&foo=bar', 'updated: query';
+    };
+
+    subtest 'set: array ref' => sub {
+      is $uri->param('foo', [qw(bar baz)]), [qw(bar baz)], 'set (scalar, array ref)';
+      is $uri->param('foo'), [qw(bar baz)], 'get';
+      is $uri->query, 'fnord=slack&foo=bar&foo=baz', 'updated: query';
+    };
+
+    subtest 'edge cases' => sub {
+      subtest 'unset only parameter' => sub {
+        my $uri = uri 'http://www.test.com?foo=bar';
+        $uri->param('foo', undef);
+        is $uri->query, '', 'expected query valuee';
+      };
+
+      subtest 'unset final parameter' => sub {
+        my $uri = uri 'http://www.test.com?bar=bat&foo=bar';
+        $uri->param('foo', undef);
+        is $uri->query, 'bar=bat', 'expected query valuee';
+      };
+
+      subtest 'unset initial parameter' => sub {
+        my $uri = uri 'http://www.test.com?bar=bat&foo=bar';
+        $uri->param('bar', undef);
+        is $uri->query, 'foo=bar', 'expected query value';
+      };
+
+      subtest 'update initial parameter' => sub {
+        my $uri = uri 'http://www.test.com?bar=bat&foo=bar';
+        $uri->param('bar', 'blah');
+        is $uri->query, 'foo=bar&bar=blah', 'expected query value';
+      };
+
+      subtest 'update final parameter' => sub {
+        my $uri = uri 'http://www.test.com?bar=bat&foo=bar';
+        $uri->param('foo', 'blah');
+        is $uri->query, 'bar=bat&foo=blah', 'expected query value';
+      };
+    };
+  };
+};
+
+subtest 'frag' => sub{
+  my $uri = uri $uris[3];
+  is $uri->frag, 'foofrag', 'get';
+  is $uri->frag('barfrag'), 'barfrag', 'set';
+  is $uri->frag, 'barfrag', 'get';
 };
 
 subtest 'uri_split' => sub{

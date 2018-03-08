@@ -319,7 +319,6 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
       strncpy(uri->auth, &src[idx], brk);
       uri->auth[brk] = '\0';
       idx += brk;
-      uri_scan_auth(uri);
     }
   }
 
@@ -582,11 +581,11 @@ const char* set_port(SV* uri_obj, const char* value, int no_triggers) {
 }
 
 void set_param(SV* uri, const char* key, SV* sv_values) {
-  char    dest[1024];
-  const   char *src = Uri_Mem(uri, query), *strval;
-  size_t  klen, vlen, slen, qlen = strlen(src), avlen, i = 0, j = 0;
-  AV*     av_values;
-  SV**    ref;
+  char   dest[1024];
+  const  char *src = Uri_Mem(uri, query), *strval;
+  size_t klen, vlen, slen, qlen = strlen(src), avlen, i = 0, j = 0, brk = 0;
+  AV*    av_values;
+  SV**   ref;
 
   char enckey[(3 * strlen(key)) + 1];
   klen = uri_encode(key, 0, enckey, "", 0);
@@ -596,46 +595,50 @@ void set_param(SV* uri, const char* key, SV* sv_values) {
 
   // Copy the old query, skipping the key to be updated
   while (i < qlen) {
+    // If the string does not begin with the key, advance until it does,
+    // copying into dest as idx advances.
     while (strncmp(&src[i], enckey, klen) != 0) {
-      dest[j++] = src[i++];
+      // Find the end of this key=value section
+      brk = strcspn(&src[i], "&");
 
-      if (i >= qlen) {
-        break;
-      }
+      // If this is not the first key=value section written to dest, add an
+      // ampersand to separate the pairs.
+      if (j > 0) dest[j++] = '&';
+
+      // Copy up to our break point
+      strncpy(&dest[j], &src[i], brk);
+      j += brk;
+      i += brk;
+
+      if (i >= qlen) break;
+      if (src[i] == '&') ++i;
     }
 
+    // The key was found; skip past to the next key=value pair
     i += strcspn(&src[i], "&");
 
-    if (src[i] == '&') {
-      ++i;
-    }
-  }
-
-  // Back up if the last char added was a &. The code below assumes that any
-  // terminal & will be at dest[j].
-  if (dest[j - 1] == '&') {
-    --j;
+    // Skip the '&', too, since it will already be there
+    if (src[i] == '&') ++i;
   }
 
   for (i = 0; i <= avlen; ++i) {
+    // Fetch next value from the array
     ref = av_fetch(av_values, (SSize_t) i, 0);
     if (ref == NULL) break;
     if (!SvOK(*ref)) break;
 
-    strval = SvPV(*ref, slen);
-    char encval[(3 * slen) + 1];
-    vlen = uri_encode(strval, slen, encval, "", 0);
+    // Add ampersand if needed to separate pairs
+    if (j > 0) dest[j++] = '&';
 
-    if (j > 0 && dest[j] != '&') {
-      dest[j++] = '&';
-    }
-
+    // Copy key over
     strncpy(&dest[j], enckey, klen);
     j += klen;
 
     dest[j++] = '=';
 
-    strncpy(&dest[j], encval, vlen);
+    // Copy value over
+    strval = SvPV(*ref, slen);
+    vlen = uri_encode(strval, slen, &dest[j], "", 0);
     j += vlen;
   }
 
@@ -689,24 +692,16 @@ SV* new(const char* class, SV* uri_str) {
   SV*    obj_ref;
 
   Newx(uri, 1, uri_t);
+  memset(uri, '\0', sizeof(uri_t));
 
   obj = newSViv((IV) uri);
   obj_ref = newRV_noinc(obj);
   sv_bless(obj_ref, gv_stashpv(class, GV_ADD));
   SvREADONLY_on(obj);
 
-  clear_scheme(obj_ref);
-  clear_auth(obj_ref);
-  clear_path(obj_ref);
-  clear_query(obj_ref);
-  clear_frag(obj_ref);
-  clear_usr(obj_ref);
-  clear_pwd(obj_ref);
-  clear_host(obj_ref);
-  clear_port(obj_ref);
-
   src = SvPV_const(uri_str, len);
   uri_scan(uri, src, len);
+  uri_scan_auth(uri);
 
   return obj_ref;
 }
@@ -719,7 +714,6 @@ void DESTROY(SV* uri_obj) {
 /*
  * Extras
  */
-
 void uri_split(SV* uri) {
   size_t idx = 0;
   size_t brk = 0;

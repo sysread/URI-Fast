@@ -85,18 +85,17 @@ sub query {
   if (@_ == 2) {
     if (ref $val) {
       $self->set_query('', 1);
-
-      foreach (keys %$val) {
-        $self->param($_, $val->{$_});
-      }
+      $self->param($_, $val->{$_})
+        foreach keys %$val;
     }
     else {
       $self->set_query($val, 0);
     }
   }
 
-  return $self->get_query
-    if defined wantarray;
+  return unless defined(wantarray);         # void context
+  return $self->get_query unless wantarray; # scalar context
+  return %{ $self->query_hash };            # list context
 }
 
 sub query_keys {
