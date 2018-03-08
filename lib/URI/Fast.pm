@@ -3,6 +3,10 @@ package URI::Fast;
 # ABSTRACT: A fast(er) URI parser
 
 use utf8;
+use strict;
+use warnings;
+no strict 'refs';
+
 use Carp;
 use Inline C => 'lib/uri_fast.c';
 

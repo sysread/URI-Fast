@@ -1,7 +1,9 @@
 {{$NEXT}}
+-Kwalitee fixes
 
 0.08 2018-03-07
 -Fix test dependency version causing cpan tester failures
+-Adopted URI::Encode::XS's encoding/decoding strategy
 
 0.07 2018-03-06
 -UTF-8 support
