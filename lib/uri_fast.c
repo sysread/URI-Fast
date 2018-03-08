@@ -458,12 +458,11 @@ SV* split_path(SV* uri) {
   SV* tmp;
 
   size_t path_len = strlen(Uri_Mem(uri, path));
-  char part[path_len + 1];
-  size_t len = uri_decode(Uri_Mem(uri, path), path_len, part);
-  char *str = part;
+  char str[path_len + 1];
+  size_t len = uri_decode(Uri_Mem(uri, path), path_len, str);
 
   if (str[0] == '/') {
-    ++str; // skip past leading /
+    ++idx; // skip past leading /
   }
 
   while (idx < len) {
