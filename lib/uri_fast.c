@@ -19,7 +19,7 @@
 #endif
 
 #ifndef Uri_Encode_Set_Nolen
-#define Uri_Encode_Set_Nolen(uri_obj, member, value, allowed, newlen) uri_encode(value, min(strlen(value), Uri_Size(member)), Uri_Mem(uri_obj, member), allowed, newlen)
+#define Uri_Encode_Set_Nolen(uri_obj, member, value, allow, allow_len) uri_encode(value, min(strlen(value), Uri_Size(member)), Uri_Mem(uri_obj, member), allow, allow_len)
 #endif
 
 /*
@@ -580,13 +580,13 @@ const char* set_scheme(SV* uri_obj, const char* value, int no_triggers) {
 }
 
 const char* set_auth(SV* uri_obj, const char* value, int no_triggers) {
-  Uri_Encode_Set_Nolen(uri_obj, auth, value, ":@", 0);
+  Uri_Encode_Set_Nolen(uri_obj, auth, value, ":@", 2);
   if (!no_triggers) uri_scan_auth(Uri(uri_obj));
   return Uri_Mem(uri_obj, auth);
 }
 
 const char* set_path(SV* uri_obj, const char* value, int no_triggers) {
-  Uri_Encode_Set_Nolen(uri_obj, path, value, "/", 0);
+  Uri_Encode_Set_Nolen(uri_obj, path, value, "/", 1);
   return Uri_Mem(uri_obj, path);
 }
 
