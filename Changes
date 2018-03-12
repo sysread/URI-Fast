@@ -2,6 +2,7 @@
 -bugfix: missing bounds checks in parser and setters
 -bugfix: segfault when query key not followed by '='
 -bugfix: non-digits no longer accepted when setting/parsing port number
+-bugfix: increased member size for uri_t
 -more thorough testing of parsing edge cases
 -more thorough testing of memory leaks
 -added MetaProvides::Package Dist::Zilla plugin for experimental Kwalitee

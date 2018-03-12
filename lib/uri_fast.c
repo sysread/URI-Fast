@@ -4,17 +4,16 @@
 #include <ctype.h>
 
 #ifndef Uri_Size
-#define Uri_Size_scheme 16
-#define Uri_Size_path   256
-#define Uri_Size_query  1024
-#define Uri_Size_frag   32
+#define Uri_Size_scheme 32
+#define Uri_Size_path   1024
+#define Uri_Size_query  2048
+#define Uri_Size_frag   64
 #define Uri_Size_usr    64
 #define Uri_Size_pwd    64
-#define Uri_Size_host   128
+#define Uri_Size_host   256
 #define Uri_Size_port   8
 // enough to fit all pieces + 3 chars for separators (2 colons + @)
 #define Uri_Size_auth   (3 + Uri_Size_usr + Uri_Size_pwd + Uri_Size_host + Uri_Size_port)
-//#define Uri_Size        (Uri_Size_scheme + Uri_Size_auth + Uri_Size_path + Uri_Size_query + Uri_Size_frag)
 #define Uri_Size(member) (Uri_Size_##member)
 #endif
 
