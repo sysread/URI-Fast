@@ -1,4 +1,5 @@
 {{$NEXT}}
+-bugfix: missing bounds checks in parser and setters
 -bugfix: segfault when query key not followed by '='
 -bugfix: non-digits no longer accepted when parsing port number
 -more thorough testing of parsing edge cases

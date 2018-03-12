@@ -12,32 +12,6 @@ my @uris = (
   'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
 );
 
-subtest 'parsing' => sub{
-  ok(uri($_), 'uri') foreach @uris;
-
-  subtest 'edge cases' => sub{
-    is uri(undef), 'file://', 'undef';
-    is uri(''), 'file://', 'empty string';
-
-    is uri('/foo')->scheme, 'file', 'default file scheme';
-    is uri('http://'), 'http://', 'non-file scheme w/o host';
-    is uri('http://test'), 'http://test', 'auth w/ invalid host';
-
-    is uri('http://usr:pwd')->usr, '', 'no usr w/o @';
-    is uri('http://usr:pwd')->pwd, '', 'no pwd w/o @';
-    is uri('http://usr:pwd')->host, 'usr', 'host w/ invalid port';
-    is uri('http://usr:pwd')->port, '', 'invalid port number ignored';
-
-    is uri('?')->query_hash, {}, 'empty query';
-    is uri('?foo')->query_hash, {'foo' => []}, 'query key w/o =value';
-    is uri('?foo=')->query_hash, {'foo' => ['']}, 'query key w/o value';
-    is uri('?=bar')->query_hash, {}, 'query =value w/o key';
-    is uri('?=')->query_hash, {}, 'query w/ = but w/o key or value';
-
-    is uri('#')->frag, '', 'fragment empty but starts with #';
-  };
-};
-
 subtest 'simple' => sub{
   ok my $uri = uri($uris[1]), 'ctor';
   is $uri->scheme, 'http', 'scheme';
@@ -311,5 +285,27 @@ subtest 'memory leaks' => sub{
 
   }, 'combined';
 };
+
+#subtest 'overruns' => sub{
+   # scheme: 16
+   # auth:   267
+   # path:   256
+   # query:  1024
+   # frag:   32
+   # usr:    64
+   # pwd:    64
+   # host:   128
+   # port:   8
+   my $uri = uri 'http://www.test.com';
+   ok $uri->scheme('x' x 17), 'scheme';
+   ok $uri->auth('x' x 268), 'auth';
+   ok $uri->path('x' x 257), 'path';
+   ok $uri->query('x' x 1025), 'query';
+   ok $uri->frag('x' x 33), 'frag';
+   ok $uri->usr('x' x 65), 'usr';
+   ok $uri->pwd('x' x 65), 'pwd';
+   ok $uri->host('x' x 129), 'host';
+   ok $uri->port('1234567890'), 'port';
+#};
 
 done_testing;
