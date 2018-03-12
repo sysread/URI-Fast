@@ -1,6 +1,7 @@
 #include "perl.h"
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 /*
  * Allocate memory with Newx if it's
@@ -259,6 +260,7 @@ void uri_scan_auth (uri_t* uri) {
   size_t idx  = 0;
   size_t brk1 = 0;
   size_t brk2 = 0;
+  size_t i;
 
   memset(&uri->usr,  '\0', 64);
   memset(&uri->pwd,  '\0', 64);
@@ -291,7 +293,16 @@ void uri_scan_auth (uri_t* uri) {
     if (brk1 > 0 && brk1 != (len - idx)) {
       strncpy(uri->host, &uri->auth[idx], brk1);
       idx += brk1 + 1;
-      strncpy(uri->port, &uri->auth[idx], len - idx);
+
+      for (i = 0; i < len - idx; ++i) {
+        if (!isdigit(uri->auth[i + idx])) {
+          memset(&uri->port, '\0', 8);
+          break;
+        }
+        else {
+          uri->port[i] = uri->auth[i + idx];
+        }
+      }
     }
     else {
       strncpy(uri->host, &uri->auth[idx], len - idx);
@@ -413,24 +424,29 @@ SV* query_hash(SV* uri) {
   const char* src = Uri_Mem(uri, query);
   size_t klen, vlen, idx;
   HV*  out = newHV();
-  AV*  arr;
-  SV** ref;
-  SV*  tmp;
+  AV*  arr = NULL;
+  SV** ref = NULL;
+  SV*  tmp = NULL;
 
   while (src != NULL && src[0] != '\0') {
     idx = strcspn(src, "=");
+    if (idx == 0) break;
+
     char key[idx + 1];
     klen = uri_decode(src, idx, key);
 
     src = strstr(src, "=");
-    src += 1;
 
-    idx = strcspn(src, "&");
-    char val[idx + 1];
-    vlen = uri_decode(src, idx, val);
+    if (src != NULL) {
+      src += 1;
 
-    tmp = newSVpv(val, vlen);
-    SvUTF8_on(tmp);
+      idx = strcspn(src, "&");
+      char val[idx + 1];
+      vlen = uri_decode(src, idx, val);
+
+      tmp = newSVpv(val, vlen);
+      SvUTF8_on(tmp);
+    }
 
     if (!hv_exists(out, key, klen)) {
       arr = newAV();
@@ -442,10 +458,15 @@ SV* query_hash(SV* uri) {
       arr = (AV*) SvRV(*ref);
     }
 
-    av_push(arr, tmp);
+    if (tmp != NULL) {
+      av_push(arr, tmp);
+    }
+
+    if (src == NULL) break;
 
     src = strstr(src, "&");
     if (src == NULL) break;
+
     ++src;
   }
 

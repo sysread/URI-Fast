@@ -12,26 +12,37 @@ my @uris = (
   'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
 );
 
-subtest 'implicit file path' => sub{
-  ok my $uri = uri($uris[0]), 'ctor';
-  is $uri->scheme, 'file', 'scheme';
-  ok !$uri->auth, 'auth';
-  is $uri->path, '/foo/bar/baz', 'path';
-  is [$uri->path], ['foo', 'bar', 'baz'], 'path';
-  ok !$uri->query, 'query';
-  ok !$uri->frag, 'frag';
+subtest 'parsing' => sub{
+  ok(uri($_), 'uri') foreach @uris;
 
-  ok !$uri->usr, 'usr';
-  ok !$uri->pwd, 'pwd';
-  ok !$uri->host, 'host';
-  ok !$uri->port, 'port';
+  subtest 'edge cases' => sub{
+    is uri(undef), 'file://', 'undef';
+    is uri(''), 'file://', 'empty string';
+
+    is uri('/foo')->scheme, 'file', 'default file scheme';
+    is uri('http://'), 'http://', 'non-file scheme w/o host';
+    is uri('http://test'), 'http://test', 'auth w/ invalid host';
+
+    is uri('http://usr:pwd')->usr, '', 'no usr w/o @';
+    is uri('http://usr:pwd')->pwd, '', 'no pwd w/o @';
+    is uri('http://usr:pwd')->host, 'usr', 'host w/ invalid port';
+    is uri('http://usr:pwd')->port, '', 'invalid port number ignored';
+
+    is uri('?')->query_hash, {}, 'empty query';
+    is uri('?foo')->query_hash, {'foo' => []}, 'query key w/o =value';
+    is uri('?foo=')->query_hash, {'foo' => ['']}, 'query key w/o value';
+    is uri('?=bar')->query_hash, {}, 'query =value w/o key';
+    is uri('?=')->query_hash, {}, 'query w/ = but w/o key or value';
+
+    is uri('#')->frag, '', 'fragment empty but starts with #';
+  };
 };
 
 subtest 'simple' => sub{
   ok my $uri = uri($uris[1]), 'ctor';
   is $uri->scheme, 'http', 'scheme';
   is $uri->auth, 'www.test.com', 'auth';
-  ok !$uri->path, 'path';
+  is $uri->path, '', 'path';
   is [$uri->path], [], 'path';
   ok !$uri->query, 'query';
   ok !$uri->frag, 'frag';
@@ -277,6 +288,28 @@ subtest 'memory leaks' => sub{
   no_leaks_ok { $uri->query_keys } 'query_keys';
   no_leaks_ok { $uri->query_hash } 'query_hash';
   no_leaks_ok { $uri->to_string } 'to_string';
+
+  no_leaks_ok {
+    my $uri   = uri $uris[3];
+    my @parts = ($uri->scheme, $uri->auth, $uri->path, $uri->query, $uri->frag);
+    my @auth  = ($uri->usr, $uri->pwd, $uri->host, $uri->port);
+    my @path  = $uri->path;
+    my @keys  = $uri->query_keys;
+    my $query = $uri->query_hash;
+
+    $uri->scheme('http');
+    $uri->auth('foo:bar@test.com:101010');
+    $uri->path('/asdf');
+    $uri->path('/Ῥόδος¢€');
+    $uri->path(['asdf', 'qwerty']);
+    $uri->query('foo=Ῥόδος¢€');
+    $uri->param('foo', 'bar');
+    $uri->param({foo => ['bar', 'baz']});
+    $uri->frag('foo');
+
+    my $str = "$uri";
+
+  }, 'combined';
 };
 
 done_testing;
