@@ -617,7 +617,7 @@ const char* set_port(SV* uri_obj, const char* value, int no_triggers) {
   size_t len = min(strlen(value), Uri_Port_Size);
   size_t i;
 
-  for (size_t i = 0; i < len; ++i) {
+  for (i = 0; i < len; ++i) {
     if (isdigit(value[i])) {
       Uri_Mem(uri_obj, port)[i] = value[i];
     }
