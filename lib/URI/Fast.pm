@@ -18,7 +18,7 @@ use overload '""' => sub{ $_[0]->to_string };
 
 sub uri ($) {
   my $self = URI::Fast->new($_[0] // '');
-  $self->set_scheme('file', 0) unless $self->get_scheme;
+  $self->set_scheme('file') unless $self->get_scheme;
   $self;
 }
 
@@ -29,7 +29,7 @@ foreach my $attr (qw(scheme usr pwd host port frag)) {
 
   *{__PACKAGE__ . "::$attr"} = sub {
     if (@_ == 2) {
-      $_[0]->$s($_[1], 0);
+      $_[0]->$s( $_[1] );
     }
 
     if (defined wantarray) {
@@ -46,14 +46,13 @@ sub auth {
 
   if (@_ == 2) {
     if (ref $val) {
-      $self->set_auth('', 1);
-      $self->set_usr($val->{usr}   // '', 1);
-      $self->set_pwd($val->{pwd}   // '', 1);
-      $self->set_host($val->{host} // '', 1);
-      $self->set_port($val->{port} // '', 0);
+      $self->set_usr($val->{usr}   // '');
+      $self->set_pwd($val->{pwd}   // '');
+      $self->set_host($val->{host} // '');
+      $self->set_port($val->{port} // '');
     }
     else {
-      $self->set_auth($val, 0);
+      $self->set_auth($val);
     }
   }
 
@@ -67,7 +66,7 @@ sub path {
 
   if (@_ == 2) {
     $val = '/' . join '/', @$val if ref $val;
-    $self->set_path($val, 0);
+    $self->set_path($val);
   }
 
   if (wantarray) {
@@ -84,12 +83,12 @@ sub query {
 
   if (@_ == 2) {
     if (ref $val) {
-      $self->set_query('', 1);
+      $self->clear_query;
       $self->param($_, $val->{$_})
         foreach keys %$val;
     }
     else {
-      $self->set_query($val, 0);
+      $self->set_query($val);
     }
   }
 

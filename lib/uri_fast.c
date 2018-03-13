@@ -268,14 +268,21 @@ size_t min(size_t a, size_t b) {
 /*
  * Clearers
  */
-inline void clear_scheme(SV* uri_obj) { memset(&((Uri(uri_obj))->scheme), '\0', sizeof(uri_scheme_t)); }
-inline void clear_path(SV* uri_obj)   { memset(&((Uri(uri_obj))->path),   '\0', sizeof(uri_path_t));   }
-inline void clear_query(SV* uri_obj)  { memset(&((Uri(uri_obj))->query),  '\0', sizeof(uri_query_t));  }
-inline void clear_frag(SV* uri_obj)   { memset(&((Uri(uri_obj))->frag),   '\0', sizeof(uri_frag_t));   }
-inline void clear_usr(SV* uri_obj)    { memset(&((Uri(uri_obj))->usr),    '\0', sizeof(uri_usr_t));    }
-inline void clear_pwd(SV* uri_obj)    { memset(&((Uri(uri_obj))->pwd),    '\0', sizeof(uri_pwd_t));    }
-inline void clear_host(SV* uri_obj)   { memset(&((Uri(uri_obj))->host),   '\0', sizeof(uri_host_t));   }
-inline void clear_port(SV* uri_obj)   { memset(&((Uri(uri_obj))->port),   '\0', sizeof(uri_port_t));   }
+void clear_scheme(SV* uri_obj) { memset(&((Uri(uri_obj))->scheme), '\0', sizeof(uri_scheme_t)); }
+void clear_path(SV* uri_obj)   { memset(&((Uri(uri_obj))->path),   '\0', sizeof(uri_path_t));   }
+void clear_query(SV* uri_obj)  { memset(&((Uri(uri_obj))->query),  '\0', sizeof(uri_query_t));  }
+void clear_frag(SV* uri_obj)   { memset(&((Uri(uri_obj))->frag),   '\0', sizeof(uri_frag_t));   }
+void clear_usr(SV* uri_obj)    { memset(&((Uri(uri_obj))->usr),    '\0', sizeof(uri_usr_t));    }
+void clear_pwd(SV* uri_obj)    { memset(&((Uri(uri_obj))->pwd),    '\0', sizeof(uri_pwd_t));    }
+void clear_host(SV* uri_obj)   { memset(&((Uri(uri_obj))->host),   '\0', sizeof(uri_host_t));   }
+void clear_port(SV* uri_obj)   { memset(&((Uri(uri_obj))->port),   '\0', sizeof(uri_port_t));   }
+
+void clear_auth(SV* uri_obj) {
+  clear_usr(uri_obj);
+  clear_pwd(uri_obj);
+  clear_host(uri_obj);
+  clear_port(uri_obj);
+}
 
 /*
  * Scans the authorization portion of the Uri string
@@ -555,49 +562,49 @@ SV* get_param(SV* uri, const char* key) {
  * Setters
  */
 
-const char* set_scheme(SV* uri_obj, const char* value, int no_triggers) {
+const char* set_scheme(SV* uri_obj, const char* value) {
   Uri_Encode_Set_Nolen(uri_obj, scheme, value, "", 0);
   return Uri_Mem(uri_obj, scheme);
 }
 
-SV* set_auth(SV* uri_obj, const char* value, int no_triggers) {
+SV* set_auth(SV* uri_obj, const char* value) {
   char auth[Uri_Size_auth];
   size_t len = uri_encode(value, strlen(value), &auth, ":@", 2);
-  if (!no_triggers) uri_scan_auth(Uri(uri_obj), auth, len);
+  uri_scan_auth(Uri(uri_obj), auth, len);
   return newSVpv(auth, len);
 }
 
-const char* set_path(SV* uri_obj, const char* value, int no_triggers) {
+const char* set_path(SV* uri_obj, const char* value) {
   Uri_Encode_Set_Nolen(uri_obj, path, value, "/", 1);
   return Uri_Mem(uri_obj, path);
 }
 
-const char* set_query(SV* uri_obj, const char* value, int no_triggers) {
+const char* set_query(SV* uri_obj, const char* value) {
   strncpy(Uri_Mem(uri_obj, query), value, min(strlen(value) + 1, Uri_Size_query));
   return value;
 }
 
-const char* set_frag(SV* uri_obj, const char* value, int no_triggers) {
+const char* set_frag(SV* uri_obj, const char* value) {
   Uri_Encode_Set_Nolen(uri_obj, frag, value, "", 0);
   return Uri_Mem(uri_obj, frag);
 }
 
-const char* set_usr(SV* uri_obj, const char* value, int no_triggers) {
+const char* set_usr(SV* uri_obj, const char* value) {
   Uri_Encode_Set_Nolen(uri_obj, usr, value, "", 0);
   return Uri_Mem(uri_obj, usr);
 }
 
-const char* set_pwd(SV* uri_obj, const char* value, int no_triggers) {
+const char* set_pwd(SV* uri_obj, const char* value) {
   Uri_Encode_Set_Nolen(uri_obj, pwd, value, "", 0);
   return Uri_Mem(uri_obj, pwd);
 }
 
-const char* set_host(SV* uri_obj, const char* value, int no_triggers) {
+const char* set_host(SV* uri_obj, const char* value) {
   Uri_Encode_Set_Nolen(uri_obj, host, value, "", 0);
   return Uri_Mem(uri_obj, host);
 }
 
-const char* set_port(SV* uri_obj, const char* value, int no_triggers) {
+const char* set_port(SV* uri_obj, const char* value) {
   size_t len = min(strlen(value), Uri_Size_port);
   size_t i;
 
