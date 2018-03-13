@@ -300,10 +300,10 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
   if (len > 0) {
     // Credentials
-    brk1 = strcspn(&auth[idx], "@");
+    brk1 = min(len, strcspn(&auth[idx], "@"));
 
     if (brk1 > 0 && brk1 != len) {
-      brk2 = strcspn(&auth[idx], ":");
+      brk2 = min(len - idx, strcspn(&auth[idx], ":"));
 
       if (brk2 > 0 && brk2 < brk1) {
         strncpy(uri->usr, &auth[idx], min(brk2, Uri_Size_usr));
@@ -319,7 +319,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
     }
 
     // Location
-    brk1 = strcspn(&auth[idx], ":");
+    brk1 = min(len - idx, strcspn(&auth[idx], ":"));
 
     if (brk1 > 0 && brk1 != (len - idx)) {
       strncpy(uri->host, &auth[idx], min(brk1, Uri_Size_host));
@@ -349,14 +349,14 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
   size_t brk = 0;
 
   // Scheme
-  brk = strcspn(&src[idx], ":/@?#");
+  brk = min(len, strcspn(&src[idx], ":/@?#"));
   if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
     strncpy(uri->scheme, &src[idx], min(brk, Uri_Size_scheme));
     uri->scheme[brk] = '\0';
     idx += brk + 3;
 
     // Authority
-    brk = strcspn(&src[idx], "/?#");
+    brk = min(len - idx, strcspn(&src[idx], "/?#"));
     if (brk > 0) {
       uri_scan_auth(uri, &src[idx], brk);
       idx += brk;
@@ -364,7 +364,7 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
   }
 
   // path
-  brk = strcspn(&src[idx], "?#");
+  brk = min(len - idx, strcspn(&src[idx], "?#"));
   if (brk > 0) {
     strncpy(uri->path, &src[idx], min(brk, Uri_Size_path));
     uri->path[brk] = '\0';
@@ -374,7 +374,7 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
   // query
   if (src[idx] == '?') {
     ++idx; // skip past ?
-    brk = strcspn(&src[idx], "#");
+    brk = min(len - idx, strcspn(&src[idx], "#"));
     if (brk > 0) {
       strncpy(uri->query, &src[idx], min(brk, Uri_Size_query));
       uri->query[brk] = '\0';

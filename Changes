@@ -1,4 +1,5 @@
 {{$NEXT}}
+-bugfix: length was being ignored in uri_scan_auth
 
 0.10 2018-03-13
 -exposed clear_* methods
