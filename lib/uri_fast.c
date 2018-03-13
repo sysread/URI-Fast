@@ -261,8 +261,12 @@ typedef struct {
 } uri_t;
 
 inline
-size_t min(size_t a, size_t b) {
-  return a <= b ? a : b;
+size_t min(size_t x, size_t y) {
+  if (x <= y) {
+    return x;
+  } else {
+    return y;
+  }
 }
 
 /*
