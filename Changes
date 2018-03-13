@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.10 2018-03-13
 -exposed clear_* methods
 -get_auth replaced by function joining sub-members
 -more thorough testing of parsing edge cases
