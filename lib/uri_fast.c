@@ -44,6 +44,10 @@
 #define Uri_Mem(obj, member) (Uri(obj)->member)
 #endif
 
+#ifndef min
+#define min(a, b) (a <= b ? a : b)
+#endif
+
 /*
  * Percent encoding
  */
@@ -259,15 +263,6 @@ typedef struct {
   uri_host_t   host;
   uri_port_t   port;
 } uri_t;
-
-inline
-size_t min(size_t x, size_t y) {
-  if (x <= y) {
-    return x;
-  } else {
-    return y;
-  }
-}
 
 /*
  * Clearers
