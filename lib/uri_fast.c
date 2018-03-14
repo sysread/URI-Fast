@@ -573,7 +573,7 @@ const char* set_scheme(SV* uri_obj, const char* value) {
 
 SV* set_auth(SV* uri_obj, const char* value) {
   char auth[Uri_Size_auth];
-  size_t len = uri_encode(value, strlen(value), &auth, ":@", 2);
+  size_t len = uri_encode(value, strlen(value), (char*) &auth, ":@", 2);
   uri_scan_auth(Uri(uri_obj), auth, len);
   return newSVpv(auth, len);
 }
