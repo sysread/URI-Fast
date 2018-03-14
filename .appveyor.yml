@@ -6,7 +6,7 @@ install:
   - set PATH=C:\strawberry\perl\bin;C:\strawberry\perl\site\bin;C:\strawberry\c\bin;%PATH%
   - cd C:\projects\%APPVEYOR_PROJECT_NAME%
   - cpanm --notest --quiet Dist::Zilla
-  - dzil listdeps --missing | cpanm --notest --quiet
   - dzil authordeps --missing | cpanm --notest --quiet
+  - dzil listdeps --missing | cpanm --notest --quiet
 build_script:
   - dzil test --test-verbose
