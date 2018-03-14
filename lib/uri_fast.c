@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
+// member size constants
 #ifndef Uri_Size
 #define Uri_Size_scheme 32
 #define Uri_Size_path   1024
@@ -12,11 +13,14 @@
 #define Uri_Size_pwd    64
 #define Uri_Size_host   256
 #define Uri_Size_port   8
+
 // enough to fit all pieces + 3 chars for separators (2 colons + @)
-#define Uri_Size_auth   (3 + Uri_Size_usr + Uri_Size_pwd + Uri_Size_host + Uri_Size_port)
+#define Uri_Size_auth (3 + Uri_Size_usr + Uri_Size_pwd + Uri_Size_host + Uri_Size_port)
+
 #define Uri_Size(member) (Uri_Size_##member)
 #endif
 
+// quick sugar for calling uri_encode
 #ifndef Uri_Encode_Set_Nolen
 #define Uri_Encode_Set_Nolen(uri_obj, member, value, allow, allow_len) uri_encode(value, min(strlen(value), Uri_Size(member)), Uri_Mem(uri_obj, member), allow, allow_len)
 #endif
@@ -36,14 +40,17 @@
 #define av_top_index(av) av_len(av)
 #endif
 
+// return uri_t* from blessed pointer ref
 #ifndef Uri
 #define Uri(obj) ((uri_t*) SvIV(SvRV(obj)))
 #endif
 
+// expands to member reference
 #ifndef Uri_Mem
 #define Uri_Mem(obj, member) (Uri(obj)->member)
 #endif
 
+// min of two numbers
 #ifndef min
 #define min(a, b) (a <= b ? a : b)
 #endif
