@@ -79,12 +79,12 @@ sub path {
 
 # Queries may be set with either a string or a hash ref
 sub query {
-  my ($self, $val) = @_;
+  my ($self, $val, $sep) = @_;
 
-  if (@_ == 2) {
+  if (@_ > 1) {
     if (ref $val) {
       $self->clear_query;
-      $self->param($_, $val->{$_})
+      $self->param($_, $val->{$_}, $sep)
         foreach keys %$val;
     }
     else {
@@ -102,14 +102,15 @@ sub query_keys {
 }
 
 sub param {
-  my ($self, $key, $val) = @_;
+  my ($self, $key, $val, $sep) = @_;
+  $sep ||= '&';
 
-  if (@_ == 3) {
+  if (@_ > 2) {
     $val = ref     $val ? $val
          : defined $val ? [$val]
          : [];
 
-    $self->set_param($key, $val);
+    $self->set_param($key, $val, $sep);
   }
 
   # No return value in void context
@@ -211,7 +212,12 @@ The path may also be updated using either a string or an array ref of segments:
 
 =head2 query
 
-The complete query string. Does not include the leading C<?>.
+Returns the complete query string. Does not include the leading C<?>. The query
+string may be set in several ways.
+
+  $uri->query("foo=bar&baz=bat"); # note: no percent-encoding performed
+  $uri->query({foo => 'bar', baz => 'bat'}); # foo=bar&baz=bat
+  $uri->query({foo => 'bar', baz => 'bat'}, ';'); # foo=bar;baz=bat
 
 =head3 query_keys
 
@@ -238,6 +244,12 @@ parameter to C<undef> deletes the parameter from the URI.
 
   # Delete 'foo'
   $uri->param('foo', undef);
+
+An optional third parameter may be specified to control the character used to
+separate key/value pairs.
+
+  $uri->param('foo', 'bar', ';'); # foo=bar
+  $uri->param('baz', 'bat', ';'); # foo=bar;baz=bat
 
 =head2 frag
 

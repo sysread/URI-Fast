@@ -1,4 +1,5 @@
 {{$NEXT}}
+-support for specifying delimiter when modifying query parameters
 
 0.12 2018-03-14
 -bugfix: fix compiler error on MSWin32 (thanks appveyor!)

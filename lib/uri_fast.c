@@ -437,59 +437,6 @@ SV* get_auth(SV* uri_obj) {
   return out;
 }
 
-SV* query_hash(SV* uri) {
-  const char* src = Uri_Mem(uri, query);
-  size_t klen, vlen, idx;
-  HV*  out = newHV();
-  AV*  arr = NULL;
-  SV** ref = NULL;
-  SV*  tmp = NULL;
-
-  while (src != NULL && src[0] != '\0') {
-    idx = strcspn(src, "=");
-    if (idx == 0) break;
-
-    char key[idx + 1];
-    klen = uri_decode(src, idx, key);
-
-    src = strstr(src, "=");
-
-    if (src != NULL) {
-      src += 1;
-
-      idx = strcspn(src, "&");
-      char val[idx + 1];
-      vlen = uri_decode(src, idx, val);
-
-      tmp = newSVpv(val, vlen);
-      SvUTF8_on(tmp);
-    }
-
-    if (!hv_exists(out, key, klen)) {
-      arr = newAV();
-      hv_store(out, key, klen, newRV_noinc((SV*) arr), 0);
-    }
-    else {
-      ref = hv_fetch(out, key, klen, 0);
-      if (ref == NULL) croak("query_form: something went wrong");
-      arr = (AV*) SvRV(*ref);
-    }
-
-    if (tmp != NULL) {
-      av_push(arr, tmp);
-    }
-
-    if (src == NULL) break;
-
-    src = strstr(src, "&");
-    if (src == NULL) break;
-
-    ++src;
-  }
-
-  return newRV_noinc((SV*) out);
-}
-
 SV* split_path(SV* uri) {
   size_t brk, idx = 0;
   AV* arr = newAV();
@@ -520,7 +467,7 @@ SV* get_query_keys(SV* uri) {
   HV* out = newHV();
 
   for (src = Uri_Mem(uri, query); src != NULL && src[0] != '\0'; src = strstr(src, "&")) {
-    if (src[0] == '&') {
+    if (src[0] == '&' || src[0] == ';') {
       ++src;
     }
 
@@ -533,7 +480,103 @@ SV* get_query_keys(SV* uri) {
   return newRV_noinc((SV*) out);
 }
 
-SV* get_param(SV* uri, const char* key) {
+SV* query_hash(SV* uri) {
+  const char* src = Uri_Mem(uri, query);
+  size_t idx = 0, brk, klen, vlen, slen = min(Uri_Size_query, strlen(src));
+  SV** ref;
+  SV* tmp;
+  AV* arr;
+  HV* out = newHV();
+
+  while (idx < slen) {
+    tmp = NULL;
+
+    // Scan key
+    brk = strcspn(&src[idx], "=");
+
+    // Missing key (e.g. query is "?=foo")
+    if (brk == 0) {
+      // Skip past value since there is no key to store it
+      idx += strcspn(&src[idx], "&;") + 1;
+      continue;
+    }
+
+    // Decode key
+    char key[brk + 1];
+    klen = uri_decode(&src[idx], brk, key);
+    idx += brk + 1;
+
+    // Scan value
+    brk = strcspn(&src[idx], "&;");
+
+    // Create SV of value
+    if (brk > 0) {
+      char val[brk + 1];
+      vlen = uri_decode(&src[idx], brk, val);
+
+      // Create new sv to store value
+      tmp = newSVpv(val, vlen);
+      SvUTF8_on(tmp);
+    }
+
+    // Move to next key
+    idx += brk + 1;
+
+    if (!hv_exists(out, key, klen)) {
+      arr = newAV();
+      hv_store(out, key, klen, newRV_noinc((SV*) arr), 0);
+    }
+    else {
+      ref = hv_fetch(out, key, klen, 0);
+      if (ref == NULL) {
+        croak("query_form: something went wrong");
+      }
+      arr = (AV*) SvRV(*ref);
+    }
+
+    if (tmp != NULL) {
+      av_push(arr, tmp);
+    }
+  }
+
+  return newRV_noinc((SV*) out);
+}
+
+SV* get_param(SV* uri, SV* sv_key) {
+  const char* src = Uri_Mem(uri, query);
+  size_t idx = 0, brk = 0, klen, elen, vlen, len = min(Uri_Size_query, strlen(src));
+  char* key = SvPV(sv_key, klen);
+  AV* out = newAV();
+  SV* value;
+
+  char enc_key[(klen * 3) + 2];
+  elen = uri_encode(key, klen, enc_key, "", 0);
+  enc_key[elen] = '=';
+  enc_key[++elen] = '\0';
+
+  while (idx < len) {
+    if (strncmp(&src[idx], enc_key, elen) == 0) {
+      idx += elen;
+      brk = strcspn(&src[idx], "&;");
+
+      char val[brk + 1];
+      vlen = uri_decode(&src[idx], brk, val);
+
+      idx += brk + 1;
+
+      value = newSVpv(val, vlen);
+      SvUTF8_on(value);
+      av_push(out, value);
+    }
+    else {
+      idx += strcspn(&src[idx], "&;") + 1;
+    }
+  }
+
+  return newRV_noinc((SV*) out);
+}
+
+SV* get_param_old(SV* uri, const char* key) {
   const char *tmp, *src = Uri_Mem(uri, query);
   char haystack[1024], needle[32];
   size_t klen, vlen, idx;
@@ -566,7 +609,6 @@ SV* get_param(SV* uri, const char* key) {
 /*
  * Setters
  */
-
 const char* set_scheme(SV* uri_obj, const char* value) {
   Uri_Encode_Set_Nolen(uri_obj, scheme, value, "", 0);
   return Uri_Mem(uri_obj, scheme);
@@ -626,14 +668,16 @@ const char* set_port(SV* uri_obj, const char* value) {
   return Uri_Mem(uri_obj, port);
 }
 
-void set_param(SV* uri, const char* key, SV* sv_values) {
+void set_param(SV* uri, SV* sv_key, SV* sv_values, const char* separator) {
   char   dest[1024];
-  const  char *src = Uri_Mem(uri, query), *strval;
+  const  char *key, *src = Uri_Mem(uri, query), *strval;
+  const  char sep = separator[0];
   size_t klen, vlen, slen, qlen = strlen(src), avlen, i = 0, j = 0, brk = 0;
   AV*    av_values;
   SV**   ref;
 
-  char enckey[(3 * strlen(key)) + 1];
+  key = SvPV(sv_key, klen);
+  char enckey[(3 * klen) + 1];
   klen = uri_encode(key, 0, enckey, "", 0);
 
   av_values = (AV*) SvRV(sv_values);
@@ -645,11 +689,11 @@ void set_param(SV* uri, const char* key, SV* sv_values) {
     // copying into dest as idx advances.
     while (strncmp(&src[i], enckey, klen) != 0) {
       // Find the end of this key=value section
-      brk = strcspn(&src[i], "&");
+      brk = strcspn(&src[i], separator);
 
       // If this is not the first key=value section written to dest, add an
       // ampersand to separate the pairs.
-      if (j > 0) dest[j++] = '&';
+      if (j > 0) dest[j++] = src[i + brk];
 
       // Copy up to our break point
       strncpy(&dest[j], &src[i], brk);
@@ -657,16 +701,17 @@ void set_param(SV* uri, const char* key, SV* sv_values) {
       i += brk;
 
       if (i >= qlen) break;
-      if (src[i] == '&') ++i;
+      if (strcspn(&src[i], separator) == 0) ++i;
     }
 
     // The key was found; skip past to the next key=value pair
-    i += strcspn(&src[i], "&");
+    i += strcspn(&src[i], separator);
 
     // Skip the '&', too, since it will already be there
-    if (src[i] == '&') ++i;
+    if (strcspn(&src[i], separator) == 0) ++i;
   }
 
+  // Add the new values to the query
   for (i = 0; i <= avlen; ++i) {
     // Fetch next value from the array
     ref = av_fetch(av_values, (SSize_t) i, 0);
@@ -674,7 +719,7 @@ void set_param(SV* uri, const char* key, SV* sv_values) {
     if (!SvOK(*ref)) break;
 
     // Add ampersand if needed to separate pairs
-    if (j > 0) dest[j++] = '&';
+    if (j > 0) dest[j++] = sep;
 
     // Copy key over
     strncpy(&dest[j], enckey, klen);
