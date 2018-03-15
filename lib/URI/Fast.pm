@@ -8,7 +8,7 @@ use warnings;
 no strict 'refs';
 
 use Carp;
-use Inline C => 'lib/uri_fast.c' => config => optimize => ['-O2'];
+use Inline C => 'lib/uri_fast.c' => optimize => '-O2';
 
 require Exporter;
 use parent 'Exporter';
