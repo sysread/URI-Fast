@@ -58,8 +58,7 @@
 /*
  * Percent encoding
  */
-
-inline
+static inline
 char is_allowed(char c, const char* allowed, size_t len) {
   size_t i;
   for (i = 0; i < len; ++i) {
