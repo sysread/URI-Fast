@@ -452,7 +452,7 @@ SV* split_path(SV* uri) {
 
   while (idx < len) {
     brk = strcspn(&str[idx], "/");
-    tmp = newSVpv(&str[idx], brk);
+    tmp = newSVpvn(&str[idx], brk);
     SvUTF8_on(tmp);
     av_push(arr, tmp);
     idx += brk + 1;

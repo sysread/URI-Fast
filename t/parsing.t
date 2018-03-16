@@ -44,6 +44,35 @@ subtest 'query_hash' => sub{
   is uri('???')->query_hash, hash{ field '??' => array{ end }; end }, 'multiple question marks';
 };
 
+subtest 'split_path' => sub{
+  is uri('//foo/baz.png')->split_path, array{
+    item '';
+    item 'foo';
+    item 'baz.png';
+    end;
+  }, 'double leading slashes';
+
+  is uri('/foo/bar/')->split_path, array{
+    item 'foo';
+    item 'bar';
+    end;
+  }, 'trailing slash';
+
+  is uri('/foo/bar//')->split_path, array{
+    item 'foo';
+    item 'bar';
+    item '';
+    end;
+  }, 'double trailing slashes';
+
+  is uri('/foo//bar')->split_path, array{
+    item 'foo';
+    item '';
+    item 'bar';
+    end;
+  }, 'double internal slashes';
+};
+
 subtest 'overruns' => sub{
    # scheme: 16
    # auth:   267
