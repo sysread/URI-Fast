@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.13 2018-03-16
 -support for specifying delimiter when modifying query parameters
 -bugfix: inlined function visibility lost in generated xs scope
 
