@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.15 2018-03-16
 -bugfix: split_path generates incorrect segments on //paths
 
 0.14 2018-03-16
