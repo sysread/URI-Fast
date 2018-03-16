@@ -1,4 +1,6 @@
 {{$NEXT}}
+-bugfix: dynamically find path to uri_fast.c
+-bugfix: move uri_fast.c out of lib root
 
 0.13 2018-03-16
 -support for specifying delimiter when modifying query parameters

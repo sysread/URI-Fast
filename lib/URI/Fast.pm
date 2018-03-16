@@ -6,11 +6,17 @@ use utf8;
 use strict;
 use warnings;
 no strict 'refs';
-
 use Carp;
-use Inline C => 'lib/uri_fast.c' => optimize => '-O2';
-
+require Inline;
 require Exporter;
+require File::Spec;
+
+# Build
+my $path = File::Spec->rel2abs(__FILE__);
+$path =~ s/\.pm$//;
+$path .= '/uri_fast.c';
+Inline->bind(C => $path => optimize => '-O2');
+
 use parent 'Exporter';
 our @EXPORT_OK = qw(uri uri_split);
 
