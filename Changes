@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.16 2018-03-19
 -bugfix: mixed separators in generated source file path on some mswin32 systems
 
 0.15 2018-03-16
