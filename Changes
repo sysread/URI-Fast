@@ -1,4 +1,5 @@
 {{$NEXT}}
+-bugfix: in which sysread gives up and puts the code in __DATA__ after all
 
 0.16 2018-03-19
 -bugfix: mixed separators in generated source file path on some mswin32 systems
