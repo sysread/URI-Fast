@@ -14,7 +14,7 @@ use File::Spec qw();
 # Build
 my $path = File::Spec->rel2abs(__FILE__);
 $path =~ s/\.pm$//;
-$path .= '/uri_fast.c';
+$path = File::Spec->catfile($path, 'uri_fast.c');
 Inline->bind(C => $path => optimize => '-O2');
 
 use parent 'Exporter';
