@@ -7,9 +7,9 @@ use strict;
 use warnings;
 no strict 'refs';
 use Carp;
-require Inline;
-require Exporter;
-require File::Spec;
+use Inline;
+use Exporter;
+use File::Spec qw();
 
 # Build
 my $path = File::Spec->rel2abs(__FILE__);
