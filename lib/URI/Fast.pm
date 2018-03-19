@@ -1163,3 +1163,5 @@ void uri_split(SV* uri) {
 
   Inline_Stack_Done;
 }
+
+//__EOC__
