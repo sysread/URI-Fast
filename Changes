@@ -1,4 +1,5 @@
 {{$NEXT}}
+-support for tied scalar inputs in XS code
 
 0.17 2018-03-19
 -bugfix: in which sysread gives up and puts the code in __DATA__ after all

@@ -17,7 +17,7 @@ our @EXPORT_OK = qw(uri uri_split);
 use overload '""' => sub{ $_[0]->to_string };
 
 sub uri ($) {
-  my $self = URI::Fast->new($_[0] // '');
+  my $self = URI::Fast->new($_[0]);
   $self->set_scheme('file') unless $self->get_scheme;
   $self;
 }
@@ -518,14 +518,16 @@ size_t uri_decode(const char *in, size_t len, char *out) {
 SV* encode(SV* in, ...) {
   size_t ilen, olen, alen;
   const char *allowed;
-  const char *src = SvPV_const(in, ilen);
-  char dest[(ilen * 3) + 1];
   SV* out;
+
+  SvGETMAGIC(in);
+  const char *src = SvPV_nomg_const(in, ilen);
+  char dest[(ilen * 3) + 1];
 
   Inline_Stack_Vars;
 
   if (Inline_Stack_Items > 1) {
-    allowed = SvPV(Inline_Stack_Item(1), alen);
+    allowed = SvPV_nomg_const(Inline_Stack_Item(1), alen);
   } else {
     allowed = "";
     alen = 0;
@@ -543,7 +545,9 @@ SV* encode(SV* in, ...) {
 SV* decode(SV* in) {
   size_t ilen, olen;
   const char* src;
-  SV*   out;
+  SV* out;
+
+  SvGETMAGIC(in);
 
   if (SvUTF8(in)) {
     in = sv_mortalcopy(in);
@@ -554,10 +558,10 @@ SV* decode(SV* in) {
       croak("decode: wide character in octet string");
     }
 
-    src = SvPV_const(in, ilen);
+    src = SvPV_nomg_const(in, ilen);
   }
   else {
-    src = SvPV_const(in, ilen);
+    src = SvPV_nomg_const(in, ilen);
   }
 
   char dest[ilen + 1];
@@ -867,9 +871,11 @@ SV* query_hash(SV* uri) {
 SV* get_param(SV* uri, SV* sv_key) {
   const char* src = URI_MEMBER(uri, query);
   size_t idx = 0, brk = 0, klen, elen, vlen, len = min(URI_SIZE_query, strlen(src));
-  char* key = SvPV(sv_key, klen);
   AV* out = newAV();
   SV* value;
+
+  SvGETMAGIC(sv_key);
+  const char* key = SvPV_nomg_const(sv_key, klen);
 
   char enc_key[(klen * 3) + 2];
   elen = uri_encode(key, klen, enc_key, "", 0);
@@ -968,9 +974,15 @@ void set_param(SV* uri, SV* sv_key, SV* sv_values, const char* separator) {
   AV*    av_values;
   SV**   ref;
 
-  key = SvPV(sv_key, klen);
+  SvGETMAGIC(sv_key);
+  key = SvPV_nomg_const(sv_key, klen);
   char enckey[(3 * klen) + 1];
   klen = uri_encode(key, strlen(key), enckey, "", 0);
+
+  SvGETMAGIC(sv_values);
+  if (!SvROK(sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
+    croak("set_param: expected array of values");
+  }
 
   av_values = (AV*) SvRV(sv_values);
   avlen = av_top_index(av_values);
@@ -1020,7 +1032,9 @@ void set_param(SV* uri, SV* sv_key, SV* sv_values, const char* separator) {
     dest[j++] = '=';
 
     // Copy value over
-    strval = SvPV(*ref, slen);
+    SvGETMAGIC(*ref);
+    strval = SvPV_nomg_const(*ref, slen);
+
     vlen = uri_encode(strval, slen, &dest[j], "", 0);
     j += vlen;
   }
@@ -1082,7 +1096,16 @@ SV* new(const char* class, SV* uri_str) {
   sv_bless(obj_ref, gv_stashpv(class, GV_ADD));
   SvREADONLY_on(obj);
 
-  src = SvPV_const(uri_str, len);
+  SvGETMAGIC(uri_str);
+
+  if (!SvOK(uri_str)) {
+    src = "";
+    len = 0;
+  }
+  else {
+    src = SvPV_nomg_const(uri_str, len);
+  }
+
   uri_scan(uri, src, len);
 
   return obj_ref;
@@ -1097,10 +1120,20 @@ void DESTROY(SV* uri_obj) {
  * Extras
  */
 void uri_split(SV* uri) {
+  const char* src;
   size_t idx = 0;
   size_t brk = 0;
   size_t len;
-  const char* src = SvPV_const(uri, len);
+
+  SvGETMAGIC(uri);
+
+  if (!SvOK(uri)) {
+    src = "";
+    len = 0;
+  }
+  else {
+    src = SvPV_nomg_const(uri, len);
+  }
 
   Inline_Stack_Vars;
   Inline_Stack_Reset;
