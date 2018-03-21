@@ -5,7 +5,6 @@ use URI::Encode::XS qw(uri_encode_utf8 uri_decode_utf8);
 use URI::Fast qw(uri uri_split);
 use URI::Split qw();
 use URI;
-use IRI;
 
 my $POD;
 
@@ -60,37 +59,31 @@ sub test {
 
 test 'Constructor', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]) },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]) },
   'URI::Fast' => sub{ my $uri = uri $urls[3] },
 };
 
 test 'Parse scheme', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->scheme },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); $uri->scheme },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->scheme },
 };
 
 test 'Update scheme', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[1]); $uri->scheme('https') },
-  'IRI' => sub{ my $uri = IRI->new($urls[1]); $uri->scheme('https') },
   'URI::Fast' => sub{ my $uri = uri $urls[1]; $uri->scheme('https') },
 };
 
 test 'Parse authorization', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->host },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); $uri->host },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host },
 };
 
 test 'Update authorization', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->host('test.com') },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); $uri->host('test.com') },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host('test.com') },
 };
 
 test 'Parse path (scalar)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $p = $uri->path },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); my $p = $uri->path },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $p = $uri->path },
 };
 
@@ -101,43 +94,36 @@ test 'Parse path (list)', 500_000, {
 
 test 'Update path (scalar)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/foo/bar') },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); $uri->path('/foo/bar') },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->path('/foo/bar') },
 };
 
 test 'Update path (array)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/' . join('/', 'foo', 'bar')) },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); $uri->path('/' . join('/', 'foo', 'bar')) },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->path(['foo', 'bar']) },
 };
 
 test 'Parse query', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my %q = $uri->query_form },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); my %q = $uri->query_form },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my @v = $uri->param('asdf') },
 };
 
 test 'Set query parameter', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->query_form(foo => 'bar') },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); $uri->query_form(foo => 'bar') },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->param('foo', 'bar') },
 };
 
 test 'Query form', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my %q = $uri->query_form },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); my %q = $uri->query_form },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $q = $uri->query_hash },
 };
 
 test 'Query keys', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my @k = keys %{$uri->query_form} },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); my @k = keys %{$uri->query_form} },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my @k = $uri->query_keys },
 };
 
 test 'Stringification', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $str = "$uri" },
-  'IRI' => sub{ my $uri = IRI->new($urls[3]); my $str = "$uri" },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $str = "$uri" },
 };
 
