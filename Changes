@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.18 2018-03-21
 -support for tied scalar inputs in XS code
 
 0.17 2018-03-19
