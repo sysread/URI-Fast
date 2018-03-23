@@ -510,6 +510,10 @@ size_t uri_decode(const char *in, size_t len, char *out) {
 
   out[j] = '\0';
 
+  if (!is_utf8_string(out, j)) {
+    croak("uri_decode: invalid multibyte sequence");
+  }
+
   return j;
 }
 
@@ -555,7 +559,7 @@ SV* decode(SV* in) {
     SvUTF8_on(in);
 
     if (!sv_utf8_downgrade(in, TRUE)) {
-      croak("decode: wide character in octet string");
+      croak("decode: wide character in input octet string");
     }
 
     src = SvPV_nomg_const(in, ilen);
@@ -889,9 +893,7 @@ SV* get_param(SV* uri, SV* sv_key) {
 
       char val[brk + 1];
       vlen = uri_decode(&src[idx], brk, val);
-
       idx += brk + 1;
-
       value = newSVpv(val, vlen);
       SvUTF8_on(value);
       av_push(out, value);

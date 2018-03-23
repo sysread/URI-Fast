@@ -56,6 +56,13 @@ subtest 'utf8' => sub{
   is $uri->param('x'), $u, 'param', $uri->get_query;
   is $uri->query({x => $u}), "x=$a", "query", $uri->get_query;
   is $uri->param('x'), $u, 'param', $uri->get_query;
+
+  subtest 'malformed' => sub{
+    ok dies{ uri('/?lang=p%EErl')->get_param('lang')->[0] }, 'get_param';
+    ok dies{ uri('/?lang=p%EErl')->query_hash }, 'query_hash';
+    ok dies{ uri('/lang/p%EErl/')->split_path }, 'split_path';
+    ok dies{ URI::Fast::decode('p%EErl') }, 'decode';
+  };
 };
 
 done_testing;

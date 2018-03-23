@@ -1,4 +1,5 @@
 {{$NEXT}}
+-added minimal validation of decoded utf8 (croaks on invalid sequences)
 
 0.18 2018-03-21
 -support for tied scalar inputs in XS code
