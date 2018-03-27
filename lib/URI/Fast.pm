@@ -471,48 +471,54 @@ static const unsigned char hex[0x100] = {
 };
 #undef __
 
+static inline
+char unhex(const char *in) {
+  unsigned char v1 = hex[ (unsigned char) in[0] ];
+  unsigned char v2 = hex[ (unsigned char) in[1] ];
+
+  /* skip invalid hex sequences */
+  if ((v1 | v2) != 0xFF) {
+    return (v1 << 4) | v2;
+  }
+
+  return '\0';
+}
+
 size_t uri_decode(const char *in, size_t len, char *out) {
   size_t i = 0, j = 0;
   unsigned char v1, v2;
-  int copy_char;
+  char decoded;
 
   if (len == 0) {
     len = strlen((char*) in);
   }
 
   while (i < len) {
-    copy_char = 1;
+    decoded = '\0';
 
-    if (in[i] == '+') {
-      out[j] = ' ';
-      ++i;
-      ++j;
-      copy_char = 0;
+    switch (in[i]) {
+      case '+':
+        decoded = ' ';
+        ++i;
+        break;
+      case '%':
+        if (i + 2 < len) {
+          decoded = unhex( &in[i + 1] );
+          if (decoded != '\0') {
+            i += 3;
+            break;
+          }
+        }
+      default:
+        decoded = in[i++];
     }
-    else if (in[i] == '%' && i + 2 < len) {
-      v1 = hex[ (unsigned char)in[i+1] ];
-      v2 = hex[ (unsigned char)in[i+2] ];
 
-      /* skip invalid hex sequences */
-      if ((v1 | v2) != 0xFF) {
-        out[j] = (v1 << 4) | v2;
-        ++j;
-        i += 3;
-        copy_char = 0;
-      }
-    }
-    if (copy_char) {
-      out[j] = in[i];
-      ++i;
-      ++j;
+    if (decoded != '\0') {
+      out[j++] = decoded;
     }
   }
 
   out[j] = '\0';
-
-  if (!is_utf8_string(out, j)) {
-    croak("uri_decode: invalid multibyte sequence");
-  }
 
   return j;
 }

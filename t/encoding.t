@@ -3,9 +3,10 @@ use Test2::V0;
 use URI::Encode::XS qw(uri_encode_utf8 uri_decode_utf8);
 use URI::Fast qw(uri);
 
-my $url      = 'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff';
-my $reserved = q{! * ' ( ) ; : @ & = + $ , / ? # [ ] %};
-my $utf8     = "Ῥόδος¢€";
+my $url       = 'https://test.com/some/path?aaaa=bbbb&cccc=dddd&eeee=ffff';
+my $reserved  = q{! * ' ( ) ; : @ & = + $ , / ? # [ ] %};
+my $utf8      = "Ῥόδος¢€";
+my $malformed = 'p%EErl%E1%BF%AC+%CF%82';
 
 subtest 'basics' => sub{
   is URI::Fast::encode('asdf'), 'asdf', 'non-reserved';
@@ -56,13 +57,6 @@ subtest 'utf8' => sub{
   is $uri->param('x'), $u, 'param', $uri->get_query;
   is $uri->query({x => $u}), "x=$a", "query", $uri->get_query;
   is $uri->param('x'), $u, 'param', $uri->get_query;
-
-  subtest 'malformed' => sub{
-    ok dies{ uri('/?lang=p%EErl')->get_param('lang')->[0] }, 'get_param';
-    ok dies{ uri('/?lang=p%EErl')->query_hash }, 'query_hash';
-    ok dies{ uri('/lang/p%EErl/')->split_path }, 'split_path';
-    ok dies{ URI::Fast::decode('p%EErl') }, 'decode';
-  };
 };
 
 done_testing;
