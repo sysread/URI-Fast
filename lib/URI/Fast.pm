@@ -1,15 +1,20 @@
 package URI::Fast;
-
 # ABSTRACT: A fast(er) URI parser
 
-use utf8;
 use strict;
 use warnings;
 no strict 'refs';
+
 use Carp;
-use Inline;
 use Exporter;
-use Inline C => 'DATA', optimize => '-O2';
+
+use Inline
+  C        => 'DATA',
+  name     => 'URI::Fast',
+  version  => eval '$URI::Fast::VERSION',
+  optimize => '-O2';
+
+Inline->init;
 
 use parent 'Exporter';
 our @EXPORT_OK = qw(uri uri_split);

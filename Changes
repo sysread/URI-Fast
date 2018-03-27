@@ -1,4 +1,6 @@
 {{$NEXT}}
+-bugfix: add 'name' and 'version' parameters to `use Inline` statment and call
+ to `Inline->init` to avoid runtime lookup errors
 
 0.21 2018-03-27
 -compromise: attempt to decode utf8 from percent-encoded sequences, but
