@@ -57,6 +57,9 @@ subtest 'utf8' => sub{
   is $uri->param('x'), $u, 'param', $uri->get_query;
   is $uri->query({x => $u}), "x=$a", "query", $uri->get_query;
   is $uri->param('x'), $u, 'param', $uri->get_query;
+
+  ok my $mal = URI::Fast::decode($malformed), 'decode: malformed';
+  ok !utf8::is_utf8($mal), 'decode: utf8 flag not set when malformed';
 };
 
 done_testing;

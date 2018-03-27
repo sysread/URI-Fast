@@ -578,7 +578,7 @@ SV* decode(SV* in) {
 
   olen = uri_decode(src, ilen, dest);
   out  = newSVpv(dest, olen);
-  SvUTF8_on(out);
+  sv_utf8_decode(out);
 
   return out;
 }
@@ -789,7 +789,7 @@ SV* split_path(SV* uri) {
   while (idx < len) {
     brk = strcspn(&str[idx], "/");
     tmp = newSVpvn(&str[idx], brk);
-    SvUTF8_on(tmp);
+    sv_utf8_decode(tmp);
     av_push(arr, tmp);
     idx += brk + 1;
   }
@@ -852,7 +852,7 @@ SV* query_hash(SV* uri) {
 
       // Create new sv to store value
       tmp = newSVpv(val, vlen);
-      SvUTF8_on(tmp);
+      sv_utf8_decode(tmp);
     }
 
     // Move to next key
@@ -901,7 +901,7 @@ SV* get_param(SV* uri, SV* sv_key) {
       vlen = uri_decode(&src[idx], brk, val);
       idx += brk + 1;
       value = newSVpv(val, vlen);
-      SvUTF8_on(value);
+      sv_utf8_decode(value);
       av_push(out, value);
     }
     else {

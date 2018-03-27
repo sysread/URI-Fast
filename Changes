@@ -1,4 +1,6 @@
 {{$NEXT}}
+-compromise: attempt to decode utf8 from percent-encoded sequences, but
+ fail gracefully
 
 0.20 2018-03-27
 -don't croak on invalid utf8; uri may include arbitrary encoded bytes
