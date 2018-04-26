@@ -1,4 +1,6 @@
 {{$NEXT}}
+-support for IRIs via new constructor, iri()
+-documented uri_split()
 
 0.22 2018-03-27
 -bugfix: add 'name' and 'version' parameters to `use Inline` statment and call

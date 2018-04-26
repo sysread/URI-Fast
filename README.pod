@@ -4,11 +4,11 @@
 
 =head1 NAME
 
-URI::Fast - A fast(er) URI parser
+URI::Fast::IRI - A fast(er) URI parser
 
 =head1 VERSION
 
-version 0.22
+version 0.23
 
 =head1 SYNOPSIS
 
@@ -41,7 +41,17 @@ parameter.
 
 =head2 uri
 
-Accepts a URI string, minimally parses it, and returns a L<URI::Fast> object.
+Accepts a URI string, minimally parses it, and returns a C<URI::Fast> object.
+
+=head2 iri
+
+Similar to L</uri>, but returns a C<URI::Fast::IRI> object. A C<URI::Fast::IRI>
+differs from a C<URI::Fast> in that UTF-8 characters are permitted and will not
+be percent-encoded when modified.
+
+=head2 uri_split
+
+Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
 
 =head1 ATTRIBUTES
 
