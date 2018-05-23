@@ -5,7 +5,7 @@ branches:
 skip_tags: true
 
 cache:
-  - C:\strawberry
+  #- C:\strawberry
 
 install:
   - if not exist "C:\strawberry" cinst strawberryperl
