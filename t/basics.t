@@ -1,4 +1,5 @@
 use utf8;
+use ExtUtils::testlib;
 use Test2::V0;
 use Test::LeakTrace qw(no_leaks_ok);
 use URI::Encode::XS qw(uri_encode_utf8 uri_decode_utf8);

@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use lib 'inc';
 use ExtUtils::MakeMaker;
-use Inline::Module;
 
 WriteMakefile(
   NAME             => 'URI::Fast',
@@ -16,7 +15,10 @@ WriteMakefile(
   PREREQ_PRINT     => 1,
 
   META_MERGE => {
-    'meta-spec' => { version => 2 },
+    'meta-spec' => {
+      version => 2,
+    },
+
     resources => {
       homepage => "https://github.com/sysread/URI-Fast",
 
@@ -46,10 +48,6 @@ WriteMakefile(
 
   BUILD_REQUIRES => {
     'ExtUtils::MakeMaker' => '6.63_03',
-    'Inline'              => '0.80',
-    'Inline::C'           => '0.78',
-    'Inline::Module'      => '0.34',
-    'lib'                 => 0,
   },
 
   TEST_REQUIRES => {
@@ -66,15 +64,6 @@ WriteMakefile(
     'Carp'     => 0,
     'Exporter' => 0,
     'parent'   => 0,
-  },
-
-  postamble => {
-    inline => {
-      module   => 'URI::Fast',
-      stub     => 'URI::Fast::Inline',
-      ilsm     => 'Inline::C',
-      makestub => 1,
-    },
   },
 );
 
