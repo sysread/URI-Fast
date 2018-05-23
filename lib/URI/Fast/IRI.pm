@@ -1,4 +1,5 @@
 package URI::Fast::IRI;
+# ABSTRACT: Support for IRIs in URI::Fast
 our @ISA = qw(URI::Fast);
 1;
 
