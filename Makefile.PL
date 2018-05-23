@@ -64,8 +64,8 @@ WriteMakefile(
 
   PREREQ_PM => {
     'Carp'     => 0,
-    'Parent'   => 0,
     'Exporter' => 0,
+    'parent'   => 0,
   },
 
   postamble => {
