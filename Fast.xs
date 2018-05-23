@@ -885,8 +885,6 @@ void uri_split(SV* uri) {
   PUTBACK;
 }
 
-//__EOC__
-
 MODULE = URI::Fast  PACKAGE = URI::Fast  
 
 PROTOTYPES: DISABLE
@@ -894,32 +892,32 @@ PROTOTYPES: DISABLE
 
 char
 is_allowed (c, allowed, len)
-	char	c
-	const char *	allowed
-	size_t	len
+  char  c
+  const char *  allowed
+  size_t  len
 
 size_t
 uri_encode (in, len, out, allow, allow_len, allow_utf8)
-	const char *	in
-	size_t	len
-	char *	out
-	const char *	allow
-	size_t	allow_len
-	int	allow_utf8
+  const char *  in
+  size_t  len
+  char *  out
+  const char *  allow
+  size_t  allow_len
+  int  allow_utf8
 
 char
 unhex (in)
-	const char *	in
+  const char *  in
 
 size_t
 uri_decode (in, len, out)
-	const char *	in
-	size_t	len
-	char *	out
+  const char *  in
+  size_t  len
+  char *  out
 
 SV *
 encode (in, ...)
-	SV *	in
+  SV *  in
         PREINIT:
         I32* temp;
         CODE:
@@ -931,11 +929,11 @@ encode (in, ...)
 
 SV *
 decode (in)
-	SV *	in
+  SV *  in
 
 void
 clear_scheme (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -951,7 +949,7 @@ clear_scheme (uri_obj)
 
 void
 clear_path (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -967,7 +965,7 @@ clear_path (uri_obj)
 
 void
 clear_query (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -983,7 +981,7 @@ clear_query (uri_obj)
 
 void
 clear_frag (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -999,7 +997,7 @@ clear_frag (uri_obj)
 
 void
 clear_usr (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -1015,7 +1013,7 @@ clear_usr (uri_obj)
 
 void
 clear_pwd (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -1031,7 +1029,7 @@ clear_pwd (uri_obj)
 
 void
 clear_host (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -1047,7 +1045,7 @@ clear_host (uri_obj)
 
 void
 clear_port (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -1063,7 +1061,7 @@ clear_port (uri_obj)
 
 void
 clear_auth (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -1079,108 +1077,108 @@ clear_auth (uri_obj)
 
 const char *
 get_scheme (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 const char *
 get_path (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 const char *
 get_query (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 const char *
 get_frag (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 const char *
 get_usr (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 const char *
 get_pwd (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 const char *
 get_host (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 const char *
 get_port (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 SV *
 get_auth (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 SV *
 split_path (uri)
-	SV *	uri
+  SV *  uri
 
 SV *
 get_query_keys (uri)
-	SV *	uri
+  SV *  uri
 
 SV *
 query_hash (uri)
-	SV *	uri
+  SV *  uri
 
 SV *
 get_param (uri, sv_key)
-	SV *	uri
-	SV *	sv_key
+  SV *  uri
+  SV *  sv_key
 
 const char *
 set_scheme (uri_obj, value)
-	SV *	uri_obj
-	const char *	value
+  SV *  uri_obj
+  const char *  value
 
 SV *
 set_auth (uri_obj, value)
-	SV *	uri_obj
-	const char *	value
+  SV *  uri_obj
+  const char *  value
 
 const char *
 set_path (uri_obj, value)
-	SV *	uri_obj
-	const char *	value
+  SV *  uri_obj
+  const char *  value
 
 const char *
 set_query (uri_obj, value)
-	SV *	uri_obj
-	const char *	value
+  SV *  uri_obj
+  const char *  value
 
 const char *
 set_frag (uri_obj, value)
-	SV *	uri_obj
-	const char *	value
+  SV *  uri_obj
+  const char *  value
 
 const char *
 set_usr (uri_obj, value)
-	SV *	uri_obj
-	const char *	value
+  SV *  uri_obj
+  const char *  value
 
 const char *
 set_pwd (uri_obj, value)
-	SV *	uri_obj
-	const char *	value
+  SV *  uri_obj
+  const char *  value
 
 const char *
 set_host (uri_obj, value)
-	SV *	uri_obj
-	const char *	value
+  SV *  uri_obj
+  const char *  value
 
 const char *
 set_port (uri_obj, value)
-	SV *	uri_obj
-	const char *	value
+  SV *  uri_obj
+  const char *  value
 
 void
 set_param (uri, sv_key, sv_values, separator)
-	SV *	uri
-	SV *	sv_key
-	SV *	sv_values
-	const char *	separator
+  SV *  uri
+  SV *  sv_key
+  SV *  sv_values
+  const char *  separator
         PREINIT:
         I32* temp;
         PPCODE:
@@ -1196,11 +1194,11 @@ set_param (uri, sv_key, sv_values, separator)
 
 SV *
 to_string (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
 
 void
 explain (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -1216,16 +1214,16 @@ explain (uri_obj)
 
 SV *
 new (class, uri_str)
-	const char *	class
-	SV *	uri_str
+  const char *  class
+  SV *  uri_str
 
 SV *
 iri (uri_str)
-	SV *	uri_str
+  SV *  uri_str
 
 void
 DESTROY (uri_obj)
-	SV *	uri_obj
+  SV *  uri_obj
         PREINIT:
         I32* temp;
         PPCODE:
@@ -1241,7 +1239,7 @@ DESTROY (uri_obj)
 
 void
 uri_split (uri)
-	SV *	uri
+  SV *  uri
         PREINIT:
         I32* temp;
         PPCODE:
