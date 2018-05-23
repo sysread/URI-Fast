@@ -1,7 +1,3 @@
-package URI::Fast::IRI;
-our @ISA = qw(URI::Fast);
-1;
-
 package URI::Fast;
 # ABSTRACT: A fast(er) URI parser
 
@@ -11,6 +7,7 @@ no strict 'refs';
 
 use Carp;
 use Exporter;
+require URI::Fast::IRI;
 
 use Inline
   C        => 'DATA',

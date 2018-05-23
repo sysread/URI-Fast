@@ -4,11 +4,11 @@
 
 =head1 NAME
 
-URI::Fast::IRI - A fast(er) URI parser
+URI::Fast - A fast(er) URI parser
 
 =head1 VERSION
 
-version 0.23
+version 0.24
 
 =head1 SYNOPSIS
 
