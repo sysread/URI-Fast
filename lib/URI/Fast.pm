@@ -1,23 +1,18 @@
 package URI::Fast;
-# ABSTRACT: A fast(er) URI parser
 
 use strict;
 use warnings;
 no strict 'refs';
 
+our $VERSION = '0.25';
+
 use Carp;
 use Exporter;
 require URI::Fast::IRI;
 
-use Inline
-  C        => 'DATA',
-  name     => 'URI::Fast',
-  version  => eval '$URI::Fast::VERSION',
-  optimize => '-O2';
+use URI::Fast::Inline C => 'DATA';
 
-Inline->init;
-
-use parent 'Exporter';
+use Exporter 'import';
 our @EXPORT_OK = qw(uri iri uri_split);
 
 use overload '""' => sub{ $_[0]->to_string };
@@ -129,6 +124,10 @@ sub param {
        : @$params == 1 ? $params->[0]
                        : $params;
 }
+
+=head1 NAME
+
+URI::Fast - A fast(er) URI parser
 
 =head1 SYNOPSIS
 
@@ -341,6 +340,17 @@ Written in C++ and purportedly very fast, but appears to only support Linux.
 Thanks to L<ZipRecruiter|https://www.ziprecruiter.com> for encouraging their
 employees to contribute back to the open source ecosystem. Without their
 dedication to quality software development this distribution would not exist.
+
+=head1 AUTHOR
+
+Jeff Ober <sysread@fastmail.fm>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Jeff Ober.
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
 
 =cut
 

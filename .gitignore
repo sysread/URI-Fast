@@ -1,6 +1,14 @@
-.build
-URI-Fast*
+*.bak
 *.swp
+.build
+.inline
+_Inline
+MYMETA.json
+MYMETA.yml
+Makefile
+Makefile.old
+blib*
 cover_db
-_Inline*
+pm_to_blib*
 scratch.pl
+URI-Fast-*

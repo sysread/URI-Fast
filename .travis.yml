@@ -2,32 +2,19 @@ language: perl
 
 sudo: false
 
-perl:
-   - "5.26"
-   - "5.24"
-   - "5.22"
-   - "5.20"
-   - "5.18"
-   - "5.16"
-   - "5.14"
-   - "5.12"
-   - "5.10"
-
-before_install:
-   - git clone git://github.com/haarg/perl-travis-helper
-   - source perl-travis-helper/init
-   - build-perl
-   - perl -V
-   - build-dist
-   - cd $BUILD_DIR
-
-install:
-   - export RELEASE_TESTING=1 AUTOMATED_TESTING=1 AUTHOR_TESTING=1 HARNESS_OPTIONS=c HARNESS_TIMER=1
-   - cpanm --quiet --notest Devel::Cover::Report::Coveralls
-   - cpanm --quiet --notest --installdeps .
-
-script:
-  perl Makefile.PL && make test
-
 notifications:
   email: false
+
+perl:
+   - "5.10"
+   - "5.12"
+   - "5.14"
+   - "5.16"
+   - "5.18"
+   - "5.20"
+   - "5.22"
+   - "5.24"
+   - "5.26"
+
+before_install:
+   - eval $(curl https://travis-perl.github.io/init) --auto
