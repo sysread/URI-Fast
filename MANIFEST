@@ -1,0 +1,14 @@
+Changes
+lib/URI/Fast.pm
+lib/URI/Fast/Benchmarks.pm
+lib/URI/Fast/Inline.pm
+lib/URI/Fast/IRI.pm
+Makefile.PL
+MANIFEST
+MANIFEST.SKIP
+README.pod
+t/basics.t
+t/encoding.t
+t/iri.t
+t/parsing.t
+t/tied.t
