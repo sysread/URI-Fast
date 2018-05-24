@@ -5,12 +5,12 @@ use warnings;
 
 BEGIN{
   unless ($ENV{BENCH} || $ENV{UPDATEBENCH}) {
+    print "Skipping benchmarks because neither BENCH nor UPDATEBENCH were set.\n";
     exit 0;
   }
 };
 
 use Benchmark qw(:all);
-
 use URI::Fast qw(uri uri_split iri);
 use URI::Encode::XS qw();
 use URI::Escape qw();
@@ -22,8 +22,10 @@ use IRI;
 my $POD;
 
 if ($ENV{UPDATEBENCH} ) {
+  print "Updating URI::Fast::Benchmarks\n";
   open $POD, '>', './lib/URI/Fast/Benchmarks.pod' or die $!;
 } else {
+  print "Running benchmarks\n";
   my $str = '';
   open $POD, '>', \$str or die $!;
 }
