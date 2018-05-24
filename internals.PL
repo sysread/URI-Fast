@@ -1,5 +1,12 @@
 #!perl
 
+BEGIN{
+  unless ($ENV{BENCHINTERNALS}) {
+    print "Skipping internals benchmarks because BENCHINTERNALS was not set.\n";
+    exit 0;
+  }
+};
+
 use URI::Fast qw(uri uri_split);
 use Benchmark qw(:all);
 use URI;
