@@ -573,7 +573,7 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
   const char* key = SvPV_nomg_const(sv_key, klen);
 
   char enc_key[(klen * 3) + 2];
-  elen = uri_encode(aTHX_ key, klen, enc_key, "", 0, is_iri);
+  elen = uri_encode(key, klen, enc_key, "", 0, is_iri);
   enc_key[elen] = '=';
   enc_key[++elen] = '\0';
 
