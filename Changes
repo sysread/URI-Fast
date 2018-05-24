@@ -1,6 +1,6 @@
 0.25 2018-05-??
--switch from Dist::Zilla and Inline::C to vanilla XS; too many complications in
- building for prod systems
+-switch from Dist::Zilla and Inline::C to vanilla XS and ExtUtils::MakeMaker to
+ simplify building binary distributions
 -support for interpreter threads
 
 0.24 2018-05-23
