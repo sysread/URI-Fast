@@ -1381,6 +1381,14 @@ set_param (uri, sv_key, sv_values, separator)
 SV *
 to_string (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = to_string(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 void
 explain (uri_obj)
