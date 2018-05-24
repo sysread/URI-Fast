@@ -681,7 +681,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char* separator) 
   SvGETMAGIC(sv_key);
   key = SvPV_nomg_const(sv_key, klen);
   char enckey[(3 * klen) + 1];
-  klen = uri_encode(aTHX_ key, strlen(key), enckey, "", 0, is_iri);
+  klen = uri_encode(key, strlen(key), enckey, "", 0, is_iri);
 
   SvGETMAGIC(sv_values);
   if (!SvROK(sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
@@ -739,7 +739,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char* separator) 
     SvGETMAGIC(*ref);
     strval = SvPV_nomg_const(*ref, slen);
 
-    vlen = uri_encode(aTHX_ strval, slen, &dest[j], "", 0, is_iri);
+    vlen = uri_encode(strval, slen, &dest[j], "", 0, is_iri);
     j += vlen;
   }
 
