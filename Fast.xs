@@ -461,7 +461,7 @@ SV* split_path(pTHX_ SV* uri) {
 
   size_t path_len = strlen(URI_MEMBER(uri, path));
   char str[path_len + 1];
-  size_t len = uri_decode(aTHX_ URI_MEMBER(uri, path), path_len, str);
+  size_t len = uri_decode(URI_MEMBER(uri, path), path_len, str);
 
   if (str[0] == '/') {
     ++idx; // skip past leading /
@@ -491,7 +491,7 @@ SV* get_query_keys(pTHX_ SV* uri) {
 
     idx = strcspn(src, "=");
     char tmp[idx + 1];
-    vlen = uri_decode(aTHX_ src, idx, tmp);
+    vlen = uri_decode(src, idx, tmp);
     hv_store(out, tmp, -vlen, &PL_sv_undef, 0);
   }
 
@@ -522,7 +522,7 @@ SV* query_hash(pTHX_ SV* uri) {
 
     // Decode key
     char key[brk + 1];
-    klen = uri_decode(aTHX_ &src[idx], brk, key);
+    klen = uri_decode(&src[idx], brk, key);
     idx += brk + 1;
 
     // Scan value
@@ -531,7 +531,7 @@ SV* query_hash(pTHX_ SV* uri) {
     // Create SV of value
     if (brk > 0) {
       char val[brk + 1];
-      vlen = uri_decode(aTHX_ &src[idx], brk, val);
+      vlen = uri_decode(&src[idx], brk, val);
 
       // Create new sv to store value
       tmp = newSVpv(val, vlen);
@@ -583,7 +583,7 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
       brk = strcspn(&src[idx], "&;");
 
       char val[brk + 1];
-      vlen = uri_decode(aTHX_ &src[idx], brk, val);
+      vlen = uri_decode(&src[idx], brk, val);
       idx += brk + 1;
       value = newSVpv(val, vlen);
       sv_utf8_decode(value);
@@ -609,7 +609,7 @@ const char* set_scheme(pTHX_ SV* uri_obj, const char* value) {
 static
 SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
   char auth[URI_SIZE_auth];
-  size_t len = uri_encode(pTHX_ value, strlen(value), (char*) &auth, ":@", 2, URI_MEMBER(uri_obj, is_iri));
+  size_t len = uri_encode(value, strlen(value), (char*) &auth, ":@", 2, URI_MEMBER(uri_obj, is_iri));
   uri_scan_auth(URI(uri_obj), auth, len);
   return newSVpv(auth, len);
 }
