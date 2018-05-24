@@ -1,14 +1,23 @@
 #!perl
-
 use utf8;
+use strict;
+use warnings;
+
+BEGIN{
+  unless ($ENV{BENCH} || $ENV{UPDATEBENCH}) {
+    exit 0;
+  }
+};
+
 use Benchmark qw(:all);
-use URI::Encode::XS qw(uri_encode_utf8 uri_decode_utf8);
+
 use URI::Fast qw(uri uri_split iri);
+use URI::Encode::XS qw();
+use URI::Escape qw();
+use URL::Encode qw();
 use URI::Split qw();
 use URI;
 use IRI;
-
-exit 0 unless $ENV{BENCH} || $ENV{UPDATEBENCH};
 
 my $POD;
 
@@ -64,6 +73,7 @@ sub test {
   print "\n";
 }
 
+=cut
 test 'Constructor', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]) },
   'URI::Fast' => sub{ my $uri = uri $urls[3] },
@@ -140,13 +150,17 @@ test 'uri_split', 1_000_000, {
   'URI::Fast' => sub{ my @uri = uri_split($urls[3]) },
 };
 
-test 'Encode', 2_000_000, {
-  'URI::Encode::XS' => sub{ uri_encode_utf8($encode_input) },
+test 'Encode', 1_000_000, {
+  'URI::Escape' => sub{ URI::Escape::uri_escape_utf8($encode_input) },
+  'URL::Encode' => sub{ URL::Encode::url_encode_utf8($encode_input) },
+  'URI::Encode::XS' => sub{ URI::Encode::XS::uri_encode_utf8($encode_input) },
   'URI::Fast' => sub{ URI::Fast::encode($encode_input) },
 };
 
-test 'Decode', 2_000_000, {
-  'URI::Encode::XS' => sub{ uri_decode_utf8($decode_input) },
+test 'Decode', 1_000_000, {
+  'URI::Escape' => sub{ URI::Escape::uri_unescape($decode_input) },
+  'URL::Encode' => sub{ URL::Encode::url_decode_utf8($decode_input) },
+  'URI::Encode::XS' => sub{ URI::Encode::XS::uri_decode_utf8($decode_input) },
   'URI::Fast' => sub{ URI::Fast::decode($decode_input) },
 };
 
@@ -169,5 +183,6 @@ test 'IRI - update path', 500_000, {
   'IRI' => sub{ my $iri = IRI->new($urls[4]); $iri->path('/Ῥόδος¢€') },
   'URI::Fast' => sub{ my $iri = iri $urls[4]; $iri->path('/Ῥόδος¢€') },
 };
+=cut
 
 close $POD;
