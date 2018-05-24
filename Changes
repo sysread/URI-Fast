@@ -1,6 +1,7 @@
 0.25 2018-05-??
 -switch from Dist::Zilla and Inline::C to vanilla XS; too many complications in
  building for prod systems
+-support for interpreter threads
 
 0.24 2018-05-23
 -bugfix: move URI::Fast::IRI to its own file to unconfuse Dist::Zilla when generating docs
