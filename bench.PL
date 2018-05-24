@@ -1,7 +1,4 @@
 #!perl
-use utf8;
-use strict;
-use warnings;
 
 BEGIN{
   unless ($ENV{BENCH} || $ENV{UPDATEBENCH}) {
@@ -10,6 +7,7 @@ BEGIN{
   }
 };
 
+use utf8;
 use Benchmark qw(:all);
 use URI::Fast qw(uri uri_split iri);
 use URI::Encode::XS qw();
