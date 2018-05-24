@@ -21,7 +21,7 @@ WriteMakefile(
   VERSION_FROM     => "lib/URI/Fast.pm",
   ABSTRACT_FROM    => 'README.pod',
   LICENSE          => 'perl_5',
-  MIN_PERL_VERSION => '5.010',
+  MIN_PERL_VERSION => '5.008002',
   PREREQ_PRINT     => 1,
   OPTIMIZE         => '-O2',
 
