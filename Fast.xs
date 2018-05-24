@@ -1,3 +1,4 @@
+#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -154,6 +155,7 @@ char unhex(const char *in) {
   return '\0';
 }
 
+static
 size_t uri_decode(const char *in, size_t len, char *out) {
   size_t i = 0, j = 0;
   unsigned char v1, v2;
@@ -195,7 +197,8 @@ size_t uri_decode(const char *in, size_t len, char *out) {
 
 // EOT (end of theft)
 
-SV* encode(SV* in, ...) {
+static
+SV* encode(pTHX_ SV* in, ...) {
   size_t ilen, olen, alen;
   const char *allowed;
   SV* out;
@@ -222,7 +225,8 @@ SV* encode(SV* in, ...) {
   return out;
 }
 
-SV* decode(SV* in) {
+static
+SV* decode(pTHX_ SV* in) {
   size_t ilen, olen;
   const char* src;
   SV* out;
@@ -281,25 +285,27 @@ typedef struct {
 /*
  * Clearers
  */
-void clear_scheme(SV* uri_obj) { memset(&((URI(uri_obj))->scheme), '\0', sizeof(uri_scheme_t)); }
-void clear_path(SV* uri_obj)   { memset(&((URI(uri_obj))->path),   '\0', sizeof(uri_path_t));   }
-void clear_query(SV* uri_obj)  { memset(&((URI(uri_obj))->query),  '\0', sizeof(uri_query_t));  }
-void clear_frag(SV* uri_obj)   { memset(&((URI(uri_obj))->frag),   '\0', sizeof(uri_frag_t));   }
-void clear_usr(SV* uri_obj)    { memset(&((URI(uri_obj))->usr),    '\0', sizeof(uri_usr_t));    }
-void clear_pwd(SV* uri_obj)    { memset(&((URI(uri_obj))->pwd),    '\0', sizeof(uri_pwd_t));    }
-void clear_host(SV* uri_obj)   { memset(&((URI(uri_obj))->host),   '\0', sizeof(uri_host_t));   }
-void clear_port(SV* uri_obj)   { memset(&((URI(uri_obj))->port),   '\0', sizeof(uri_port_t));   }
+static void clear_scheme(pTHX_ SV* uri_obj) { memset(&((URI(uri_obj))->scheme), '\0', sizeof(uri_scheme_t)); }
+static void clear_path(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->path),   '\0', sizeof(uri_path_t));   }
+static void clear_query(pTHX_ SV* uri_obj)  { memset(&((URI(uri_obj))->query),  '\0', sizeof(uri_query_t));  }
+static void clear_frag(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->frag),   '\0', sizeof(uri_frag_t));   }
+static void clear_usr(pTHX_ SV* uri_obj)    { memset(&((URI(uri_obj))->usr),    '\0', sizeof(uri_usr_t));    }
+static void clear_pwd(pTHX_ SV* uri_obj)    { memset(&((URI(uri_obj))->pwd),    '\0', sizeof(uri_pwd_t));    }
+static void clear_host(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->host),   '\0', sizeof(uri_host_t));   }
+static void clear_port(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->port),   '\0', sizeof(uri_port_t));   }
 
-void clear_auth(SV* uri_obj) {
-  clear_usr(uri_obj);
-  clear_pwd(uri_obj);
-  clear_host(uri_obj);
-  clear_port(uri_obj);
+static
+void clear_auth(pTHX_ SV* uri_obj) {
+  clear_usr(aTHX_ uri_obj);
+  clear_pwd(aTHX_ uri_obj);
+  clear_host(aTHX_ uri_obj);
+  clear_port(aTHX_ uri_obj);
 }
 
 /*
  * Scans the authorization portion of the URI string
  */
+static
 void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
   size_t idx  = 0;
   size_t brk1 = 0;
@@ -357,6 +363,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 /*
  * Scans a URI string and populates the uri_t struct.
  */
+static
 void uri_scan(uri_t* uri, const char* src, size_t len) {
   size_t idx = 0;
   size_t brk = 0;
@@ -413,16 +420,17 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
 /*
  * Getters
  */
-const char* get_scheme(SV* uri_obj) { return URI_MEMBER(uri_obj, scheme); }
-const char* get_path(SV* uri_obj)   { return URI_MEMBER(uri_obj, path);   }
-const char* get_query(SV* uri_obj)  { return URI_MEMBER(uri_obj, query);  }
-const char* get_frag(SV* uri_obj)   { return URI_MEMBER(uri_obj, frag);   }
-const char* get_usr(SV* uri_obj)    { return URI_MEMBER(uri_obj, usr);    }
-const char* get_pwd(SV* uri_obj)    { return URI_MEMBER(uri_obj, pwd);    }
-const char* get_host(SV* uri_obj)   { return URI_MEMBER(uri_obj, host);   }
-const char* get_port(SV* uri_obj)   { return URI_MEMBER(uri_obj, port);   }
+static const char* get_scheme(pTHX_ SV* uri_obj) { return URI_MEMBER(uri_obj, scheme); }
+static const char* get_path(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, path);   }
+static const char* get_query(pTHX_ SV* uri_obj)  { return URI_MEMBER(uri_obj, query);  }
+static const char* get_frag(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, frag);   }
+static const char* get_usr(pTHX_ SV* uri_obj)    { return URI_MEMBER(uri_obj, usr);    }
+static const char* get_pwd(pTHX_ SV* uri_obj)    { return URI_MEMBER(uri_obj, pwd);    }
+static const char* get_host(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, host);   }
+static const char* get_port(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, port);   }
 
-SV* get_auth(SV* uri_obj) {
+static
+SV* get_auth(pTHX_ SV* uri_obj) {
   uri_t* uri = URI(uri_obj);
   SV* out = newSVpv("", 0);
 
@@ -445,14 +453,15 @@ SV* get_auth(SV* uri_obj) {
   return out;
 }
 
-SV* split_path(SV* uri) {
+static
+SV* split_path(pTHX_ SV* uri) {
   size_t brk, idx = 0;
   AV* arr = newAV();
   SV* tmp;
 
   size_t path_len = strlen(URI_MEMBER(uri, path));
   char str[path_len + 1];
-  size_t len = uri_decode(URI_MEMBER(uri, path), path_len, str);
+  size_t len = uri_decode(aTHX_ URI_MEMBER(uri, path), path_len, str);
 
   if (str[0] == '/') {
     ++idx; // skip past leading /
@@ -469,7 +478,8 @@ SV* split_path(SV* uri) {
   return newRV_noinc((SV*) arr);
 }
 
-SV* get_query_keys(SV* uri) {
+static
+SV* get_query_keys(pTHX_ SV* uri) {
   const char* src;
   size_t vlen, idx;
   HV* out = newHV();
@@ -481,14 +491,15 @@ SV* get_query_keys(SV* uri) {
 
     idx = strcspn(src, "=");
     char tmp[idx + 1];
-    vlen = uri_decode(src, idx, tmp);
+    vlen = uri_decode(aTHX_ src, idx, tmp);
     hv_store(out, tmp, -vlen, &PL_sv_undef, 0);
   }
 
   return newRV_noinc((SV*) out);
 }
 
-SV* query_hash(SV* uri) {
+static
+SV* query_hash(pTHX_ SV* uri) {
   const char* src = URI_MEMBER(uri, query);
   size_t idx = 0, brk, klen, vlen, slen = min(URI_SIZE_query, strlen(src));
   SV** ref;
@@ -511,7 +522,7 @@ SV* query_hash(SV* uri) {
 
     // Decode key
     char key[brk + 1];
-    klen = uri_decode(&src[idx], brk, key);
+    klen = uri_decode(aTHX_ &src[idx], brk, key);
     idx += brk + 1;
 
     // Scan value
@@ -520,7 +531,7 @@ SV* query_hash(SV* uri) {
     // Create SV of value
     if (brk > 0) {
       char val[brk + 1];
-      vlen = uri_decode(&src[idx], brk, val);
+      vlen = uri_decode(aTHX_ &src[idx], brk, val);
 
       // Create new sv to store value
       tmp = newSVpv(val, vlen);
@@ -550,7 +561,8 @@ SV* query_hash(SV* uri) {
   return newRV_noinc((SV*) out);
 }
 
-SV* get_param(SV* uri, SV* sv_key) {
+static
+SV* get_param(pTHX_ SV* uri, SV* sv_key) {
   int is_iri = URI_MEMBER(uri, is_iri);
   const char* src = URI_MEMBER(uri, query);
   size_t idx = 0, brk = 0, klen, elen, vlen, len = min(URI_SIZE_query, strlen(src));
@@ -561,7 +573,7 @@ SV* get_param(SV* uri, SV* sv_key) {
   const char* key = SvPV_nomg_const(sv_key, klen);
 
   char enc_key[(klen * 3) + 2];
-  elen = uri_encode(key, klen, enc_key, "", 0, is_iri);
+  elen = uri_encode(aTHX_ key, klen, enc_key, "", 0, is_iri);
   enc_key[elen] = '=';
   enc_key[++elen] = '\0';
 
@@ -571,7 +583,7 @@ SV* get_param(SV* uri, SV* sv_key) {
       brk = strcspn(&src[idx], "&;");
 
       char val[brk + 1];
-      vlen = uri_decode(&src[idx], brk, val);
+      vlen = uri_decode(aTHX_ &src[idx], brk, val);
       idx += brk + 1;
       value = newSVpv(val, vlen);
       sv_utf8_decode(value);
@@ -588,49 +600,58 @@ SV* get_param(SV* uri, SV* sv_key) {
 /*
  * Setters
  */
-const char* set_scheme(SV* uri_obj, const char* value) {
+static
+const char* set_scheme(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, scheme, value, "", 0);
   return URI_MEMBER(uri_obj, scheme);
 }
 
-SV* set_auth(SV* uri_obj, const char* value) {
+static
+SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
   char auth[URI_SIZE_auth];
-  size_t len = uri_encode(value, strlen(value), (char*) &auth, ":@", 2, URI_MEMBER(uri_obj, is_iri));
+  size_t len = uri_encode(pTHX_ value, strlen(value), (char*) &auth, ":@", 2, URI_MEMBER(uri_obj, is_iri));
   uri_scan_auth(URI(uri_obj), auth, len);
   return newSVpv(auth, len);
 }
 
-const char* set_path(SV* uri_obj, const char* value) {
+static
+const char* set_path(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, path, value, "/", 1);
   return URI_MEMBER(uri_obj, path);
 }
 
-const char* set_query(SV* uri_obj, const char* value) {
+static
+const char* set_query(pTHX_ SV* uri_obj, const char* value) {
   strncpy(URI_MEMBER(uri_obj, query), value, min(strlen(value) + 1, URI_SIZE_query));
   return value;
 }
 
-const char* set_frag(SV* uri_obj, const char* value) {
+static
+const char* set_frag(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, frag, value, "", 0);
   return URI_MEMBER(uri_obj, frag);
 }
 
-const char* set_usr(SV* uri_obj, const char* value) {
+static
+const char* set_usr(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, usr, value, "", 0);
   return URI_MEMBER(uri_obj, usr);
 }
 
-const char* set_pwd(SV* uri_obj, const char* value) {
+static
+const char* set_pwd(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, pwd, value, "", 0);
   return URI_MEMBER(uri_obj, pwd);
 }
 
-const char* set_host(SV* uri_obj, const char* value) {
+static
+const char* set_host(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, host, value, "", 0);
   return URI_MEMBER(uri_obj, host);
 }
 
-const char* set_port(SV* uri_obj, const char* value) {
+static
+const char* set_port(pTHX_ SV* uri_obj, const char* value) {
   size_t len = min(strlen(value), URI_SIZE_port);
   size_t i;
 
@@ -639,7 +660,7 @@ const char* set_port(SV* uri_obj, const char* value) {
       URI_MEMBER(uri_obj, port)[i] = value[i];
     }
     else {
-      clear_port(uri_obj);
+      clear_port(aTHX_ uri_obj);
       break;
     }
   }
@@ -647,7 +668,8 @@ const char* set_port(SV* uri_obj, const char* value) {
   return URI_MEMBER(uri_obj, port);
 }
 
-void set_param(SV* uri, SV* sv_key, SV* sv_values, const char* separator) {
+static
+void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char* separator) {
   int    is_iri = URI_MEMBER(uri, is_iri);
   char   dest[1024];
   const  char *key, *src = URI_MEMBER(uri, query), *strval;
@@ -659,7 +681,7 @@ void set_param(SV* uri, SV* sv_key, SV* sv_values, const char* separator) {
   SvGETMAGIC(sv_key);
   key = SvPV_nomg_const(sv_key, klen);
   char enckey[(3 * klen) + 1];
-  klen = uri_encode(key, strlen(key), enckey, "", 0, is_iri);
+  klen = uri_encode(aTHX_ key, strlen(key), enckey, "", 0, is_iri);
 
   SvGETMAGIC(sv_values);
   if (!SvROK(sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
@@ -717,11 +739,11 @@ void set_param(SV* uri, SV* sv_key, SV* sv_values, const char* separator) {
     SvGETMAGIC(*ref);
     strval = SvPV_nomg_const(*ref, slen);
 
-    vlen = uri_encode(strval, slen, &dest[j], "", 0, is_iri);
+    vlen = uri_encode(aTHX_ strval, slen, &dest[j], "", 0, is_iri);
     j += vlen;
   }
 
-  clear_query(uri);
+  clear_query(aTHX_ uri);
   strncpy(URI_MEMBER(uri, query), dest, j);
 }
 
@@ -729,7 +751,8 @@ void set_param(SV* uri, SV* sv_key, SV* sv_values, const char* separator) {
  * Other stuff
  */
 
-SV* to_string(SV* uri_obj) {
+static
+SV* to_string(pTHX_ SV* uri_obj) {
   uri_t* uri = URI(uri_obj);
   SV*    out = newSVpv("", 0);
 
@@ -751,7 +774,8 @@ SV* to_string(SV* uri_obj) {
   return out;
 }
 
-void explain(SV* uri_obj) {
+static
+void explain(pTHX_ SV* uri_obj) {
   printf("scheme: %s\n",  URI_MEMBER(uri_obj, scheme));
   printf("auth:\n");
   printf("  -usr: %s\n",  URI_MEMBER(uri_obj, usr));
@@ -763,7 +787,8 @@ void explain(SV* uri_obj) {
   printf("frag: %s\n",    URI_MEMBER(uri_obj, frag));
 }
 
-SV* new(const char* class, SV* uri_str) {
+static
+SV* new(pTHX_ const char* class, SV* uri_str) {
   const char* src;
   size_t len;
   uri_t* uri;
@@ -788,18 +813,20 @@ SV* new(const char* class, SV* uri_str) {
     src = SvPV_nomg_const(uri_str, len);
   }
 
-  uri_scan(uri, src, len);
+  uri_scan(aTHX_ uri, src, len);
 
   return obj_ref;
 }
 
-SV* iri(SV* uri_str) {
-  SV* obj = new("URI::Fast::IRI", uri_str);
+static
+SV* iri(pTHX_ SV* uri_str) {
+  SV* obj = new(aTHX_ "URI::Fast::IRI", uri_str);
   URI_MEMBER(obj, is_iri) = 1;
   return obj;
 }
 
-void DESTROY(SV* uri_obj) {
+static
+void DESTROY(pTHX_ SV* uri_obj) {
   uri_t* uri = (uri_t*) SvIV(SvRV(uri_obj));
   Safefree(uri);
 }
@@ -807,7 +834,8 @@ void DESTROY(SV* uri_obj) {
 /*
  * Extras
  */
-void uri_split(SV* uri) {
+static
+void uri_split(pTHX_ SV* uri) {
   const char* src;
   size_t idx = 0;
   size_t brk = 0;
@@ -922,7 +950,7 @@ encode (in, ...)
         I32* temp;
         CODE:
         temp = PL_markstack_ptr++;
-        RETVAL = encode(in);
+        RETVAL = encode(aTHX_ in);
         PL_markstack_ptr = temp;
         OUTPUT:
         RETVAL
@@ -938,7 +966,7 @@ clear_scheme (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        clear_scheme(uri_obj);
+        clear_scheme(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -954,7 +982,7 @@ clear_path (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        clear_path(uri_obj);
+        clear_path(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -970,7 +998,7 @@ clear_query (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        clear_query(uri_obj);
+        clear_query(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -986,7 +1014,7 @@ clear_frag (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        clear_frag(uri_obj);
+        clear_frag(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1002,7 +1030,7 @@ clear_usr (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        clear_usr(uri_obj);
+        clear_usr(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1018,7 +1046,7 @@ clear_pwd (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        clear_pwd(uri_obj);
+        clear_pwd(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1034,7 +1062,7 @@ clear_host (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        clear_host(uri_obj);
+        clear_host(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1050,7 +1078,7 @@ clear_port (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        clear_port(uri_obj);
+        clear_port(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1066,7 +1094,7 @@ clear_auth (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        clear_auth(uri_obj);
+        clear_auth(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1183,7 +1211,7 @@ set_param (uri, sv_key, sv_values, separator)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        set_param(uri, sv_key, sv_values, separator);
+        set_param(aTHX_ uri, sv_key, sv_values, separator);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1203,7 +1231,7 @@ explain (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        explain(uri_obj);
+        explain(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1228,7 +1256,7 @@ DESTROY (uri_obj)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        DESTROY(uri_obj);
+        DESTROY(aTHX_ uri_obj);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1244,7 +1272,7 @@ uri_split (uri)
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        uri_split(uri);
+        uri_split(aTHX_ uri);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
