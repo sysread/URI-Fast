@@ -2,8 +2,18 @@ package UriFastMakeMaker;
 
 use strict;
 use warnings;
-use lib 'inc';
 use ExtUtils::MakeMaker;
+
+sub MY::postamble {
+  return <<EOS;
+
+misc : readme manifest
+
+release : test dist
+\tcpan-upload \$(DISTVNAME).tar.gz
+
+EOS
+}
 
 WriteMakefile(
   NAME             => 'URI::Fast',
