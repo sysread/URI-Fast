@@ -50,7 +50,7 @@ Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
 Unless otherwise specified, all attributes serve as full accessors, allowing
 the URI segment to be both retrieved and modified.
 
-Each attribute further has a matching clearer method (L<clear_*>) which unsets
+Each attribute further has a matching clearer method (C<clear_*>) which unsets
 its value.
 
 =head2 scheme
