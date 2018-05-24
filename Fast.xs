@@ -917,32 +917,6 @@ MODULE = URI::Fast  PACKAGE = URI::Fast
 
 PROTOTYPES: DISABLE
 
-
-char
-is_allowed (c, allowed, len)
-  char  c
-  const char *  allowed
-  size_t  len
-
-size_t
-uri_encode (in, len, out, allow, allow_len, allow_utf8)
-  const char *  in
-  size_t  len
-  char *  out
-  const char *  allow
-  size_t  allow_len
-  int  allow_utf8
-
-char
-unhex (in)
-  const char *  in
-
-size_t
-uri_decode (in, len, out)
-  const char *  in
-  size_t  len
-  char *  out
-
 SV *
 encode (in, ...)
   SV *  in
@@ -958,6 +932,14 @@ encode (in, ...)
 SV *
 decode (in)
   SV *  in
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = decode(aTHX_ in);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 void
 clear_scheme (uri_obj)
@@ -1106,55 +1088,159 @@ clear_auth (uri_obj)
 const char *
 get_scheme (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_scheme(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 get_path (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_path(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 get_query (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_query(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 get_frag (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_frag(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 get_usr (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_usr(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 get_pwd (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_pwd(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 get_host (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_host(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 get_port (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_port(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 SV *
 get_auth (uri_obj)
   SV *  uri_obj
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_auth(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 SV *
 split_path (uri)
   SV *  uri
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = split_path(aTHX_ uri);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 SV *
 get_query_keys (uri)
   SV *  uri
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = query_keys(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 SV *
 query_hash (uri)
   SV *  uri
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = query_hash(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 SV *
 get_param (uri, sv_key)
   SV *  uri
   SV *  sv_key
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = get_param(aTHX_ uri_obj);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 set_scheme (uri_obj, value)
