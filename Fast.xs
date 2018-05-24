@@ -1212,7 +1212,7 @@ get_query_keys (uri)
         I32* temp;
         CODE:
         temp = PL_markstack_ptr++;
-        RETVAL = query_keys(aTHX_ uri_obj);
+        RETVAL = get_query_keys(aTHX_ uri);
         PL_markstack_ptr = temp;
         OUTPUT:
         RETVAL
@@ -1224,7 +1224,7 @@ query_hash (uri)
         I32* temp;
         CODE:
         temp = PL_markstack_ptr++;
-        RETVAL = query_hash(aTHX_ uri_obj);
+        RETVAL = query_hash(aTHX_ uri);
         PL_markstack_ptr = temp;
         OUTPUT:
         RETVAL
@@ -1237,7 +1237,7 @@ get_param (uri, sv_key)
         I32* temp;
         CODE:
         temp = PL_markstack_ptr++;
-        RETVAL = get_param(aTHX_ uri_obj);
+        RETVAL = get_param(aTHX_ uri, sv_key);
         PL_markstack_ptr = temp;
         OUTPUT:
         RETVAL
@@ -1246,46 +1246,118 @@ const char *
 set_scheme (uri_obj, value)
   SV *  uri_obj
   const char *  value
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = set_scheme(aTHX_ uri_obj, value);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 SV *
 set_auth (uri_obj, value)
   SV *  uri_obj
   const char *  value
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = set_auth(aTHX_ uri_obj, value);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 set_path (uri_obj, value)
   SV *  uri_obj
   const char *  value
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = set_path(aTHX_ uri_obj, value);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 set_query (uri_obj, value)
   SV *  uri_obj
   const char *  value
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = set_query(aTHX_ uri_obj, value);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 set_frag (uri_obj, value)
   SV *  uri_obj
   const char *  value
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = set_frag(aTHX_ uri_obj, value);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 set_usr (uri_obj, value)
   SV *  uri_obj
   const char *  value
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = set_usr(aTHX_ uri_obj, value);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 set_pwd (uri_obj, value)
   SV *  uri_obj
   const char *  value
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = set_pwd(aTHX_ uri_obj, value);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 set_host (uri_obj, value)
   SV *  uri_obj
   const char *  value
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = set_host(aTHX_ uri_obj, value);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 const char *
 set_port (uri_obj, value)
   SV *  uri_obj
   const char *  value
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = set_port(aTHX_ uri_obj, value);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 void
 set_param (uri, sv_key, sv_values, separator)
@@ -1330,10 +1402,26 @@ SV *
 new (class, uri_str)
   const char *  class
   SV *  uri_str
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = new(aTHX_ class, uri_str);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 SV *
 iri (uri_str)
   SV *  uri_str
+        PREINIT:
+        I32* temp;
+        CODE:
+        temp = PL_markstack_ptr++;
+        RETVAL = iri(aTHX_ uri_str);
+        PL_markstack_ptr = temp;
+        OUTPUT:
+        RETVAL
 
 void
 DESTROY (uri_obj)
