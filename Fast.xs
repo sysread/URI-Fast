@@ -2,7 +2,6 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-
 #include "ppport.h"
 
 #ifndef URI
@@ -913,553 +912,315 @@ void uri_split(pTHX_ SV* uri) {
   PUTBACK;
 }
 
+
 MODULE = URI::Fast  PACKAGE = URI::Fast
 
 PROTOTYPES: DISABLE
 
-SV *
-encode (in, ...)
-  SV *  in
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = encode(aTHX_ in);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+#-------------------------------------------------------------------------------
+# URL-encoding
+#-------------------------------------------------------------------------------
+SV* encode(in, ...)
+  SV* in
+    PREINIT:
+      I32* temp;
+    CODE:
+      temp = PL_markstack_ptr++;
+      RETVAL = encode(aTHX_ in);
+      PL_markstack_ptr = temp;
+    OUTPUT:
+      RETVAL
 
-SV *
-decode (in)
-  SV *  in
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = decode(aTHX_ in);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+SV* decode(in)
+  SV* in
+    CODE:
+      RETVAL = decode(aTHX_ in);
+    OUTPUT:
+      RETVAL
 
-void
-clear_scheme (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        clear_scheme(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+#-------------------------------------------------------------------------------
+# Constructors and destructors
+#-------------------------------------------------------------------------------
+SV* new(class, uri_str)
+  const char* class
+  SV* uri_str
+  CODE:
+    RETVAL = new(aTHX_ class, uri_str);
+  OUTPUT:
+    RETVAL
 
-void
-clear_path (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        clear_path(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+SV* iri(uri_str)
+  SV* uri_str
+  CODE:
+    RETVAL = iri(aTHX_ uri_str);
+  OUTPUT:
+    RETVAL
 
-void
-clear_query (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        clear_query(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+void DESTROY(uri_obj)
+  SV* uri_obj
+  CODE:
+    DESTROY(aTHX_ uri_obj);
 
-void
-clear_frag (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        clear_frag(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
 
-void
-clear_usr (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        clear_usr(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+#-------------------------------------------------------------------------------
+# Clearers
+#-------------------------------------------------------------------------------
+void clear_scheme(uri_obj)
+  SV* uri_obj
+  CODE:
+    clear_scheme(aTHX_ uri_obj);
 
-void
-clear_pwd (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        clear_pwd(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+void clear_path(uri_obj)
+  SV* uri_obj
+  CODE:
+    clear_path(aTHX_ uri_obj);
 
-void
-clear_host (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        clear_host(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+void clear_query (uri_obj)
+  SV* uri_obj
+  CODE:
+    clear_query(aTHX_ uri_obj);
 
-void
-clear_port (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        clear_port(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+void clear_frag(uri_obj)
+  SV* uri_obj
+  CODE:
+    clear_frag(aTHX_ uri_obj);
 
-void
-clear_auth (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        clear_auth(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+void clear_usr(uri_obj)
+  SV* uri_obj
+  CODE:
+    clear_usr(aTHX_ uri_obj);
 
-const char *
-get_scheme (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_scheme(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+void clear_pwd(uri_obj)
+  SV* uri_obj
+  CODE:
+    clear_pwd(aTHX_ uri_obj);
 
-const char *
-get_path (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_path(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+void clear_host(uri_obj)
+  SV* uri_obj
+  CODE:
+    clear_host(aTHX_ uri_obj);
 
-const char *
-get_query (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_query(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+void clear_port(uri_obj)
+  SV* uri_obj
+  CODE:
+    clear_port(aTHX_ uri_obj);
 
-const char *
-get_frag (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_frag(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+void clear_auth(uri_obj)
+  SV* uri_obj
+  CODE:
+    clear_auth(aTHX_ uri_obj);
 
-const char *
-get_usr (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_usr(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
 
-const char *
-get_pwd (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_pwd(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+#-------------------------------------------------------------------------------
+# Simple getters
+#-------------------------------------------------------------------------------
+const char* get_scheme(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_scheme(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
-const char *
-get_host (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_host(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* get_path(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_path(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
-const char *
-get_port (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_port(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* get_query(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_query(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
-SV *
-get_auth (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_auth(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* get_frag(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_frag(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
-SV *
-split_path (uri)
-  SV *  uri
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = split_path(aTHX_ uri);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* get_usr(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_usr(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
-SV *
-get_query_keys (uri)
-  SV *  uri
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_query_keys(aTHX_ uri);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* get_pwd(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_pwd(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
-SV *
-query_hash (uri)
-  SV *  uri
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = query_hash(aTHX_ uri);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* get_host(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_host(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
-SV *
-get_param (uri, sv_key)
-  SV *  uri
-  SV *  sv_key
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = get_param(aTHX_ uri, sv_key);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* get_port(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_port(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
-const char *
-set_scheme (uri_obj, value)
-  SV *  uri_obj
-  const char *  value
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = set_scheme(aTHX_ uri_obj, value);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+SV* get_auth(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_auth(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
-SV *
-set_auth (uri_obj, value)
-  SV *  uri_obj
-  const char *  value
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = set_auth(aTHX_ uri_obj, value);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
 
-const char *
-set_path (uri_obj, value)
-  SV *  uri_obj
-  const char *  value
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = set_path(aTHX_ uri_obj, value);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+#-------------------------------------------------------------------------------
+# Compound getters
+#-------------------------------------------------------------------------------
+SV* split_path(uri)
+  SV* uri
+  CODE:
+    RETVAL = split_path(aTHX_ uri);
+  OUTPUT:
+    RETVAL
 
-const char *
-set_query (uri_obj, value)
-  SV *  uri_obj
-  const char *  value
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = set_query(aTHX_ uri_obj, value);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+SV* get_query_keys(uri)
+  SV* uri
+  CODE:
+    RETVAL = get_query_keys(aTHX_ uri);
+  OUTPUT:
+    RETVAL
 
-const char *
-set_frag (uri_obj, value)
-  SV *  uri_obj
-  const char *  value
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = set_frag(aTHX_ uri_obj, value);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+SV* query_hash(uri)
+  SV* uri
+  CODE:
+    RETVAL = query_hash(aTHX_ uri);
+  OUTPUT:
+    RETVAL
 
-const char *
-set_usr (uri_obj, value)
-  SV *  uri_obj
-  const char *  value
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = set_usr(aTHX_ uri_obj, value);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+SV* get_param(uri, sv_key)
+  SV* uri
+  SV* sv_key
+  CODE:
+    RETVAL = get_param(aTHX_ uri, sv_key);
+  OUTPUT:
+    RETVAL
 
-const char *
-set_pwd (uri_obj, value)
-  SV *  uri_obj
-  const char *  value
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = set_pwd(aTHX_ uri_obj, value);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
 
-const char *
-set_host (uri_obj, value)
-  SV *  uri_obj
-  const char *  value
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = set_host(aTHX_ uri_obj, value);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+#-------------------------------------------------------------------------------
+# Setters
+#-------------------------------------------------------------------------------
+const char* set_scheme(uri_obj, value)
+  SV* uri_obj
+  const char* value
+  CODE:
+    RETVAL = set_scheme(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
 
-const char *
-set_port (uri_obj, value)
-  SV *  uri_obj
-  const char *  value
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = set_port(aTHX_ uri_obj, value);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+SV* set_auth(uri_obj, value)
+  SV* uri_obj
+  const char* value
+  CODE:
+    RETVAL = set_auth(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
 
-void
-set_param (uri, sv_key, sv_values, separator)
-  SV *  uri
-  SV *  sv_key
-  SV *  sv_values
-  const char *  separator
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        set_param(aTHX_ uri, sv_key, sv_values, separator);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+const char* set_path(uri_obj, value)
+  SV* uri_obj
+  const char* value
+  CODE:
+    RETVAL = set_path(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
 
-SV *
-to_string (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = to_string(aTHX_ uri_obj);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* set_query(uri_obj, value)
+  SV* uri_obj
+  const char* value
+  CODE:
+    RETVAL = set_query(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
 
-void
-explain (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        explain(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+const char* set_frag(uri_obj, value)
+  SV* uri_obj
+  const char* value
+  CODE:
+    RETVAL = set_frag(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
 
-SV *
-new (class, uri_str)
-  const char *  class
-  SV *  uri_str
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = new(aTHX_ class, uri_str);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* set_usr(uri_obj, value)
+  SV* uri_obj
+  const char* value
+  CODE:
+    RETVAL = set_usr(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
 
-SV *
-iri (uri_str)
-  SV *  uri_str
-        PREINIT:
-        I32* temp;
-        CODE:
-        temp = PL_markstack_ptr++;
-        RETVAL = iri(aTHX_ uri_str);
-        PL_markstack_ptr = temp;
-        OUTPUT:
-        RETVAL
+const char* set_pwd(uri_obj, value)
+  SV* uri_obj
+  const char* value
+  CODE:
+    RETVAL = set_pwd(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
 
-void
-DESTROY (uri_obj)
-  SV *  uri_obj
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        DESTROY(aTHX_ uri_obj);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+const char* set_host(uri_obj, value)
+  SV* uri_obj
+  const char* value
+  CODE:
+    RETVAL = set_host(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
 
-void
-uri_split (uri)
-  SV *  uri
-        PREINIT:
-        I32* temp;
-        PPCODE:
-        temp = PL_markstack_ptr++;
-        uri_split(aTHX_ uri);
-        if (PL_markstack_ptr != temp) {
-          /* truly void, because dXSARGS not invoked */
-          PL_markstack_ptr = temp;
-          XSRETURN_EMPTY; /* return empty stack */
-        }
-        /* must have used dXSARGS; list context implied */
-        return; /* assume stack size is correct */
+const char* set_port(uri_obj, value)
+  SV* uri_obj
+  const char* value
+  CODE:
+    RETVAL = set_port(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
 
+void set_param(uri, sv_key, sv_values, separator)
+  SV* uri
+  SV* sv_key
+  SV* sv_values
+  const char* separator
+  CODE:
+    set_param(aTHX_ uri, sv_key, sv_values, separator);
+
+
+#-------------------------------------------------------------------------------
+# Extras
+#-------------------------------------------------------------------------------
+SV* to_string(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = to_string(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+void explain(uri_obj)
+  SV* uri_obj
+  CODE:
+    explain(aTHX_ uri_obj);
+
+void uri_split(uri)
+  SV* uri
+  PREINIT:
+    I32* temp;
+  PPCODE:
+    temp = PL_markstack_ptr++;
+    uri_split(aTHX_ uri);
+
+    if (PL_markstack_ptr != temp) {
+      PL_markstack_ptr = temp;
+      XSRETURN_EMPTY;
+    }
+
+    return;
