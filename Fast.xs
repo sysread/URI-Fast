@@ -758,7 +758,7 @@ SV* to_string(pTHX_ SV* uri_obj) {
 
   sv_catpv(out, uri->scheme);
   sv_catpv(out, "://");
-  sv_catsv(out, sv_2mortal(get_auth(uri_obj)));
+  sv_catsv(out, sv_2mortal(get_auth(aTHX_ uri_obj)));
   sv_catpv(out, uri->path);
 
   if (uri->query[0] != '\0') {
@@ -813,7 +813,7 @@ SV* new(pTHX_ const char* class, SV* uri_str) {
     src = SvPV_nomg_const(uri_str, len);
   }
 
-  uri_scan(aTHX_ uri, src, len);
+  uri_scan(uri, src, len);
 
   return obj_ref;
 }
@@ -913,7 +913,7 @@ void uri_split(pTHX_ SV* uri) {
   PUTBACK;
 }
 
-MODULE = URI::Fast  PACKAGE = URI::Fast  
+MODULE = URI::Fast  PACKAGE = URI::Fast
 
 PROTOTYPES: DISABLE
 
