@@ -291,6 +291,15 @@ subtest 'memory leaks' => sub{
   }, 'combined';
 };
 
+subtest 'clearers' => sub{
+  ok my $uri = uri($uris[3]), 'ctor';
+  foreach (qw(scheme path query frag usr pwd host port auth)) {
+    my $method = 'clear_' . $_;
+    $uri->$method;
+    is $uri->$_, '', $method;
+  }
+};
+
 subtest 'overruns' => sub{
    # scheme: 16
    # auth:   267
