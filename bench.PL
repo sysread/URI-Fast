@@ -75,7 +75,6 @@ sub test {
   print "\n";
 }
 
-=cut
 test 'Constructor', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]) },
   'URI::Fast' => sub{ my $uri = uri $urls[3] },
@@ -185,6 +184,5 @@ test 'IRI - update path', 500_000, {
   'IRI' => sub{ my $iri = IRI->new($urls[4]); $iri->path('/Ῥόδος¢€') },
   'URI::Fast' => sub{ my $iri = iri $urls[4]; $iri->path('/Ῥόδος¢€') },
 };
-=cut
 
 close $POD;
