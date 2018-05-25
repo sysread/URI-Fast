@@ -9,7 +9,6 @@ ppport.h
 
 lib/URI/Fast.pm
 lib/URI/Fast/Benchmarks.pod
-lib/URI/Fast/IRI.pm
 
 t/basics.t
 t/encoding.t

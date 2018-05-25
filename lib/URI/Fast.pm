@@ -1,7 +1,3 @@
-package URI::Fast::IRI;
-our @ISA = qw(URI::Fast);
-1;
-
 package URI::Fast;
 
 use strict;
@@ -363,4 +359,8 @@ terms as the Perl 5 programming language system itself.
 
 =cut
 
+1;
+
+package URI::Fast::IRI;
+our @ISA = qw(URI::Fast);
 1;
