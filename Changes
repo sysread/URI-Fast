@@ -1,3 +1,6 @@
+0.27 ????-??-??
+-declare POD encoding
+
 0.26 2018-05-25
 -switch from Dist::Zilla and Inline::C to vanilla XS and ExtUtils::MakeMaker to
  simplify building binary distributions
