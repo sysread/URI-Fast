@@ -126,6 +126,8 @@ sub param {
                        : $params;
 }
 
+=encoding utf8
+
 =head1 NAME
 
 URI::Fast - A fast(er) URI parser
