@@ -8,7 +8,6 @@ our $VERSION = '0.25';
 
 use Carp;
 use Exporter;
-require URI::Fast::IRI;
 
 require XSLoader;
 XSLoader::load('URI::Fast', $VERSION);
@@ -357,5 +356,11 @@ This is free software; you can redistribute it and/or modify it under the same
 terms as the Perl 5 programming language system itself.
 
 =cut
+
+1;
+
+package URI::Fast::IRI;
+
+our @ISA = qw(URI::Fast);
 
 1;

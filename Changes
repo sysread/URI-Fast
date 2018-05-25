@@ -2,6 +2,8 @@
 -switch from Dist::Zilla and Inline::C to vanilla XS and ExtUtils::MakeMaker to
  simplify building binary distributions
 -support for interpreter threads
+-remove separate URI::Fast::IRI module as Dist::Zilla's POD generator is no
+ longer used
 
 0.24 2018-05-23
 -bugfix: move URI::Fast::IRI to its own file to unconfuse Dist::Zilla when generating docs
