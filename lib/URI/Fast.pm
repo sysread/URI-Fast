@@ -1,3 +1,7 @@
+package URI::Fast::IRI;
+our @ISA = qw(URI::Fast);
+1;
+
 package URI::Fast;
 
 use strict;
@@ -125,7 +129,7 @@ sub param {
                        : $params;
 }
 
-=encoding utf8
+=encoding UTF8
 
 =head1 NAME
 
@@ -358,11 +362,5 @@ This is free software; you can redistribute it and/or modify it under the same
 terms as the Perl 5 programming language system itself.
 
 =cut
-
-1;
-
-package URI::Fast::IRI;
-
-our @ISA = qw(URI::Fast);
 
 1;
