@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no strict 'refs';
 
-our $VERSION = '0.28';
+our $VERSION = '0.29';
 
 use Carp;
 use Exporter;
@@ -19,7 +19,6 @@ use overload '""' => sub{ $_[0]->to_string };
 
 sub uri ($) {
   my $self = URI::Fast->new($_[0]);
-  $self->set_scheme('file') unless $self->get_scheme;
   $self;
 }
 
@@ -71,10 +70,10 @@ sub path {
   }
 
   if (wantarray) {
-    return @{ $self->split_path };
+    @{ $self->split_path };
   }
   elsif (defined wantarray) {
-    return decode($self->get_path);
+    decode($self->get_path);
   }
 }
 
