@@ -196,7 +196,7 @@ port number:
 
 Setting this field may be done with a string (see the note below about
 L</ENCODING>) or a hash reference of individual field names (C<usr>, C<pwd>,
-C<host>, and C<sport>). In both cases, the existing values are completely
+C<host>, and C<port>). In both cases, the existing values are completely
 replaced by the new values and any values not present are deleted.
 
 =head3 usr
