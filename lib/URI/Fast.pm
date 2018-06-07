@@ -239,7 +239,7 @@ C<?>. The query string may be set in several ways.
   $uri->query({foo => 'bar', baz => 'bat'}, ';'); # foo=bar;baz=bat
 
 In list context, returns a hash ref mapping query keys to array refs of their
-values (see L<./query_hash>).
+values (see L</query_hash>).
 
 =head3 query_keys
 
