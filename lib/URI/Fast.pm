@@ -121,7 +121,7 @@ sub param {
 
   return wantarray     ? @$params
        : @$params == 1 ? $params->[0]
-                       : $params;
+       : croak("param: multiple values encountered for query parameter '$key' when called in SCALAR context");
 }
 
 =encoding UTF8
@@ -261,8 +261,8 @@ parameter to C<undef> deletes the parameter from the URI.
   $uri->param('fnord', 'slack');
 
   my $value_scalar    = $uri->param('fnord'); # fnord appears once
-  my $value_array_ref = $uri->param('foo');   # foo appears twice
-  my @value_list      = $uri->param('foo');   # list context always yields a list
+  my @value_list      = $uri->param('foo');   # foo appears twice
+  my $value_scalar    = $uri->param('foo');   # croaks; expected single value but foo has multiple
 
   # Delete 'foo'
   $uri->param('foo', undef);
