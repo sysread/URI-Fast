@@ -134,12 +134,12 @@ URI::Fast - A fast(er) URI parser
 
   use URI::Fast qw(uri);
 
-  my $uri = uri 'http://www.example.com/some/path?a=b&c=d';
+  my $uri = uri 'http://www.example.com/some/path?fnord=slack&foo=bar';
 
   if ($uri->scheme =~ /http(s)?/) {
-    my @path = $uri->path;
-    my $a = $uri->param('a');
-    my $b = $uri->param('b');
+    my @path  = $uri->path;
+    my $fnord = $uri->param('fnord');
+    my $foo   = $uri->param('foo');
   }
 
   if ($uri->path =~ /\/login/ && $uri->scheme ne 'https') {
@@ -231,12 +231,15 @@ The path may also be updated using either a string or an array ref of segments:
 
 =head2 query
 
-Returns the complete query string. Does not include the leading C<?>. The query
-string may be set in several ways.
+In scalar context, returns the complete query string, excluding the leading
+C<?>. The query string may be set in several ways.
 
   $uri->query("foo=bar&baz=bat"); # note: no percent-encoding performed
   $uri->query({foo => 'bar', baz => 'bat'}); # foo=bar&baz=bat
   $uri->query({foo => 'bar', baz => 'bat'}, ';'); # foo=bar;baz=bat
+
+In list context, returns a hash ref mapping query keys to array refs of their
+values (see L<./query_hash>).
 
 =head3 query_keys
 
@@ -307,7 +310,7 @@ Percent-encodes a string for use in a URI. By default, both reserved and UTF-8
 chars (C<! * ' ( ) ; : @ & = + $ , / ? # [ ] %>) are encoded.
 
 A second (optional) parameter provides a string containing any characters the
-caller does not wish to be decoded. An empty string will result in the default
+caller does not wish to be encoded. An empty string will result in the default
 behavior described above.
 
 For example, to encode all characters in a query-like string I<except> for

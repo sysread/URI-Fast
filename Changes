@@ -1,5 +1,6 @@
 0.29 2019-??-??
 -optimization: uri() now sets default scheme to "file" in XS
+-docs updated to clarify the unclear
 
 0.28 2018-05-30
 -bugfix: segfault when c function uri_decode called with len=0 and an input
