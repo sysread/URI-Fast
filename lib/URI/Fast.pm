@@ -157,6 +157,8 @@ parameter.
 
 =head1 EXPORTED SUBROUTINES
 
+Subroutines are exported on demand.
+
 =head2 uri
 
 Accepts a URI string, minimally parses it, and returns a C<URI::Fast> object.
@@ -170,6 +172,10 @@ be percent-encoded when modified.
 =head2 uri_split
 
 Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
+
+=head2 encode/decode
+
+See L</ENCODING>.
 
 =head1 ATTRIBUTES
 
