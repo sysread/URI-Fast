@@ -17,10 +17,8 @@ our @EXPORT_OK = qw(uri iri uri_split);
 
 use overload '""' => sub{ $_[0]->to_string };
 
-sub uri ($) {
-  my $self = URI::Fast->new($_[0]);
-  $self;
-}
+sub uri { URI::Fast->new($_[0]) }
+sub iri { URI::Fast::IRI->new_iri($_[0]) }
 
 # Build a simple accessor for basic attributes
 foreach my $attr (qw(scheme usr pwd host port frag)) {
@@ -183,7 +181,7 @@ its value.
 
 =head2 scheme
 
-Defaults to C<file> if not present in the URI string.
+Gets or sets the scheme portion of the URI (e.g. C<http>), excluding C<://>.
 
 =head2 auth
 

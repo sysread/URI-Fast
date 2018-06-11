@@ -1,4 +1,9 @@
-0.29 2019-06-07
+0.30 2018-06-??
+-incompatible change: dropped default scheme; when no scheme is present in
+ the source string, the stringified URI is excluded
+-dropped prototype from URI::Fast::uri()
+
+0.29 2018-06-07
 -optimization: uri() now sets default scheme to "file" in XS
 -docs updated to clarify the unclear (credit: val, merlyn)
 -incompatible change: param() croaks when called in scalar context but
