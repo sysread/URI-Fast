@@ -1,4 +1,4 @@
-0.30 2018-06-??
+0.30 2018-06-12
 -incompatible change: dropped default scheme; when no scheme is present in
  the source string, the stringified URI is excluded
 -dropped prototype from URI::Fast::uri()
