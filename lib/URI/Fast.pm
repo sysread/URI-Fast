@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no strict 'refs';
 
-our $VERSION = '0.30';
+our $VERSION = '0.31';
 
 use Carp;
 use Exporter;
@@ -13,7 +13,7 @@ require XSLoader;
 XSLoader::load('URI::Fast', $VERSION);
 
 use Exporter 'import';
-our @EXPORT_OK = qw(uri iri uri_split);
+our @EXPORT_OK = qw(uri iri uri_split encode decode);
 
 use overload '""' => sub{ $_[0]->to_string };
 
