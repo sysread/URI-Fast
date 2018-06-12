@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no strict 'refs';
 
-our $VERSION = '0.31';
+our $VERSION = '0.32';
 
 use Carp;
 use Exporter;
@@ -19,6 +19,7 @@ use overload '""' => sub{ $_[0]->to_string };
 
 sub uri { URI::Fast->new($_[0]) }
 sub iri { URI::Fast::IRI->new_iri($_[0]) }
+sub as_string { goto \&to_string }
 
 # Build a simple accessor for basic attributes
 foreach my $attr (qw(scheme usr pwd host port frag)) {
