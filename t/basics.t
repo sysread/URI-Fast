@@ -219,6 +219,13 @@ subtest 'query' => sub{
       };
     }
   };
+
+  subtest 'add_param' => sub{
+    my $uri = uri 'http://www.test.com';
+    is $uri->param('foo', 'bar'), 'bar', 'param';
+    is [$uri->add_param('foo', 'baz')], ['bar', 'baz'], 'add_param';
+    is [$uri->param('foo')], ['bar', 'baz'], 'add_param';
+  };
 };
 
 subtest 'frag' => sub{

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no strict 'refs';
 
-our $VERSION = '0.32';
+our $VERSION = '0.33';
 
 use Carp;
 use Exporter;
@@ -121,6 +121,11 @@ sub param {
   return wantarray     ? @$params
        : @$params == 1 ? $params->[0]
        : croak("param: multiple values encountered for query parameter '$key' when called in SCALAR context");
+}
+
+sub add_param {
+  my ($self, $key, $val, $sep) = @_;
+  $self->param($key, [$self->param($key), $val], $sep);
 }
 
 =encoding UTF8
@@ -277,6 +282,15 @@ separate key/value pairs.
 
   $uri->param('foo', 'bar', ';'); # foo=bar
   $uri->param('baz', 'bat', ';'); # foo=bar;baz=bat
+
+=head3 add_param
+
+Updates the query string by adding a new value for the specified key. If the
+key already exists in the query string, the new value is appended without
+altering the original value.
+
+  $uri->param('foo', 'bar');  # foo=bar
+  $uri->param('foo', 'baz');  # foo=bar&foo=baz
 
 =head2 frag
 

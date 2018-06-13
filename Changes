@@ -1,4 +1,8 @@
-0.32 2018-06-13
+0.33 2018-06-13
+-New method add_param() appends query parameters without clobbering existing
+ query keys
+
+0.32 2018-06-12
 -Alias as_string -> to_string
 
 0.31 2018-06-12
