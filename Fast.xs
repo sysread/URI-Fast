@@ -13,7 +13,7 @@
 #define URI_MEMBER(obj, member) (URI(obj)->member)
 
 // quick sugar for calling uri_encode
-#define URI_ENCODE_MEMBER(uri, mem, val, allow, alen) uri_encode(val, min(strlen(val), URI_SIZE(mem)), URI_MEMBER(uri, mem), allow, alen, URI_MEMBER(uri, is_iri))
+#define URI_ENCODE_MEMBER(uri, mem, val, allow, alen) uri_encode(val, minnum(strlen(val), URI_SIZE(mem)), URI_MEMBER(uri, mem), allow, alen, URI_MEMBER(uri, is_iri))
 
 // size constats
 #define URI_SIZE_scheme 32
@@ -47,8 +47,8 @@
 #endif
 
 // min of two numbers
-size_t min(size_t a, size_t b) {
-  return a <= b ? a : b;
+size_t minnum(size_t x, size_t y) {
+  return x <= y ? x : y;
 }
 
 /*
@@ -314,29 +314,29 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
   if (len > 0) {
     // Credentials
-    brk1 = min(len, strcspn(&auth[idx], "@"));
+    brk1 = minnum(len, strcspn(&auth[idx], "@"));
 
     if (brk1 > 0 && brk1 != len) {
-      brk2 = min(len - idx, strcspn(&auth[idx], ":"));
+      brk2 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
       if (brk2 > 0 && brk2 < brk1) {
-        strncpy(uri->usr, &auth[idx], min(brk2, URI_SIZE_usr));
+        strncpy(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
         idx += brk2 + 1;
 
-        strncpy(uri->pwd, &auth[idx], min(brk1 - brk2 - 1, URI_SIZE_pwd));
+        strncpy(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
         idx += brk1 - brk2;
       }
       else {
-        strncpy(uri->usr, &auth[idx], min(brk1, URI_SIZE_usr));
+        strncpy(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
         idx += brk1 + 1;
       }
     }
 
     // Location
-    brk1 = min(len - idx, strcspn(&auth[idx], ":"));
+    brk1 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
     if (brk1 > 0 && brk1 != (len - idx)) {
-      strncpy(uri->host, &auth[idx], min(brk1, URI_SIZE_host));
+      strncpy(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
       idx += brk1 + 1;
 
       for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
@@ -350,7 +350,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
       }
     }
     else {
-      strncpy(uri->host, &auth[idx], min(len - idx, URI_SIZE_host));
+      strncpy(uri->host, &auth[idx], minnum(len - idx, URI_SIZE_host));
     }
   }
 }
@@ -364,14 +364,14 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
   size_t brk = 0;
 
   // Scheme
-  brk = min(len, strcspn(&src[idx], ":/@?#"));
+  brk = minnum(len, strcspn(&src[idx], ":/@?#"));
   if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
-    strncpy(uri->scheme, &src[idx], min(brk, URI_SIZE_scheme));
+    strncpy(uri->scheme, &src[idx], minnum(brk, URI_SIZE_scheme));
     uri->scheme[brk] = '\0';
     idx += brk + 3;
 
     // Authority
-    brk = min(len - idx, strcspn(&src[idx], "/?#"));
+    brk = minnum(len - idx, strcspn(&src[idx], "/?#"));
     if (brk > 0) {
       uri_scan_auth(uri, &src[idx], brk);
       idx += brk;
@@ -379,9 +379,9 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
   }
 
   // path
-  brk = min(len - idx, strcspn(&src[idx], "?#"));
+  brk = minnum(len - idx, strcspn(&src[idx], "?#"));
   if (brk > 0) {
-    strncpy(uri->path, &src[idx], min(brk, URI_SIZE_path));
+    strncpy(uri->path, &src[idx], minnum(brk, URI_SIZE_path));
     uri->path[brk] = '\0';
     idx += brk;
   }
@@ -389,9 +389,9 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
   // query
   if (src[idx] == '?') {
     ++idx; // skip past ?
-    brk = min(len - idx, strcspn(&src[idx], "#"));
+    brk = minnum(len - idx, strcspn(&src[idx], "#"));
     if (brk > 0) {
-      strncpy(uri->query, &src[idx], min(brk, URI_SIZE_query));
+      strncpy(uri->query, &src[idx], minnum(brk, URI_SIZE_query));
       uri->query[brk] = '\0';
       idx += brk;
     }
@@ -402,7 +402,7 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
     ++idx; // skip past #
     brk = len - idx;
     if (brk > 0) {
-      strncpy(uri->frag, &src[idx], min(brk, URI_SIZE_frag));
+      strncpy(uri->frag, &src[idx], minnum(brk, URI_SIZE_frag));
       uri->frag[brk] = '\0';
     }
   }
@@ -496,7 +496,7 @@ SV* get_query_keys(pTHX_ SV* uri) {
 static
 SV* query_hash(pTHX_ SV* uri) {
   const char* src = URI_MEMBER(uri, query);
-  size_t idx = 0, brk, klen, vlen, slen = min(URI_SIZE_query, strlen(src));
+  size_t idx = 0, brk, klen, vlen, slen = minnum(URI_SIZE_query, strlen(src));
   SV** ref;
   SV* tmp;
   AV* arr;
@@ -560,7 +560,7 @@ static
 SV* get_param(pTHX_ SV* uri, SV* sv_key) {
   int is_iri = URI_MEMBER(uri, is_iri);
   const char* src = URI_MEMBER(uri, query);
-  size_t idx = 0, brk = 0, klen, elen, vlen, len = min(URI_SIZE_query, strlen(src));
+  size_t idx = 0, brk = 0, klen, elen, vlen, len = minnum(URI_SIZE_query, strlen(src));
   AV* out = newAV();
   SV* value;
 
@@ -617,7 +617,7 @@ const char* set_path(pTHX_ SV* uri_obj, const char* value) {
 
 static
 const char* set_query(pTHX_ SV* uri_obj, const char* value) {
-  strncpy(URI_MEMBER(uri_obj, query), value, min(strlen(value) + 1, URI_SIZE_query));
+  strncpy(URI_MEMBER(uri_obj, query), value, minnum(strlen(value) + 1, URI_SIZE_query));
   return value;
 }
 
@@ -647,7 +647,7 @@ const char* set_host(pTHX_ SV* uri_obj, const char* value) {
 
 static
 const char* set_port(pTHX_ SV* uri_obj, const char* value) {
-  size_t len = min(strlen(value), URI_SIZE_port);
+  size_t len = minnum(strlen(value), URI_SIZE_port);
   size_t i;
 
   for (i = 0; i < len; ++i) {
