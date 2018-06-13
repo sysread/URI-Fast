@@ -47,9 +47,9 @@
 #endif
 
 // min of two numbers
-#ifndef min
-#define min(a, b) (a <= b ? a : b)
-#endif
+size_t min(size_t a, size_t b) {
+  return a <= b ? a : b;
+}
 
 /*
  * Percent encoding
@@ -666,7 +666,7 @@ const char* set_port(pTHX_ SV* uri_obj, const char* value) {
 static
 void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char* separator) {
   int    is_iri = URI_MEMBER(uri, is_iri);
-  char   dest[1024];
+  char   dest[URI_SIZE_query];
   const  char *key, *src = URI_MEMBER(uri, query), *strval;
   const  char sep = separator[0];
   const  char seps[2] = { sep, '\0' };
@@ -722,8 +722,14 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char* separator) 
     if (ref == NULL) break;
     if (!SvOK(*ref)) break;
 
-    // Add ampersand if needed to separate pairs
+    // Break out after hitting the limit of the query slot
+    if (j == URI_SIZE_query) break;
+
+    // Add separator if needed to separate pairs
     if (j > 0) dest[j++] = sep;
+
+    // Break out early if this key would overflow the struct member
+    if (j + klen + 1 > URI_SIZE_query) break;
 
     // Copy key over
     strncpy(&dest[j], enckey, klen);

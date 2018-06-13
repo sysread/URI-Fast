@@ -1,9 +1,12 @@
+0.34 2018-06-13
+-bugfix: set_param could clobber existing query parameters (credit: aeruder)
+
 0.33 2018-06-13
--New method add_param() appends query parameters without clobbering existing
+-new method add_param() appends query parameters without clobbering existing
  query keys (credit: sara)
 
 0.32 2018-06-12
--Alias as_string -> to_string (credit: merlyn)
+-alias as_string -> to_string (credit: merlyn)
 
 0.31 2018-06-12
 -@EXPORT_OK now includes encode() and decode() (credit: merlyn)
