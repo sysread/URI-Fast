@@ -669,6 +669,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char* separator) 
   char   dest[1024];
   const  char *key, *src = URI_MEMBER(uri, query), *strval;
   const  char sep = separator[0];
+  const  char seps[2] = { sep, '\0' };
   size_t klen, vlen, slen, qlen = strlen(src), avlen, i = 0, j = 0, brk = 0;
   AV*    av_values;
   SV**   ref;
@@ -692,7 +693,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char* separator) 
     // copying into dest as idx advances.
     while (strncmp(&src[i], enckey, klen) != 0) {
       // Find the end of this key=value section
-      brk = strcspn(&src[i], separator);
+      brk = strcspn(&src[i], seps);
 
       // If this is not the first key=value section written to dest, add an
       // ampersand to separate the pairs.
@@ -708,7 +709,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char* separator) 
     }
 
     // The key was found; skip past to the next key=value pair
-    i += strcspn(&src[i], separator);
+    i += strcspn(&src[i], seps);
 
     // Skip the '&', too, since it will already be there
     if (strcspn(&src[i], separator) == 0) ++i;
