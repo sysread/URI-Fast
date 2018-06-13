@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no strict 'refs';
 
-our $VERSION = '0.33';
+our $VERSION = '0.34';
 
 use Carp;
 use Exporter;
