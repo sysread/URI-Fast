@@ -1,12 +1,12 @@
 0.33 2018-06-13
 -New method add_param() appends query parameters without clobbering existing
- query keys
+ query keys (credit: sara)
 
 0.32 2018-06-12
--Alias as_string -> to_string
+-Alias as_string -> to_string (credit: merlyn)
 
 0.31 2018-06-12
--@EXPORT_OK now includes encode() and decode()
+-@EXPORT_OK now includes encode() and decode() (credit: merlyn)
 
 0.30 2018-06-12
 -incompatible change: dropped default scheme; when no scheme is present in
