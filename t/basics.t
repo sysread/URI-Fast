@@ -168,6 +168,9 @@ subtest 'query' => sub{
           is [$uri->param('foo', [qw(bar baz)], $sep)], [qw(bar baz)], 'set';
           is [$uri->param('foo')], [qw(bar baz)], 'get';
           is $uri->query, "fnord=slack${sep}foo=bar${sep}foo=baz", 'updated: query';
+          is [$uri->param('qux', 'corge', $sep)], [qw(corge)], 'set qux';
+          is [$uri->param('qux')], [qw(corge)], 'get qux';
+          is $uri->query, "fnord=slack${sep}foo=bar${sep}foo=baz${sep}qux=corge", 'updated: query';
         };
 
         subtest 'edge cases' => sub {
