@@ -266,15 +266,15 @@ typedef char uri_port_t   [URI_SIZE_port + 1];
 typedef int  uri_is_iri_t;
 
 typedef struct {
+  uri_is_iri_t is_iri;
   uri_scheme_t scheme;
-  uri_path_t   path;
   uri_query_t  query;
+  uri_path_t   path;
+  uri_host_t   host;
+  uri_port_t   port;
   uri_frag_t   frag;
   uri_usr_t    usr;
   uri_pwd_t    pwd;
-  uri_host_t   host;
-  uri_port_t   port;
-  uri_is_iri_t is_iri;
 } uri_t;
 
 /*

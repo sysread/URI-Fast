@@ -166,6 +166,22 @@ altering the original value.
 
 The fragment section of the URI, excluding the leading C<#>.
 
+=head2 to_string
+
+=head2 as_string
+
+=head2 "$uri"
+
+Stringifies the URI, encoding output as necessary. String interpolation is
+overloaded.
+
+=head2 compare
+
+=head2 $uri eq $other
+
+Compares the URI to another, returning true if the URIs are equivalent.
+Overloads the C<eq> operator.
+
 =head1 ENCODING
 
 C<URI::Fast> tries to do the right thing in most cases with regard to reserved

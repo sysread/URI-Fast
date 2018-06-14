@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no strict 'refs';
 
-our $VERSION = '0.34';
+our $VERSION = '0.35';
 
 use Carp;
 use Exporter;
@@ -15,7 +15,8 @@ XSLoader::load('URI::Fast', $VERSION);
 use Exporter 'import';
 our @EXPORT_OK = qw(uri iri uri_split encode decode);
 
-use overload '""' => sub{ $_[0]->to_string };
+use overload '""' => sub{ $_[0]->to_string },
+             'eq' => sub{ $_[0]->compare($_[1]) };
 
 sub uri { URI::Fast->new($_[0]) }
 sub iri { URI::Fast::IRI->new_iri($_[0]) }
@@ -126,6 +127,52 @@ sub param {
 sub add_param {
   my ($self, $key, $val, $sep) = @_;
   $self->param($key, [$self->param($key), $val], $sep);
+}
+
+sub _cmp ($$) {
+  if (defined $_[0]) {
+    return if !defined $_[1];
+    return if $_[0] ne $_[1];
+  }
+  elsif (defined $_[1]) {
+    return;
+  }
+
+  return 1;
+}
+
+sub compare {
+  my ($self, $other) = @_;
+  $other = uri $other;
+
+  return unless _cmp($self->scheme, $other->scheme)
+    && _cmp($self->usr, $other->usr)
+    && _cmp($self->pwd, $other->pwd)
+    && _cmp($self->host, $other->host)
+    && _cmp($self->port, $other->port)
+    && _cmp($self->frag, $other->frag);
+
+  my @spath = $self->path;
+  my @opath = $other->path;
+  return unless @spath == @opath;
+
+  foreach (0 .. $#spath) {
+    return unless _cmp($spath[$_], $opath[$_]);
+  }
+
+  my $sparam = $self->query_hash;
+  my $oparam = $other->query_hash;
+
+  foreach my $k (keys %$sparam) {
+    return unless exists $oparam->{$k};
+    return unless @{$sparam->{$k}} == @{$oparam->{$k}};
+
+    foreach (0 .. $#{$sparam->{$k}}) {
+      return unless _cmp($sparam->{$k}[$_], $oparam->{$k}[$_]);
+    }
+  }
+
+  return 1;
 }
 
 =encoding UTF8
@@ -295,6 +342,22 @@ altering the original value.
 =head2 frag
 
 The fragment section of the URI, excluding the leading C<#>.
+
+=head2 to_string
+
+=head2 as_string
+
+=head2 "$uri"
+
+Stringifies the URI, encoding output as necessary. String interpolation is
+overloaded.
+
+=head2 compare
+
+=head2 $uri eq $other
+
+Compares the URI to another, returning true if the URIs are equivalent.
+Overloads the C<eq> operator.
 
 =head1 ENCODING
 

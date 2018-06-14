@@ -34,6 +34,7 @@ subtest 'param' => sub{
   is uri('?=bar')->param('bar'), undef, 'query =value w/o key && request key eq value';
   is uri('?=')->param('foo'), undef, 'query w/ = but w/o key or value';
   is uri('???')->param('??'), undef, 'multiple question marks';
+  is uri('?food=bard&foo=bar')->param('foo'), 'bar', 'substring match';
 };
 
 subtest 'query_hash' => sub{
