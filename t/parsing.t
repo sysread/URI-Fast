@@ -40,7 +40,8 @@ subtest 'param' => sub{
 subtest 'query_hash' => sub{
   is uri('?')->query_hash, hash{ end }, 'empty query';
   is uri('?foo')->query_hash, hash{ field 'foo' => array{ end }; end }, 'query key w/o =value';
-  is uri('?foo=')->query_hash, hash{ field 'foo' => array{ end }; end }, 'query key w/o value';
+  is uri('?foo')->query_hash, hash{ field 'foo' => array{ end }; end }, 'query key w/o =value';
+  is uri('?foo=')->query_hash, hash{ field 'foo' => array{ item ''; end }; end }, 'query key w/o value';
   is uri('?=bar')->query_hash, hash{ end }, 'query =value w/o key';
   is uri('?=')->query_hash, hash{ end }, 'query w/ = but w/o key or value';
   is uri('???')->query_hash, hash{ field '??' => array{ end }; end }, 'multiple question marks';

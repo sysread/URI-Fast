@@ -97,9 +97,9 @@ sub query {
   return %{ $self->query_hash };            # list context
 }
 
-sub query_keys {
-  keys %{ $_[0]->get_query_keys };
-}
+sub query_hash   { $_[0]->get_query_hash($_[1] || '&') }
+sub query_keys   { keys %{ $_[0]->get_query_keys($_[1] || '&') } }
+sub query_keyset { $_[0]->update_query_keyset($_[1], $_[2] || '&') }
 
 sub param {
   my ($self, $key, $val, $sep) = @_;
@@ -338,6 +338,25 @@ altering the original value.
 
   $uri->param('foo', 'bar');  # foo=bar
   $uri->param('foo', 'baz');  # foo=bar&foo=baz
+
+=head3 query_keyset
+
+Allows modification of the query string in the manner of a set, using keys
+without C<=value>, e.g. C<foo&bar&baz>. Accepts a hash ref of keys to update.
+A truthy value adds the key, a falsey value removes it. Any keys not mentioned
+in the update hash are left unchanged.
+
+  my $uri = uri '&baz&bat';
+  $uri->query_keyset({foo => 1, bar => 1}); # baz&bat&foo&bar
+  $uri->query_keyset({baz => 0, bat => 0}); # foo&bar
+
+If there are key-value pairs in the query string as well, the behavior of
+this method becomes a little more complex. When a key is specified in the
+hash update hash ref, a positive value will leave an existing key/value pair
+untouched. A negative value will remove the key and value.
+
+  my $uri = uri '&foo=bar&baz&bat';
+  $uri->query_keyset({foo => 1, baz => 0}); # foo=bar&bat
 
 =head2 frag
 
