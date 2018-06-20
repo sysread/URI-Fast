@@ -330,6 +330,9 @@ separate key/value pairs.
   $uri->param('foo', 'bar', ';'); # foo=bar
   $uri->param('baz', 'bat', ';'); # foo=bar;baz=bat
 
+When included, separators in the query string will be normalized to the
+character specified.
+
 =head3 add_param
 
 Updates the query string by adding a new value for the specified key. If the
@@ -358,8 +361,10 @@ untouched. A negative value will remove the key and value.
   my $uri = uri '&foo=bar&baz&bat';
   $uri->query_keyset({foo => 1, baz => 0}); # foo=bar&bat
 
-And optional second parameter may be specified to control the separator
-character used when updating the query string.
+An optional second parameter may be specified to control the separator
+character used when updating the query string. When the separator is explicitly
+specified, all separators in the query string will be normalized to the
+specified separator.
 
 =head2 frag
 
@@ -431,6 +436,19 @@ Decodes a percent-encoded string.
 =head1 SPEED
 
 See L<URI::Fast::Benchmarks>.
+
+=head1 FUTURE PLANS
+
+=over
+
+=item Zero-copy strategy for parsing and updating query string
+
+=item Support for arbitrary binary data in query string
+
+Currently, queries are restricted to keys or key/value pairs and decoded into
+utf8 strings.
+
+=back
 
 =head1 SEE ALSO
 
