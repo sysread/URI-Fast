@@ -15,7 +15,6 @@ typedef struct {
 } uri_query_token_t;
 
 typedef struct {
-  char    separator[4];
   size_t  length;
   size_t  cursor;
   char   *source;
@@ -30,11 +29,6 @@ void query_scanner_init(
   scanner->source = source;
   scanner->length = length;
   scanner->cursor = 0;
-
-  scanner->separator[0] = '&';
-  scanner->separator[1] = ';';
-  scanner->separator[2] = '=';
-  scanner->separator[3] = '\0';
 }
 
 int query_scanner_done(uri_query_scanner_t *scanner) {
@@ -57,7 +51,7 @@ SCAN_KEY:
   }
 
   // Scan to end of token
-  brk = strcspn(&scanner->source[ scanner->cursor ], scanner->separator);
+  brk = strcspn(&scanner->source[ scanner->cursor ], "&;=\0");
 
   // Set key members in token struct
   token->key = &scanner->source[ scanner->cursor ];
@@ -72,7 +66,7 @@ SCAN_KEY:
     ++scanner->cursor;
 
     // Find the end of the value
-    brk = strcspn(&scanner->source[ scanner->cursor ], scanner->separator);
+    brk = strcspn(&scanner->source[ scanner->cursor ], "&;=\0");
 
     // Set the value and token type
     token->value = &scanner->source[ scanner->cursor ];

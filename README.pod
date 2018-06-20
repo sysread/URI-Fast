@@ -181,6 +181,9 @@ untouched. A negative value will remove the key and value.
   my $uri = uri '&foo=bar&baz&bat';
   $uri->query_keyset({foo => 1, baz => 0}); # foo=bar&bat
 
+And optional second parameter may be specified to control the separator
+character used when updating the query string.
+
 =head2 frag
 
 The fragment section of the URI, excluding the leading C<#>.
