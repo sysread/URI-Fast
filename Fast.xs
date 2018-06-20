@@ -480,14 +480,14 @@ SV* split_path(pTHX_ SV* uri) {
 }
 
 static
-SV* get_query_keys(pTHX_ SV* uri, const char separator) {
+SV* get_query_keys(pTHX_ SV* uri) {
   char* query = URI_MEMBER(uri, query);
   size_t klen, qlen = strlen(query);
   HV* out = newHV();
   uri_query_scanner_t scanner;
   uri_query_token_t token;
 
-  query_scanner_init(&scanner, query, qlen, separator);
+  query_scanner_init(&scanner, query, qlen);
 
   while (!query_scanner_done(&scanner)) {
     query_scanner_next(&scanner, &token);
@@ -501,7 +501,7 @@ SV* get_query_keys(pTHX_ SV* uri, const char separator) {
 }
 
 static
-SV* query_hash(pTHX_ SV* uri, const char separator) {
+SV* query_hash(pTHX_ SV* uri) {
   SV *tmp, **refval;
   AV *arr;
   HV *out = newHV();
@@ -510,7 +510,7 @@ SV* query_hash(pTHX_ SV* uri, const char separator) {
   uri_query_scanner_t scanner;
   uri_query_token_t token;
 
-  query_scanner_init(&scanner, query, qlen, separator);
+  query_scanner_init(&scanner, query, qlen);
 
   while (!query_scanner_done(&scanner)) {
     query_scanner_next(&scanner, &token);
@@ -560,7 +560,7 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
   char enc_key[(klen * 3) + 2];
   elen = uri_encode(key, klen, enc_key, "", 0, is_iri);
 
-  query_scanner_init(&scanner, query, qlen, '\0');
+  query_scanner_init(&scanner, query, qlen);
 
   while (!query_scanner_done(&scanner)) {
     query_scanner_next(&scanner, &token);
@@ -655,7 +655,7 @@ const char* set_port(pTHX_ SV* uri_obj, const char* value) {
 }
 
 static
-void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, const char separator) {
+void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
   HE     *ent;
   HV     *keys, *enc_keys;
   I32    iterlen, i, klen;
@@ -698,7 +698,7 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, const char separator) {
   // encountered in the query string, exclude ones with a falsish value in the
   // hash and keep the ones with a truish value. Any not present in the hash
   // are kept unchanged.
-  query_scanner_init(&scanner, query, qlen, separator);
+  query_scanner_init(&scanner, query, qlen);
 
   while (!query_scanner_done(&scanner)) {
     query_scanner_next(&scanner, &token);
@@ -1188,19 +1188,17 @@ SV* split_path(uri)
   OUTPUT:
     RETVAL
 
-SV* get_query_keys(uri, separator)
+SV* get_query_keys(uri)
   SV* uri
-  char separator
   CODE:
-    RETVAL = get_query_keys(aTHX_ uri, separator);
+    RETVAL = get_query_keys(aTHX_ uri);
   OUTPUT:
     RETVAL
 
-SV* get_query_hash(uri, separator)
+SV* get_query_hash(uri)
   SV* uri
-  char separator
   CODE:
-    RETVAL = query_hash(aTHX_ uri, separator);
+    RETVAL = query_hash(aTHX_ uri);
   OUTPUT:
     RETVAL
 

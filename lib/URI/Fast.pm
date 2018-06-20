@@ -97,8 +97,8 @@ sub query {
   return %{ $self->query_hash };            # list context
 }
 
-sub query_hash   { $_[0]->get_query_hash($_[1] || '&') }
-sub query_keys   { keys %{ $_[0]->get_query_keys($_[1] || '&') } }
+sub query_hash   { $_[0]->get_query_hash }
+sub query_keys   { keys %{ $_[0]->get_query_keys } }
 sub query_keyset { $_[0]->update_query_keyset($_[1], $_[2] || '&') }
 
 sub param {
@@ -357,6 +357,9 @@ untouched. A negative value will remove the key and value.
 
   my $uri = uri '&foo=bar&baz&bat';
   $uri->query_keyset({foo => 1, baz => 0}); # foo=bar&bat
+
+And optional second parameter may be specified to control the separator
+character used when updating the query string.
 
 =head2 frag
 

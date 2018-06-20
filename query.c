@@ -24,27 +24,17 @@ typedef struct {
 void query_scanner_init(
     uri_query_scanner_t *scanner,
     char *source,
-    size_t length,
-    char separator
+    size_t length
   )
 {
   scanner->source = source;
   scanner->length = length;
   scanner->cursor = 0;
 
-  char seps[4] = {'\0', '\0', '\0', '\0'};
-
-  if (separator == '\0') {
-    seps[0] = '&';
-    seps[1] = ';';
-    seps[2] = '=';
-  }
-  else {
-    seps[0] = separator;
-    seps[1] = '=';
-  }
-
-  strncpy(scanner->separator, seps, 4);
+  scanner->separator[0] = '&';
+  scanner->separator[1] = ';';
+  scanner->separator[2] = '=';
+  scanner->separator[3] = '\0';
 }
 
 int query_scanner_done(uri_query_scanner_t *scanner) {

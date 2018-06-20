@@ -2,6 +2,8 @@
 -new method query_keyset({...})
 -new method compare($other) with overloaded eq
 -document stringification with overloaded ""
+-change in behavior: all query scanning functions now treat '&' and ';' as
+ valid separators
 
 0.34 2018-06-13
 -bugfix: set_param could clobber existing query parameters (credit: aeruder)
