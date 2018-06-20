@@ -1,6 +1,6 @@
 0.35 2018-06-??
--new method compare($other) with overloaded eq
 -new method query_keyset({...})
+-new method compare($other) with overloaded eq
 -document stringification with overloaded ""
 
 0.34 2018-06-13

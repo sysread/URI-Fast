@@ -317,9 +317,9 @@ parameter to C<undef> deletes the parameter from the URI.
   $uri->param('foo', ['bar', 'baz']);
   $uri->param('fnord', 'slack');
 
-  my $value_scalar    = $uri->param('fnord'); # fnord appears once
-  my @value_list      = $uri->param('foo');   # foo appears twice
-  my $value_scalar    = $uri->param('foo');   # croaks; expected single value but foo has multiple
+  my $value_scalar = $uri->param('fnord'); # fnord appears once
+  my @value_list   = $uri->param('foo');   # foo appears twice
+  my $value_scalar = $uri->param('foo');   # croaks; expected single value but foo has multiple
 
   # Delete 'foo'
   $uri->param('foo', undef);
