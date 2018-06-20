@@ -757,21 +757,23 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
 }
 
 static
-void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char *separator) {
+void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
   int    is_iri = URI_MEMBER(uri, is_iri);
+  char   *key, *strval, *query = URI_MEMBER(uri, query);
+  size_t qlen = strlen(query), klen, vlen, slen, av_idx, i = 0, brk = 0, off = 0;
   char   dest[URI_SIZE_query];
-  const  char *key, *src = URI_MEMBER(uri, query), *strval;
-  const  char sep = separator[0];
-  const  char seps[2] = { sep, '\0' };
-  size_t klen, vlen, slen, qlen = strlen(src), av_idx, i = 0, j = 0, brk = 0;
-  AV*    av_values;
-  SV**   ref;
+  AV     *av_values;
+  SV     **refval;
+  uri_query_scanner_t scanner;
+  uri_query_token_t token;
 
+  // Build encoded key string
   SvGETMAGIC(sv_key);
-  key = SvPV_nomg_const(sv_key, klen);
-  char enckey[(3 * klen) + 1];
-  klen = uri_encode(key, strlen(key), enckey, "", 0, is_iri);
+  key = SvPV_nomg(sv_key, klen);
+  char enc_key[(3 * klen) + 1];
+  klen = uri_encode(key, strlen(key), enc_key, "", 0, is_iri);
 
+  // Get array of values to set
   SvGETMAGIC(sv_values);
   if (!SvROK(sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
     croak("set_param: expected array of values");
@@ -780,66 +782,72 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, const char *separator) 
   av_values = (AV*) SvRV(sv_values);
   av_idx = av_top_index(av_values);
 
-  // Copy the old query, skipping the key to be updated
-  while (i < qlen) {
-    // If the string does not begin with the key, advance until it does,
-    // copying into dest as idx advances.
-    while (strncmp(&src[i], enckey, klen) != 0) {
-      // Find the end of this key=value section
-      brk = strcspn(&src[i], seps);
+  // Begin building the new query string from the existing one, skipping
+  // keys (and their values, if any) matching sv_key.
+  query_scanner_init(&scanner, query, qlen);
 
-      // If this is not the first key=value section written to dest, add an
-      // ampersand to separate the pairs.
-      if (j > 0) dest[j++] = sep;
+  while (!query_scanner_done(&scanner)) {
+    query_scanner_next(&scanner, &token);
+    if (token.type == DONE) continue;
 
-      // Copy up to our break point
-      strncpy(&dest[j], &src[i], brk);
-      j += brk;
-      i += brk;
+    // The key does not match the key being set
+    if (strncmp(enc_key, token.key, maxnum(klen, token.key_length)) != 0) {
+      // Add separator if this is not the first key being written
+      if (off > 0) {
+        dest[off++] = separator;
+      }
 
-      if (i >= qlen) break;
-      if (src[i] == sep) ++i;
+      // Write the key to the buffer
+      strncpy(&dest[off], token.key, token.key_length);
+      off += token.key_length;
+
+      // The key has a value
+      if (token.type == PARAM) {
+        dest[off++] = '=';
+
+        // If the value's length is 0, it was parsed from "key=", so the value
+        // is not written after the '=' is added above.
+        if (token.value_length > 0) {
+          // Otherwise, write the value to the buffer
+          strncpy(&dest[off], token.value, token.value_length);
+          off += token.value_length;
+        }
+      }
     }
-
-    // The key was found; skip past to the next key=value pair
-    i += strcspn(&src[i], seps);
-
-    // Skip the '&', too, since it will already be there
-    if (src[i] == sep) ++i;
   }
 
   // Add the new values to the query
   for (i = 0; i <= av_idx; ++i) {
     // Fetch next value from the array
-    ref = av_fetch(av_values, (SSize_t) i, 0);
-    if (ref == NULL) break;
-    if (!SvOK(*ref)) break;
+    refval = av_fetch(av_values, (SSize_t) i, 0);
+    if (refval == NULL) break;
+    if (!SvOK(*refval)) break;
 
     // Break out after hitting the limit of the query slot
-    if (j == URI_SIZE_query) break;
+    if (off == URI_SIZE_query) break;
 
     // Add separator if needed to separate pairs
-    if (j > 0) dest[j++] = sep;
+    if (off > 0) dest[off++] = separator;
 
     // Break out early if this key would overflow the struct member
-    if (j + klen + 1 > URI_SIZE_query) break;
+    if (off + klen + 1 > URI_SIZE_query) break;
 
     // Copy key over
-    strncpy(&dest[j], enckey, klen);
-    j += klen;
+    strncpy(&dest[off], enc_key, klen);
+    off += klen;
 
-    dest[j++] = '=';
+    dest[off++] = '=';
 
     // Copy value over
-    SvGETMAGIC(*ref);
-    strval = SvPV_nomg_const(*ref, slen);
+    SvGETMAGIC(*refval);
+    strval = SvPV_nomg(*refval, slen);
 
-    vlen = uri_encode(strval, slen, &dest[j], "", 0, is_iri);
-    j += vlen;
+    vlen = uri_encode(strval, slen, &dest[off], "", 0, is_iri);
+    off += vlen;
   }
 
   clear_query(aTHX_ uri);
-  strncpy(URI_MEMBER(uri, query), dest, j);
+  strncpy(URI_MEMBER(uri, query), dest, off);
 }
 
 /*
@@ -1290,7 +1298,7 @@ void set_param(uri, sv_key, sv_values, separator)
   SV* uri
   SV* sv_key
   SV* sv_values
-  const char* separator
+  char separator
   CODE:
     set_param(aTHX_ uri, sv_key, sv_values, separator);
 
