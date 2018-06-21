@@ -49,7 +49,7 @@ be percent-encoded when modified.
 
 Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
 
-=head2 encode/decode
+=head2 encode/decode/url_encode/url_decode
 
 See L</ENCODING>.
 
