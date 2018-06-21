@@ -121,17 +121,23 @@ C<?>. The query string may be set in several ways.
 In list context, returns a hash ref mapping query keys to array refs of their
 values (see L</query_hash>).
 
-=head3 query_keys
+=head2 frag
+
+The fragment section of the URI, excluding the leading C<#>.
+
+=head1 METHODS
+
+=head2 query_keys
 
 Does a fast scan of the query string and returns a list of unique parameter
 names that appear in the query string.
 
-=head3 query_hash
+=head2 query_hash
 
 Scans the query string and returns a hash ref of key/value pairs. Values are
 returned as an array ref, as keys may appear multiple times.
 
-=head3 param
+=head2 param
 
 Gets or sets a parameter value. Setting a parameter value will replace existing
 values completely; the L</query> string will also be updated. Setting a
@@ -156,7 +162,7 @@ separate key/value pairs.
 When included, separators in the query string will be normalized to the
 character specified.
 
-=head3 add_param
+=head2 add_param
 
 Updates the query string by adding a new value for the specified key. If the
 key already exists in the query string, the new value is appended without
@@ -165,7 +171,7 @@ altering the original value.
   $uri->param('foo', 'bar');  # foo=bar
   $uri->param('foo', 'baz');  # foo=bar&foo=baz
 
-=head3 query_keyset
+=head2 query_keyset
 
 Allows modification of the query string in the manner of a set, using keys
 without C<=value>, e.g. C<foo&bar&baz>. Accepts a hash ref of keys to update.
@@ -188,10 +194,6 @@ An optional second parameter may be specified to control the separator
 character used when updating the query string. When the separator is explicitly
 specified, all separators in the query string will be normalized to the
 specified separator.
-
-=head2 frag
-
-The fragment section of the URI, excluding the leading C<#>.
 
 =head2 to_string
 
