@@ -32,4 +32,15 @@ subtest 'mixed' => sub {
   is $uri->query_hash, {baz => ['bat']}, 'remove key w/ 0';
 };
 
+subtest 'separator replacement' => sub {
+  my $uri = uri 'http://example.com';
+
+  $uri->query_keyset({foo => 1, bar => 1});
+  like $uri->query, qr/&/, 'separator defaults to &';
+
+  $uri->query_keyset({baz => 1}, ';');
+  like $uri->query, qr/;/, 'explicit separator used';
+  unlike $uri->query, qr/&/, 'original separator replaced';
+};
+
 done_testing;

@@ -7,9 +7,12 @@ subtest 'param' => sub{
   foreach my $sep (qw(& ;)) {
     subtest "separator '$sep'" => sub {
       my $uri = uri "http://www.test.com?foo=bar${sep}foo=baz${sep}fnord=slack";
-      is [$uri->param('foo')], array{ item 'bar'; item 'baz'; end; }, 'get (list)';
-      is $uri->param('fnord'), 'slack', 'get (scalar): single value as scalar';
-      ok dies{ my $foo = $uri->param('foo'); }, 'get (scalar): dies when encountering multiple values';
+
+      subtest 'context' => sub{
+        is [$uri->param('foo')], [qw(bar baz)], 'get (list)';
+        is $uri->param('fnord'), 'slack', 'get (scalar): single value as scalar';
+        ok dies{ my $foo = $uri->param('foo'); }, 'get (scalar): dies when encountering multiple values';
+      };
 
       subtest 'unset' => sub {
         is $uri->param('foo', undef, $sep), U, 'set';
@@ -80,6 +83,18 @@ subtest 'param' => sub{
       };
     };
   }
+
+  subtest 'separator replacement' => sub {
+    my $uri = uri 'http://example.com';
+
+    $uri->param('foo', 'bar');
+    $uri->param('baz', 'bat');
+    like $uri->query, qr/&/, 'separator defaults to &';
+
+    $uri->param('asdf', 'qwerty', ';');
+    like $uri->query, qr/;/, 'explicit separator used';
+    unlike $uri->query, qr/&/, 'original separator replaced';
+  };
 };
 
 subtest 'add_param' => sub{
@@ -87,6 +102,19 @@ subtest 'add_param' => sub{
   is $uri->param('foo', 'bar'), 'bar', 'param';
   is [$uri->add_param('foo', 'baz')], ['bar', 'baz'], 'add_param';
   is [$uri->param('foo')], ['bar', 'baz'], 'add_param';
+
+  subtest 'separator replacement' => sub {
+    my $uri = uri 'http://example.com';
+
+    $uri->add_param('foo', 'bar');
+    $uri->add_param('foo', 'baz');
+    $uri->add_param('foo', 'bat');
+    like $uri->query, qr/&/, 'separator defaults to &';
+
+    $uri->add_param('asdf', 'qwerty', ';');
+    like $uri->query, qr/;/, 'explicit separator used';
+    unlike $uri->query, qr/&/, 'original separator replaced';
+  };
 };
 
 done_testing;

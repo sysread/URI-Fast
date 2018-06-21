@@ -143,6 +143,11 @@ subtest 'query' => sub{
   is $uri->query({fnord => [qw(foo bar)]}), 'fnord=foo&fnord=bar', 'set (hash ref w/ multiple values per key)';
   is $uri->query, 'fnord=foo&fnord=bar', 'get (scalar)';
   is { $uri->query }, {fnord => [qw(foo bar)]}, 'get (list)';
+
+  like $uri->query, qr/&/, 'separator defaults to &';
+  $uri->query({foo => 'bar', baz => 'bat'}, ';');
+  like $uri->query, qr/;/, 'explicit separator used';
+  unlike $uri->query, qr/&/, 'original separator replaced';
 };
 
 subtest 'frag' => sub{
