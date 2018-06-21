@@ -276,6 +276,12 @@ See L<URI::Fast::Benchmarks>.
 
 =item Zero-copy strategy for parsing and updating query string
 
+uri() does a single, fast pass over the input string and copies portions into
+the struct members. Some compound fields, such as the query and path, are only
+parsed as needed. Switching to a zero-copy strategy would make the initial pass
+faster, reduce time spent zeroing out the struct, and make better use of the
+cache.
+
 =item Support for arbitrary binary data in query string
 
 Currently, queries are restricted to keys or key/value pairs and decoded into
