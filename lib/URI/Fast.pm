@@ -13,7 +13,12 @@ require XSLoader;
 XSLoader::load('URI::Fast', $VERSION);
 
 use Exporter 'import';
-our @EXPORT_OK = qw(uri iri uri_split encode decode url_encode url_decode);
+
+our @EXPORT_OK = qw(
+  uri iri uri_split
+  encode url_encode
+  decode url_decode
+);
 
 use overload '""' => sub{ $_[0]->to_string },
              'eq' => sub{ $_[0]->compare($_[1]) };
@@ -230,7 +235,7 @@ be percent-encoded when modified.
 
 Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
 
-=head2 encode/decode
+=head2 encode/decode/url_encode/url_decode
 
 See L</ENCODING>.
 
