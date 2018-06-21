@@ -13,14 +13,18 @@ require XSLoader;
 XSLoader::load('URI::Fast', $VERSION);
 
 use Exporter 'import';
-our @EXPORT_OK = qw(uri iri uri_split encode decode);
+our @EXPORT_OK = qw(uri iri uri_split encode decode url_encode url_decode);
 
 use overload '""' => sub{ $_[0]->to_string },
              'eq' => sub{ $_[0]->compare($_[1]) };
 
 sub uri { URI::Fast->new($_[0]) }
 sub iri { URI::Fast::IRI->new_iri($_[0]) }
-sub as_string { goto \&to_string }
+
+# Aliases
+sub as_string  { goto \&to_string }
+sub url_encode { goto \&encode    }
+sub url_decode { goto \&decode    }
 
 # Build a simple accessor for basic attributes
 foreach my $attr (qw(scheme usr pwd host port frag)) {
@@ -432,6 +436,14 @@ those used by the query:
 Decodes a percent-encoded string.
 
   my $decoded = URI::Fast::decode($some_string);
+
+=head2 url_encode
+
+=head2 url_decode
+
+These are aliases of L</encode> and L</decode>, respectively. They were added
+to make L<BLUEFEET|https://metacpan.org/author/BLUEFEET> happy after he made
+fun of me for naming L</encode> and L</decode> too generically.
 
 =head1 SPEED
 

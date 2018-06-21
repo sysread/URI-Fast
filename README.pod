@@ -256,6 +256,14 @@ Decodes a percent-encoded string.
 
   my $decoded = URI::Fast::decode($some_string);
 
+=head2 url_encode
+
+=head2 url_decode
+
+These are aliases of L</encode> and L</decode>, respectively. They were added
+to make L<BLUEFEET|https://metacpan.org/author/BLUEFEET> happy after he made
+fun of me for naming L</encode> and L</decode> too generically.
+
 =head1 SPEED
 
 See L<URI::Fast::Benchmarks>.
