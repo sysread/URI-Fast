@@ -286,14 +286,23 @@ typedef struct {
 /*
  * Clearers
  */
-static void clear_scheme(pTHX_ SV* uri_obj) { URI(uri_obj)->scheme[0] = 0; }
+/*static void clear_scheme(pTHX_ SV* uri_obj) { URI(uri_obj)->scheme[0] = 0; }
 static void clear_path(pTHX_ SV* uri_obj)   { URI(uri_obj)->path[0]   = 0; }
 static void clear_query(pTHX_ SV* uri_obj)  { URI(uri_obj)->query[0]  = 0; }
 static void clear_frag(pTHX_ SV* uri_obj)   { URI(uri_obj)->frag[0]   = 0; }
 static void clear_usr(pTHX_ SV* uri_obj)    { URI(uri_obj)->usr[0]    = 0; }
 static void clear_pwd(pTHX_ SV* uri_obj)    { URI(uri_obj)->pwd[0]    = 0; }
 static void clear_host(pTHX_ SV* uri_obj)   { URI(uri_obj)->host[0]   = 0; }
-static void clear_port(pTHX_ SV* uri_obj)   { URI(uri_obj)->port[0]   = 0; }
+static void clear_port(pTHX_ SV* uri_obj)   { URI(uri_obj)->port[0]   = 0; }*/
+
+static void clear_scheme(pTHX_ SV* uri_obj) { memset(&((URI(uri_obj))->scheme), '\0', sizeof(uri_scheme_t)); }
+static void clear_path(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->path),   '\0', sizeof(uri_path_t));   }
+static void clear_query(pTHX_ SV* uri_obj)  { memset(&((URI(uri_obj))->query),  '\0', sizeof(uri_query_t));  }
+static void clear_frag(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->frag),   '\0', sizeof(uri_frag_t));   }
+static void clear_usr(pTHX_ SV* uri_obj)    { memset(&((URI(uri_obj))->usr),    '\0', sizeof(uri_usr_t));    }
+static void clear_pwd(pTHX_ SV* uri_obj)    { memset(&((URI(uri_obj))->pwd),    '\0', sizeof(uri_pwd_t));    }
+static void clear_host(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->host),   '\0', sizeof(uri_host_t));   }
+static void clear_port(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->port),   '\0', sizeof(uri_port_t));   }
 
 static
 void clear_auth(pTHX_ SV* uri_obj) {

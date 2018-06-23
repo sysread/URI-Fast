@@ -23,7 +23,7 @@ WriteMakefile(
   LICENSE          => 'perl_5',
   MIN_PERL_VERSION => '5.010',
   PREREQ_PRINT     => 1,
-#  OPTIMIZE         => '-O2',
+  OPTIMIZE         => '-O2',
 
   META_MERGE => {
     'meta-spec' => {
