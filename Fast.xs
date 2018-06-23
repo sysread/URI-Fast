@@ -312,6 +312,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
   size_t brk1 = 0;
   size_t brk2 = 0;
   size_t i;
+  size_t n;
 
   uri->usr[0]  = '\0';
   uri->pwd[0]  = '\0';
@@ -326,16 +327,19 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
       brk2 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
       if (brk2 > 0 && brk2 < brk1) {
-        strncpy(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
-        uri->usr[minnum(brk2, URI_SIZE_usr)] = '\0';
+        n = minnum(brk2, URI_SIZE_usr);
+        strncpy(uri->usr, &auth[idx], n);
+        uri->usr[n] = '\0';
         idx += brk2 + 1;
 
-        strncpy(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
-        uri->pwd[minnum(brk2, URI_SIZE_pwd)] = '\0';
+        n = minnum(brk1 - brk2 - 1, URI_SIZE_pwd);
+        strncpy(uri->pwd, &auth[idx], n);
+        uri->pwd[n] = '\0';
         idx += brk1 - brk2;
       }
       else {
-        strncpy(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
+        n = minnum(brk1, URI_SIZE_usr);
+        strncpy(uri->usr, &auth[idx], n);
         uri->usr[minnum(brk1, URI_SIZE_usr)] = '\0';
         idx += brk1 + 1;
       }
@@ -345,8 +349,9 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
     brk1 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
     if (brk1 > 0 && brk1 != (len - idx)) {
-      strncpy(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
-      uri->host[minnum(brk1, URI_SIZE_host)] = '\0';
+      n = minnum(brk1, URI_SIZE_host);
+      strncpy(uri->host, &auth[idx], n);
+      uri->host[n] = '\0';
       idx += brk1 + 1;
 
       for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
@@ -356,12 +361,14 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
         }
         else {
           uri->port[i] = auth[i + idx];
+          uri->port[i + 1] = '\0';
         }
       }
     }
     else {
-      strncpy(uri->host, &auth[idx], minnum(len - idx, URI_SIZE_host));
-      uri->host[minnum(len - idx, URI_SIZE_host)] = '\0';
+      n = minnum(len - idx, URI_SIZE_host);
+      strncpy(uri->host, &auth[idx], n);
+      uri->host[n] = '\0';
     }
   }
 }
