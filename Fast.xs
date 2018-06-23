@@ -323,10 +323,14 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
   size_t i;
   size_t n;
 
-  uri->usr[0]  = '\0';
+  /*uri->usr[0]  = '\0';
   uri->pwd[0]  = '\0';
   uri->host[0] = '\0';
-  uri->port[0] = '\0';
+  uri->port[0] = '\0';*/
+  memset(&uri->usr,  '\0', sizeof(uri_usr_t));
+  memset(&uri->pwd,  '\0', sizeof(uri_pwd_t));
+  memset(&uri->host, '\0', sizeof(uri_host_t));
+  memset(&uri->port, '\0', sizeof(uri_port_t));
 
   if (len > 0) {
     // Credentials
