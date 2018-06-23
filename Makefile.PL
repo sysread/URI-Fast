@@ -70,7 +70,6 @@ WriteMakefile(
     'Test::Pod'         => 1.41,
     'URI::Encode::XS'   => '0.11',
     'URI::Split'        => 0,
-    'Unicode::GCString' => 0,
   },
 
   PREREQ_PM => {

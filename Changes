@@ -7,8 +7,6 @@
 -change in behavior: explicitly specifying a separator in a query setter
  replaces existing separators in the query
 -new aliases: url_encode, url_decode
--optimization: set null terminator on first address in uri struct members
- rather than zeroing out entire struct on instantiation
 
 0.34 2018-06-13
 -bugfix: set_param could clobber existing query parameters (credit: aeruder)

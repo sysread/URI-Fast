@@ -286,15 +286,6 @@ typedef struct {
 /*
  * Clearers
  */
-/*static void clear_scheme(pTHX_ SV* uri_obj) { URI(uri_obj)->scheme[0] = 0; }
-static void clear_path(pTHX_ SV* uri_obj)   { URI(uri_obj)->path[0]   = 0; }
-static void clear_query(pTHX_ SV* uri_obj)  { URI(uri_obj)->query[0]  = 0; }
-static void clear_frag(pTHX_ SV* uri_obj)   { URI(uri_obj)->frag[0]   = 0; }
-static void clear_usr(pTHX_ SV* uri_obj)    { URI(uri_obj)->usr[0]    = 0; }
-static void clear_pwd(pTHX_ SV* uri_obj)    { URI(uri_obj)->pwd[0]    = 0; }
-static void clear_host(pTHX_ SV* uri_obj)   { URI(uri_obj)->host[0]   = 0; }
-static void clear_port(pTHX_ SV* uri_obj)   { URI(uri_obj)->port[0]   = 0; }*/
-
 static void clear_scheme(pTHX_ SV* uri_obj) { memset(&((URI(uri_obj))->scheme), '\0', sizeof(uri_scheme_t)); }
 static void clear_path(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->path),   '\0', sizeof(uri_path_t));   }
 static void clear_query(pTHX_ SV* uri_obj)  { memset(&((URI(uri_obj))->query),  '\0', sizeof(uri_query_t));  }
@@ -321,12 +312,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
   size_t brk1 = 0;
   size_t brk2 = 0;
   size_t i;
-  size_t n;
 
-  /*uri->usr[0]  = '\0';
-  uri->pwd[0]  = '\0';
-  uri->host[0] = '\0';
-  uri->port[0] = '\0';*/
   memset(&uri->usr,  '\0', sizeof(uri_usr_t));
   memset(&uri->pwd,  '\0', sizeof(uri_pwd_t));
   memset(&uri->host, '\0', sizeof(uri_host_t));
@@ -340,20 +326,14 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
       brk2 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
       if (brk2 > 0 && brk2 < brk1) {
-        n = minnum(brk2, URI_SIZE_usr - 1);
-        strncpy(uri->usr, &auth[idx], n);
-        uri->usr[n] = '\0';
+        strncpy(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
         idx += brk2 + 1;
 
-        n = minnum(brk1 - brk2 - 1, URI_SIZE_pwd - 1);
-        strncpy(uri->pwd, &auth[idx], n);
-        uri->pwd[n] = '\0';
+        strncpy(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
         idx += brk1 - brk2;
       }
       else {
-        n = minnum(brk1, URI_SIZE_usr - 1);
-        strncpy(uri->usr, &auth[idx], n);
-        uri->usr[minnum(brk1, URI_SIZE_usr)] = '\0';
+        strncpy(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
         idx += brk1 + 1;
       }
     }
@@ -362,26 +342,21 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
     brk1 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
     if (brk1 > 0 && brk1 != (len - idx)) {
-      n = minnum(brk1, URI_SIZE_host - 1);
-      strncpy(uri->host, &auth[idx], n);
-      uri->host[n] = '\0';
+      strncpy(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
       idx += brk1 + 1;
 
       for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
         if (!isdigit(auth[i + idx])) {
-          uri->port[0] = '\0';
+          memset(&uri->port, '\0', URI_SIZE_port + 1);
           break;
         }
         else {
           uri->port[i] = auth[i + idx];
-          uri->port[i + 1] = '\0';
         }
       }
     }
     else {
-      n = minnum(len - idx, URI_SIZE_host - 1);
-      strncpy(uri->host, &auth[idx], n);
-      uri->host[n] = '\0';
+      strncpy(uri->host, &auth[idx], minnum(len - idx, URI_SIZE_host));
     }
   }
 }
@@ -397,7 +372,7 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
   // Scheme
   brk = minnum(len, strcspn(&src[idx], ":/@?#"));
   if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
-    strncpy(uri->scheme, &src[idx], minnum(brk, URI_SIZE_scheme - 1));
+    strncpy(uri->scheme, &src[idx], minnum(brk, URI_SIZE_scheme));
     uri->scheme[brk] = '\0';
     idx += brk + 3;
 
@@ -412,7 +387,7 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
   // path
   brk = minnum(len - idx, strcspn(&src[idx], "?#"));
   if (brk > 0) {
-    strncpy(uri->path, &src[idx], minnum(brk, URI_SIZE_path - 1));
+    strncpy(uri->path, &src[idx], minnum(brk, URI_SIZE_path));
     uri->path[brk] = '\0';
     idx += brk;
   }
@@ -422,7 +397,7 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
     ++idx; // skip past ?
     brk = minnum(len - idx, strcspn(&src[idx], "#"));
     if (brk > 0) {
-      strncpy(uri->query, &src[idx], minnum(brk, URI_SIZE_query - 1));
+      strncpy(uri->query, &src[idx], minnum(brk, URI_SIZE_query));
       uri->query[brk] = '\0';
       idx += brk;
     }
@@ -433,7 +408,7 @@ void uri_scan(uri_t* uri, const char* src, size_t len) {
     ++idx; // skip past #
     brk = len - idx;
     if (brk > 0) {
-      strncpy(uri->frag, &src[idx], minnum(brk, URI_SIZE_frag - 1));
+      strncpy(uri->frag, &src[idx], minnum(brk, URI_SIZE_frag));
       uri->frag[brk] = '\0';
     }
   }
@@ -871,8 +846,8 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
     off += vlen;
   }
 
+  clear_query(aTHX_ uri);
   strncpy(URI_MEMBER(uri, query), dest, off);
-  URI_MEMBER(uri, query)[off] = '\0';
 }
 
 /*
@@ -927,14 +902,7 @@ SV* new(pTHX_ const char* class, SV* uri_str) {
   SV*    obj_ref;
 
   Newx(uri, 1, uri_t);
-  uri->scheme[0] = '\0';
-  uri->usr[0]    = '\0';
-  uri->pwd[0]    = '\0';
-  uri->host[0]   = '\0';
-  uri->port[0]   = '\0';
-  uri->path[0]   = '\0';
-  uri->query[0]  = '\0';
-  uri->frag[0]   = '\0';
+  memset(uri, '\0', sizeof(uri_t));
 
   obj = newSViv((IV) uri);
   obj_ref = newRV_noinc(obj);
