@@ -313,10 +313,10 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
   size_t brk2 = 0;
   size_t i;
 
-  uri->usr[0]  = 0;
-  uri->pwd[0]  = 0;
-  uri->host[0] = 0;
-  uri->port[0] = 0;
+  uri->usr[0]  = '\0';
+  uri->pwd[0]  = '\0';
+  uri->host[0] = '\0';
+  uri->port[0] = '\0';
 
   if (len > 0) {
     // Credentials
@@ -327,13 +327,16 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
       if (brk2 > 0 && brk2 < brk1) {
         strncpy(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
+        uri->usr[minnum(brk2, URI_SIZE_usr)] = '\0';
         idx += brk2 + 1;
 
         strncpy(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
+        uri->pwd[minnum(brk2, URI_SIZE_pwd)] = '\0';
         idx += brk1 - brk2;
       }
       else {
         strncpy(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
+        uri->usr[minnum(brk1, URI_SIZE_usr)] = '\0';
         idx += brk1 + 1;
       }
     }
@@ -343,11 +346,12 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
     if (brk1 > 0 && brk1 != (len - idx)) {
       strncpy(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
+      uri->host[minnum(brk1, URI_SIZE_host)] = '\0';
       idx += brk1 + 1;
 
       for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
         if (!isdigit(auth[i + idx])) {
-          uri->port[0] = 0;
+          uri->port[0] = '\0';
           break;
         }
         else {
@@ -357,6 +361,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
     }
     else {
       strncpy(uri->host, &auth[idx], minnum(len - idx, URI_SIZE_host));
+      uri->host[minnum(len - idx, URI_SIZE_host)] = '\0';
     }
   }
 }
@@ -846,8 +851,8 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
     off += vlen;
   }
 
-  clear_query(aTHX_ uri);
   strncpy(URI_MEMBER(uri, query), dest, off);
+  URI_MEMBER(uri, query)[off] = '\0';
 }
 
 /*
@@ -902,14 +907,14 @@ SV* new(pTHX_ const char* class, SV* uri_str) {
   SV*    obj_ref;
 
   Newx(uri, 1, uri_t);
-  uri->scheme[0] = 0;
-  uri->usr[0]    = 0;
-  uri->pwd[0]    = 0;
-  uri->host[0]   = 0;
-  uri->port[0]   = 0;
-  uri->path[0]   = 0;
-  uri->query[0]  = 0;
-  uri->frag[0]   = 0;
+  uri->scheme[0] = '\0';
+  uri->usr[0]    = '\0';
+  uri->pwd[0]    = '\0';
+  uri->host[0]   = '\0';
+  uri->port[0]   = '\0';
+  uri->path[0]   = '\0';
+  uri->query[0]  = '\0';
+  uri->frag[0]   = '\0';
 
   obj = newSViv((IV) uri);
   obj_ref = newRV_noinc(obj);
