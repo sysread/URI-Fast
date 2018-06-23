@@ -23,7 +23,7 @@ WriteMakefile(
   LICENSE          => 'perl_5',
   MIN_PERL_VERSION => '5.010',
   PREREQ_PRINT     => 1,
-  OPTIMIZE         => '-O2',
+#  OPTIMIZE         => '-O2',
 
   META_MERGE => {
     'meta-spec' => {
@@ -70,6 +70,7 @@ WriteMakefile(
     'Test::Pod'         => 1.41,
     'URI::Encode::XS'   => '0.11',
     'URI::Split'        => 0,
+    'Unicode::GCString' => 0,
   },
 
   PREREQ_PM => {

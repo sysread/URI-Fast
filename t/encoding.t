@@ -45,8 +45,7 @@ subtest 'utf8' => sub{
 
   ok my $uri = uri($url), 'ctor';
 
-  is $uri->auth("$u:$u\@www.$u.com:1234"), "$a:$a\@www.$a.com:1234", 'auth'
-    or $uri->explain;
+  is $uri->auth("$u:$u\@www.$u.com:1234"), "$a:$a\@www.$a.com:1234", 'auth';
 
   is $uri->usr, $u, 'usr';
   is $uri->pwd, $u, 'pwd';
