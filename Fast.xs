@@ -286,14 +286,14 @@ typedef struct {
 /*
  * Clearers
  */
-static void clear_scheme(pTHX_ SV* uri_obj) { memset(&((URI(uri_obj))->scheme), '\0', sizeof(uri_scheme_t)); }
-static void clear_path(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->path),   '\0', sizeof(uri_path_t));   }
-static void clear_query(pTHX_ SV* uri_obj)  { memset(&((URI(uri_obj))->query),  '\0', sizeof(uri_query_t));  }
-static void clear_frag(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->frag),   '\0', sizeof(uri_frag_t));   }
-static void clear_usr(pTHX_ SV* uri_obj)    { memset(&((URI(uri_obj))->usr),    '\0', sizeof(uri_usr_t));    }
-static void clear_pwd(pTHX_ SV* uri_obj)    { memset(&((URI(uri_obj))->pwd),    '\0', sizeof(uri_pwd_t));    }
-static void clear_host(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->host),   '\0', sizeof(uri_host_t));   }
-static void clear_port(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->port),   '\0', sizeof(uri_port_t));   }
+static void clear_scheme(pTHX_ SV* uri_obj) { URI(uri_obj)->scheme[0] = 0; }
+static void clear_path(pTHX_ SV* uri_obj)   { URI(uri_obj)->path[0]   = 0; }
+static void clear_query(pTHX_ SV* uri_obj)  { URI(uri_obj)->query[0]  = 0; }
+static void clear_frag(pTHX_ SV* uri_obj)   { URI(uri_obj)->frag[0]   = 0; }
+static void clear_usr(pTHX_ SV* uri_obj)    { URI(uri_obj)->usr[0]    = 0; }
+static void clear_pwd(pTHX_ SV* uri_obj)    { URI(uri_obj)->pwd[0]    = 0; }
+static void clear_host(pTHX_ SV* uri_obj)   { URI(uri_obj)->host[0]   = 0; }
+static void clear_port(pTHX_ SV* uri_obj)   { URI(uri_obj)->port[0]   = 0; }
 
 static
 void clear_auth(pTHX_ SV* uri_obj) {
@@ -313,10 +313,10 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
   size_t brk2 = 0;
   size_t i;
 
-  memset(&uri->usr,  '\0', sizeof(uri_usr_t));
-  memset(&uri->pwd,  '\0', sizeof(uri_pwd_t));
-  memset(&uri->host, '\0', sizeof(uri_host_t));
-  memset(&uri->port, '\0', sizeof(uri_port_t));
+  uri->usr[0]  = 0;
+  uri->pwd[0]  = 0;
+  uri->host[0] = 0;
+  uri->port[0] = 0;
 
   if (len > 0) {
     // Credentials
@@ -347,7 +347,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
       for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
         if (!isdigit(auth[i + idx])) {
-          memset(&uri->port, '\0', URI_SIZE_port + 1);
+          uri->port[0] = 0;
           break;
         }
         else {
@@ -902,7 +902,14 @@ SV* new(pTHX_ const char* class, SV* uri_str) {
   SV*    obj_ref;
 
   Newx(uri, 1, uri_t);
-  memset(uri, '\0', sizeof(uri_t));
+  uri->scheme[0] = 0;
+  uri->usr[0]    = 0;
+  uri->pwd[0]    = 0;
+  uri->host[0]   = 0;
+  uri->port[0]   = 0;
+  uri->path[0]   = 0;
+  uri->query[0]  = 0;
+  uri->frag[0]   = 0;
 
   obj = newSViv((IV) uri);
   obj_ref = newRV_noinc(obj);

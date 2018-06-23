@@ -73,7 +73,7 @@ sub test {
   print "\n";
 }
 
-test 'Constructor', 500_000, {
+test 'Constructor', 750_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]) },
   'URI::Fast' => sub{ my $uri = uri $urls[3] },
 };
