@@ -1,3 +1,5 @@
+#include "../ppport.h"
+
 #ifndef URI
 
 // return uri_t* from blessed pointer ref

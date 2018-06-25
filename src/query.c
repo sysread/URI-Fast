@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "ppport.h"
+
+#include "../ppport.h"
 #include "defs.c"
 
 /*

@@ -3,6 +3,7 @@
 #include "perl.h"
 #include "XSUB.h"
 #include "ppport.h"
+
 #include "src/defs.c"
 #include "src/encoding.c"
 #include "src/query.c"
