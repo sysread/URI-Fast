@@ -558,7 +558,7 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
   SvGETMAGIC(sv_key);
   const char* key = SvPV_nomg_const(sv_key, klen);
   char enc_key[(klen * 3) + 2];
-  elen = uri_encode(key, klen, enc_key, "", 0, is_iri);
+  elen = uri_encode(key, klen, enc_key, ":@?/", 4, is_iri);
 
   query_scanner_init(&scanner, query, qlen);
 
@@ -602,19 +602,19 @@ SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
 
 static
 const char* set_path(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, path, value, "/", 1);
+  URI_ENCODE_MEMBER(uri_obj, path, value, "/:@", 3);
   return URI_MEMBER(uri_obj, path);
 }
 
 static
 const char* set_query(pTHX_ SV* uri_obj, const char* value) {
-  strncpy(URI_MEMBER(uri_obj, query), value, minnum(strlen(value) + 1, URI_SIZE_query));
+  URI_ENCODE_MEMBER(uri_obj, query, value, ":@?/&=", 6);
   return value;
 }
 
 static
 const char* set_frag(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, frag, value, "", 0);
+  URI_ENCODE_MEMBER(uri_obj, frag, value, "?/", 2);
   return URI_MEMBER(uri_obj, frag);
 }
 
@@ -689,7 +689,7 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
     SvGETMAGIC(val);
 
     char enc_key[(3 * klen) + 1];
-    klen = uri_encode(key, klen, enc_key, "", 0, is_iri);
+    klen = uri_encode(key, klen, enc_key, ":@?/", 4, is_iri);
 
     hv_store(enc_keys, enc_key, klen * (is_iri ? -1 : 1), val, 0);
   }
@@ -771,7 +771,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
   SvGETMAGIC(sv_key);
   key = SvPV_nomg(sv_key, klen);
   char enc_key[(3 * klen) + 1];
-  klen = uri_encode(key, strlen(key), enc_key, "", 0, is_iri);
+  klen = uri_encode(key, strlen(key), enc_key, ":@?/", 4, is_iri);
 
   // Get array of values to set
   SvGETMAGIC(sv_values);
@@ -842,7 +842,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
     SvGETMAGIC(*refval);
     strval = SvPV_nomg(*refval, slen);
 
-    vlen = uri_encode(strval, slen, &dest[off], "", 0, is_iri);
+    vlen = uri_encode(strval, slen, &dest[off], ":@?/", 4, is_iri);
     off += vlen;
   }
 
