@@ -32,8 +32,8 @@ size_t maxnum(size_t x, size_t y) {
 #define URI_PATH_CHARS "!$&'()*+,;=:@/"
 #define URI_PATH_CHARS_LEN 14
 
-#define URI_QUERY_CHARS ":@?/&="
-#define URI_QUERY_CHARS_LEN 6
+#define URI_QUERY_CHARS ":@?/&;="
+#define URI_QUERY_CHARS_LEN 7
 
 #define URI_QUERY_TOK_CHARS ":@?/"
 #define URI_QUERY_TOK_CHARS_LEN 4
