@@ -595,14 +595,14 @@ const char* set_scheme(pTHX_ SV* uri_obj, const char* value) {
 static
 SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
   char auth[URI_SIZE_auth];
-  size_t len = uri_encode(value, strlen(value), (char*) &auth, ":@", 2, URI_MEMBER(uri_obj, is_iri));
+  size_t len = uri_encode(value, strlen(value), (char*) &auth, "!$&'()*+,;=:@", 14, URI_MEMBER(uri_obj, is_iri));
   uri_scan_auth(URI(uri_obj), auth, len);
   return newSVpv(auth, len);
 }
 
 static
 const char* set_path(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, path, value, "/:@", 3);
+  URI_ENCODE_MEMBER(uri_obj, path, value, "!$&'()*+,;=:@/", 14);
   return URI_MEMBER(uri_obj, path);
 }
 
@@ -614,25 +614,25 @@ const char* set_query(pTHX_ SV* uri_obj, const char* value) {
 
 static
 const char* set_frag(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, frag, value, "?/", 2);
+  URI_ENCODE_MEMBER(uri_obj, frag, value, ":@?/", 4);
   return URI_MEMBER(uri_obj, frag);
 }
 
 static
 const char* set_usr(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, usr, value, "", 0);
+  URI_ENCODE_MEMBER(uri_obj, usr, value, "!$&'()*+,;=", 11);
   return URI_MEMBER(uri_obj, usr);
 }
 
 static
 const char* set_pwd(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, pwd, value, "", 0);
+  URI_ENCODE_MEMBER(uri_obj, pwd, value, "!$&'()*+,;=", 11);
   return URI_MEMBER(uri_obj, pwd);
 }
 
 static
 const char* set_host(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, host, value, "", 0);
+  URI_ENCODE_MEMBER(uri_obj, host, value, "!$&'()*+,;=", 1);
   return URI_MEMBER(uri_obj, host);
 }
 
