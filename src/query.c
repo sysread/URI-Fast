@@ -2,35 +2,46 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * Token type
+ */
 typedef enum {
-  KEY   = 1,
-  PARAM = 2,
-  DONE  = 3,
+  KEY   = 1, // key-only, e.g. ?foo&bar
+  PARAM = 2, // key-value pair, e.g. ?foo=bar
+  DONE  = 3, // scanner reached end of query
 } uri_query_token_type_t;
 
+/*
+ * Token
+ */
 typedef struct {
-  uri_query_token_type_t type;
-  char *key;   size_t key_length;
-  char *value; size_t value_length; // only present when type=PARAM
+  uri_query_token_type_t type;      // always present
+  char *key;   size_t key_length;   // present when type=KEY|PARAM
+  char *value; size_t value_length; // present when type=PARAM
 } uri_query_token_t;
 
+/*
+ * Scanner
+ */
 typedef struct {
   size_t  length;
   size_t  cursor;
   char   *source;
 } uri_query_scanner_t;
 
-void query_scanner_init(
-    uri_query_scanner_t *scanner,
-    char *source,
-    size_t length
-  )
-{
+/*
+ * Initializes a scanner struct for the given source char*, which will scan up
+ * to length bytes.
+ */
+void query_scanner_init(uri_query_scanner_t *scanner, char *source, size_t length) {
   scanner->source = source;
   scanner->length = length;
   scanner->cursor = 0;
 }
 
+/*
+ * Returns 1 when the cursor has reached the end of the source char*.
+ */
 int query_scanner_done(uri_query_scanner_t *scanner) {
   return scanner->cursor >= scanner->length;
 }
@@ -44,7 +55,7 @@ void query_scanner_next(uri_query_scanner_t *scanner, uri_query_token_t *token) 
   const char sep[4] = {'&', ';', '=', '\0'};
 
 SCAN_KEY:
-  if (scanner->cursor >= scanner->length) {
+  if (query_scanner_done(scanner)) {
     token->key   = NULL; token->key_length   = 0;
     token->value = NULL; token->value_length = 0;
     token->type  = DONE;
