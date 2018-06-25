@@ -168,8 +168,8 @@ Updates the query string by adding a new value for the specified key. If the
 key already exists in the query string, the new value is appended without
 altering the original value.
 
-  $uri->param('foo', 'bar');  # foo=bar
-  $uri->param('foo', 'baz');  # foo=bar&foo=baz
+  $uri->add_param('foo', 'bar'); # foo=bar
+  $uri->add_param('foo', 'baz'); # foo=bar&foo=baz
 
 =head2 query_keyset
 
