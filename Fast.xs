@@ -608,7 +608,7 @@ const char* set_path(pTHX_ SV* uri_obj, const char* value) {
 
 static
 const char* set_query(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, query, value, ":@?/&=", 6);
+  URI_ENCODE_MEMBER(uri_obj, query, value, ":@?/&=;", 7);
   return value;
 }
 
