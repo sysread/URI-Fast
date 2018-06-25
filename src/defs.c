@@ -16,6 +16,21 @@ size_t maxnum(size_t x, size_t y) {
   return x >= y ? x : y;
 }
 
+/*
+ * Allocate memory with Newx if it's
+ * available - if it's an older perl
+ * that doesn't have Newx then we
+ * resort to using New.
+ */
+#ifndef Newx
+#define Newx(v,n,t) New(0,v,n,t)
+#endif
+
+// av_top_index not available on Perls < 5.18
+#ifndef av_top_index
+#define av_top_index(av) av_len(av)
+#endif
+
 // return uri_t* from blessed pointer ref
 #define URI(obj) ((uri_t*) SvIV(SvRV(obj)))
 
@@ -80,19 +95,4 @@ typedef struct {
   uri_pwd_t    pwd;
 } uri_t;
 
-#endif
-
-/*
- * Allocate memory with Newx if it's
- * available - if it's an older perl
- * that doesn't have Newx then we
- * resort to using New.
- */
-#ifndef Newx
-#define Newx(v,n,t) New(0,v,n,t)
-#endif
-
-// av_top_index not available on Perls < 5.18
-#ifndef av_top_index
-#define av_top_index(av) av_len(av)
 #endif

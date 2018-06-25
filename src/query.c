@@ -370,3 +370,40 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
   strncpy(URI_MEMBER(uri, query), dest, off);
 }
 
+static
+SV* get_param(pTHX_ SV* uri, SV* sv_key) {
+  int is_iri = URI_MEMBER(uri, is_iri);
+  char* query = URI_MEMBER(uri, query);
+  size_t qlen = strlen(query), klen, vlen, elen;
+  uri_query_scanner_t scanner;
+  uri_query_token_t token;
+  AV* out = newAV();
+  SV* value;
+
+  SvGETMAGIC(sv_key);
+  const char* key = SvPV_nomg_const(sv_key, klen);
+  char enc_key[(klen * 3) + 2];
+  elen = uri_encode(key, klen, enc_key, ":@?/", 4, is_iri);
+
+  query_scanner_init(&scanner, query, qlen);
+
+  while (!query_scanner_done(&scanner)) {
+    query_scanner_next(&scanner, &token);
+    if (token.type == DONE) continue;
+
+    if (strncmp(enc_key, token.key, maxnum(elen, token.key_length)) == 0) {
+      if (token.type == PARAM) {
+        char val[token.value_length + 1];
+        vlen = uri_decode(token.value, token.value_length, val);
+        value = newSVpv(val, vlen);
+        sv_utf8_decode(value);
+        av_push(out, value);
+      }
+      else {
+        av_push(out, newSV(0));
+      }
+    }
+  }
+
+  return newRV_noinc((SV*) out);
+}

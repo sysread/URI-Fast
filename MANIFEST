@@ -8,6 +8,7 @@ MANIFEST
 MANIFEST.SKIP
 ppport.h
 README.pod
+src/auth.c
 src/defs.c
 src/encoding.c
 src/query.c

@@ -6,6 +6,7 @@
 
 #include "src/defs.c"
 #include "src/encoding.c"
+#include "src/auth.c"
 #include "src/query.c"
 
 /*
@@ -30,64 +31,6 @@ void clear_auth(pTHX_ SV* uri_obj) {
   clear_pwd(aTHX_ uri_obj);
   clear_host(aTHX_ uri_obj);
   clear_port(aTHX_ uri_obj);
-}
-
-/*
- * Scans the authorization portion of the URI string
- */
-static
-void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
-  size_t idx  = 0;
-  size_t brk1 = 0;
-  size_t brk2 = 0;
-  size_t i;
-
-  memset(&uri->usr,  '\0', sizeof(uri_usr_t));
-  memset(&uri->pwd,  '\0', sizeof(uri_pwd_t));
-  memset(&uri->host, '\0', sizeof(uri_host_t));
-  memset(&uri->port, '\0', sizeof(uri_port_t));
-
-  if (len > 0) {
-    // Credentials
-    brk1 = minnum(len, strcspn(&auth[idx], "@"));
-
-    if (brk1 > 0 && brk1 != len) {
-      brk2 = minnum(len - idx, strcspn(&auth[idx], ":"));
-
-      if (brk2 > 0 && brk2 < brk1) {
-        strncpy(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
-        idx += brk2 + 1;
-
-        strncpy(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
-        idx += brk1 - brk2;
-      }
-      else {
-        strncpy(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
-        idx += brk1 + 1;
-      }
-    }
-
-    // Location
-    brk1 = minnum(len - idx, strcspn(&auth[idx], ":"));
-
-    if (brk1 > 0 && brk1 != (len - idx)) {
-      strncpy(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
-      idx += brk1 + 1;
-
-      for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
-        if (!isdigit(auth[i + idx])) {
-          memset(&uri->port, '\0', URI_SIZE_port + 1);
-          break;
-        }
-        else {
-          uri->port[i] = auth[i + idx];
-        }
-      }
-    }
-    else {
-      strncpy(uri->host, &auth[idx], minnum(len - idx, URI_SIZE_host));
-    }
-  }
 }
 
 /*
@@ -160,30 +103,6 @@ static const char* get_host(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, ho
 static const char* get_port(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, port);   }
 
 static
-SV* get_auth(pTHX_ SV* uri_obj) {
-  uri_t* uri = URI(uri_obj);
-  SV* out = newSVpv("", 0);
-
-  if (uri->usr[0] != '\0') {
-    if (uri->pwd[0] != '\0') {
-      sv_catpvf(out, "%s:%s@", uri->usr, uri->pwd);
-    } else {
-      sv_catpvf(out, "%s@", uri->usr);
-    }
-  }
-
-  if (uri->host[0] != '\0') {
-    if (uri->port[0] != '\0') {
-      sv_catpvf(out, "%s:%s", uri->host, uri->port);
-    } else {
-      sv_catpv(out, uri->host);
-    }
-  }
-
-  return out;
-}
-
-static
 SV* split_path(pTHX_ SV* uri) {
   size_t brk, idx = 0;
   AV* arr = newAV();
@@ -208,44 +127,6 @@ SV* split_path(pTHX_ SV* uri) {
   return newRV_noinc((SV*) arr);
 }
 
-static
-SV* get_param(pTHX_ SV* uri, SV* sv_key) {
-  int is_iri = URI_MEMBER(uri, is_iri);
-  char* query = URI_MEMBER(uri, query);
-  size_t qlen = strlen(query), klen, vlen, elen;
-  uri_query_scanner_t scanner;
-  uri_query_token_t token;
-  AV* out = newAV();
-  SV* value;
-
-  SvGETMAGIC(sv_key);
-  const char* key = SvPV_nomg_const(sv_key, klen);
-  char enc_key[(klen * 3) + 2];
-  elen = uri_encode(key, klen, enc_key, ":@?/", 4, is_iri);
-
-  query_scanner_init(&scanner, query, qlen);
-
-  while (!query_scanner_done(&scanner)) {
-    query_scanner_next(&scanner, &token);
-    if (token.type == DONE) continue;
-
-    if (strncmp(enc_key, token.key, maxnum(elen, token.key_length)) == 0) {
-      if (token.type == PARAM) {
-        char val[token.value_length + 1];
-        vlen = uri_decode(token.value, token.value_length, val);
-        value = newSVpv(val, vlen);
-        sv_utf8_decode(value);
-        av_push(out, value);
-      }
-      else {
-        av_push(out, newSV(0));
-      }
-    }
-  }
-
-  return newRV_noinc((SV*) out);
-}
-
 /*
  * Setters
  */
@@ -253,14 +134,6 @@ static
 const char* set_scheme(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, scheme, value, "", 0);
   return URI_MEMBER(uri_obj, scheme);
-}
-
-static
-SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
-  char auth[URI_SIZE_auth];
-  size_t len = uri_encode(value, strlen(value), (char*) &auth, URI_AUTH_CHARS, URI_AUTH_CHARS_LEN, URI_MEMBER(uri_obj, is_iri));
-  uri_scan_auth(URI(uri_obj), auth, len);
-  return newSVpv(auth, len);
 }
 
 static
