@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "ppport.h"
+#include "defs.c"
 
 /*
  * Token type
@@ -101,3 +103,73 @@ SCAN_KEY:
 
   return;
 }
+
+/*
+ * perlguts functions
+ */
+static
+SV* get_query_keys(pTHX_ SV* uri) {
+  char* query = URI_MEMBER(uri, query);
+  size_t klen, qlen = strlen(query);
+  HV* out = newHV();
+  uri_query_scanner_t scanner;
+  uri_query_token_t token;
+
+  query_scanner_init(&scanner, query, qlen);
+
+  while (!query_scanner_done(&scanner)) {
+    query_scanner_next(&scanner, &token);
+    if (token.type == DONE) continue;
+    char key[token.key_length];
+    klen = uri_decode(token.key, token.key_length, key);
+    hv_store(out, key, -klen, &PL_sv_undef, 0);
+  }
+
+  return newRV_noinc((SV*) out);
+}
+
+static
+SV* query_hash(pTHX_ SV* uri) {
+  SV *tmp, **refval;
+  AV *arr;
+  HV *out = newHV();
+  char* query = URI_MEMBER(uri, query);
+  size_t qlen = strlen(query), klen, vlen;
+  uri_query_scanner_t scanner;
+  uri_query_token_t token;
+
+  query_scanner_init(&scanner, query, qlen);
+
+  while (!query_scanner_done(&scanner)) {
+    query_scanner_next(&scanner, &token);
+    if (token.type == DONE) continue;
+
+    // Get decoded key
+    char key[token.key_length + 1];
+    klen = uri_decode(token.key, token.key_length, key);
+
+    // Values are stored in an array; this block is the rough equivalent of:
+    //   $out{$key} = [] unless exists $out{$key};
+    if (!hv_exists(out, key, klen)) {
+      arr = newAV();
+      hv_store(out, key, -klen, newRV_noinc((SV*) arr), 0);
+    }
+    else {
+      refval = hv_fetch(out, key, -klen, 0);
+      if (refval == NULL) croak("query_hash: something went wrong");
+      arr = (AV*) SvRV(*refval);
+    }
+
+    // Get decoded value if there is one
+    if (token.type == PARAM) {
+      char val[token.value_length + 1];
+      vlen = uri_decode(token.value, token.value_length, val);
+      tmp = newSVpv(val, vlen);
+      sv_utf8_decode(tmp);
+      av_push(arr, tmp);
+    }
+  }
+
+  return newRV_noinc((SV*) out);
+}
+

@@ -3,50 +3,13 @@
 #include "perl.h"
 #include "XSUB.h"
 #include "ppport.h"
+#include "src/defs.c"
 #include "src/encoding.c"
 #include "src/query.c"
 
-#ifndef URI
-
-// return uri_t* from blessed pointer ref
-#define URI(obj) ((uri_t*) SvIV(SvRV(obj)))
-
-// expands to member reference
-#define URI_MEMBER(obj, member) (URI(obj)->member)
-
-// quick sugar for calling uri_encode
-#define URI_ENCODE_MEMBER(uri, mem, val, allow, alen) uri_encode(val, minnum(strlen(val), URI_SIZE(mem)), URI_MEMBER(uri, mem), allow, alen, URI_MEMBER(uri, is_iri))
-
-// size constats
-#define URI_SIZE_scheme 32
-#define URI_SIZE_path   1024
-#define URI_SIZE_query  2048
-#define URI_SIZE_frag   64
-#define URI_SIZE_usr    64
-#define URI_SIZE_pwd    64
-#define URI_SIZE_host   256
-#define URI_SIZE_port   8
-
-// enough to fit all pieces + 3 chars for separators (2 colons + @)
-#define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
-#define URI_SIZE(member) (URI_SIZE_##member)
-
-#endif
-
 /*
- * Allocate memory with Newx if it's
- * available - if it's an older perl
- * that doesn't have Newx then we
- * resort to using New.
+ * Utils
  */
-#ifndef Newx
-#define Newx(v,n,t) New(0,v,n,t)
-#endif
-
-// av_top_index not available on Perls < 5.18
-#ifndef av_top_index
-#define av_top_index(av) av_len(av)
-#endif
 
 // min of two numbers
 size_t minnum(size_t x, size_t y) {
@@ -61,27 +24,6 @@ size_t maxnum(size_t x, size_t y) {
 /*
  * Internal API
  */
-typedef char uri_scheme_t [URI_SIZE_scheme + 1];
-typedef char uri_path_t   [URI_SIZE_path + 1];
-typedef char uri_query_t  [URI_SIZE_query + 1];
-typedef char uri_frag_t   [URI_SIZE_frag + 1];
-typedef char uri_usr_t    [URI_SIZE_usr + 1];
-typedef char uri_pwd_t    [URI_SIZE_pwd + 1];
-typedef char uri_host_t   [URI_SIZE_host + 1];
-typedef char uri_port_t   [URI_SIZE_port + 1];
-typedef int  uri_is_iri_t;
-
-typedef struct {
-  uri_is_iri_t is_iri;
-  uri_scheme_t scheme;
-  uri_query_t  query;
-  uri_path_t   path;
-  uri_host_t   host;
-  uri_port_t   port;
-  uri_frag_t   frag;
-  uri_usr_t    usr;
-  uri_pwd_t    pwd;
-} uri_t;
 
 /*
  * Clearers
@@ -277,72 +219,6 @@ SV* split_path(pTHX_ SV* uri) {
   }
 
   return newRV_noinc((SV*) arr);
-}
-
-static
-SV* get_query_keys(pTHX_ SV* uri) {
-  char* query = URI_MEMBER(uri, query);
-  size_t klen, qlen = strlen(query);
-  HV* out = newHV();
-  uri_query_scanner_t scanner;
-  uri_query_token_t token;
-
-  query_scanner_init(&scanner, query, qlen);
-
-  while (!query_scanner_done(&scanner)) {
-    query_scanner_next(&scanner, &token);
-    if (token.type == DONE) continue;
-    char key[token.key_length];
-    klen = uri_decode(token.key, token.key_length, key);
-    hv_store(out, key, -klen, &PL_sv_undef, 0);
-  }
-
-  return newRV_noinc((SV*) out);
-}
-
-static
-SV* query_hash(pTHX_ SV* uri) {
-  SV *tmp, **refval;
-  AV *arr;
-  HV *out = newHV();
-  char* query = URI_MEMBER(uri, query);
-  size_t qlen = strlen(query), klen, vlen;
-  uri_query_scanner_t scanner;
-  uri_query_token_t token;
-
-  query_scanner_init(&scanner, query, qlen);
-
-  while (!query_scanner_done(&scanner)) {
-    query_scanner_next(&scanner, &token);
-    if (token.type == DONE) continue;
-
-    // Get decoded key
-    char key[token.key_length + 1];
-    klen = uri_decode(token.key, token.key_length, key);
-
-    // Values are stored in an array; this block is the rough equivalent of:
-    //   $out{$key} = [] unless exists $out{$key};
-    if (!hv_exists(out, key, klen)) {
-      arr = newAV();
-      hv_store(out, key, -klen, newRV_noinc((SV*) arr), 0);
-    }
-    else {
-      refval = hv_fetch(out, key, -klen, 0);
-      if (refval == NULL) croak("query_hash: something went wrong");
-      arr = (AV*) SvRV(*refval);
-    }
-
-    // Get decoded value if there is one
-    if (token.type == PARAM) {
-      char val[token.value_length + 1];
-      vlen = uri_decode(token.value, token.value_length, val);
-      tmp = newSVpv(val, vlen);
-      sv_utf8_decode(tmp);
-      av_push(arr, tmp);
-    }
-  }
-
-  return newRV_noinc((SV*) out);
 }
 
 static
