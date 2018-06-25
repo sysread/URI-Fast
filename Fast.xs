@@ -9,20 +9,6 @@
 #include "src/query.c"
 
 /*
- * Utils
- */
-
-// min of two numbers
-size_t minnum(size_t x, size_t y) {
-  return x <= y ? x : y;
-}
-
-// max of two numbers
-size_t maxnum(size_t x, size_t y) {
-  return x >= y ? x : y;
-}
-
-/*
  * Internal API
  */
 
@@ -272,44 +258,44 @@ const char* set_scheme(pTHX_ SV* uri_obj, const char* value) {
 static
 SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
   char auth[URI_SIZE_auth];
-  size_t len = uri_encode(value, strlen(value), (char*) &auth, "!$&'()*+,;=:@", 14, URI_MEMBER(uri_obj, is_iri));
+  size_t len = uri_encode(value, strlen(value), (char*) &auth, URI_AUTH_CHARS, URI_AUTH_CHARS_LEN, URI_MEMBER(uri_obj, is_iri));
   uri_scan_auth(URI(uri_obj), auth, len);
   return newSVpv(auth, len);
 }
 
 static
 const char* set_path(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, path, value, "!$&'()*+,;=:@/", 14);
+  URI_ENCODE_MEMBER(uri_obj, path, value, URI_PATH_CHARS, URI_PATH_CHARS_LEN);
   return URI_MEMBER(uri_obj, path);
 }
 
 static
 const char* set_query(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, query, value, ":@?/&=", 6);
+  URI_ENCODE_MEMBER(uri_obj, query, value, URI_QUERY_CHARS, URI_QUERY_CHARS_LEN);
   return value;
 }
 
 static
 const char* set_frag(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, frag, value, ":@?/", 4);
+  URI_ENCODE_MEMBER(uri_obj, frag, value, URI_FRAG_CHARS, URI_FRAG_CHARS_LEN);
   return URI_MEMBER(uri_obj, frag);
 }
 
 static
 const char* set_usr(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, usr, value, "!$&'()*+,;=", 11);
+  URI_ENCODE_MEMBER(uri_obj, usr, value, URI_USER_HOST_CHARS, URI_USER_HOST_CHARS_LEN);
   return URI_MEMBER(uri_obj, usr);
 }
 
 static
 const char* set_pwd(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, pwd, value, "!$&'()*+,;=", 11);
+  URI_ENCODE_MEMBER(uri_obj, pwd, value, URI_USER_HOST_CHARS, URI_USER_HOST_CHARS_LEN);
   return URI_MEMBER(uri_obj, pwd);
 }
 
 static
 const char* set_host(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, host, value, "!$&'()*+,;=", 1);
+  URI_ENCODE_MEMBER(uri_obj, host, value, URI_USER_HOST_CHARS, URI_USER_HOST_CHARS_LEN);
   return URI_MEMBER(uri_obj, host);
 }
 
@@ -329,202 +315,6 @@ const char* set_port(pTHX_ SV* uri_obj, const char* value) {
   }
 
   return URI_MEMBER(uri_obj, port);
-}
-
-static
-void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
-  HE     *ent;
-  HV     *keys, *enc_keys;
-  I32    iterlen, i, klen;
-  SV     *val, **refval;
-  bool   copy;
-  char   *key, *query = URI_MEMBER(uri, query);
-  char   dest[URI_SIZE_query];
-  int    is_iri = URI_MEMBER(uri, is_iri);
-  size_t off = 0, qlen = strlen(query);
-
-  uri_query_scanner_t scanner;
-  uri_query_token_t   token;
-
-  // Validate reference parameters
-  if (!SvROK(sv_key_set) || SvTYPE(SvRV(sv_key_set)) != SVt_PVHV) {
-    croak("set_query_keys: expected hash ref");
-  }
-
-  // Dereference key set hash
-  keys = (HV*) SvRV(sv_key_set);
-
-  // Create new HV with all keys uri-encoded
-  enc_keys = newHV();
-  iterlen = hv_iterinit(keys);
-
-  for (i = 0; i < iterlen; ++i) {
-    ent = hv_iternext(keys);
-    key = hv_iterkey(ent, &klen);
-    val = hv_iterval(keys, ent);
-
-    SvGETMAGIC(val);
-
-    char enc_key[(3 * klen) + 1];
-    klen = uri_encode(key, klen, enc_key, ":@?/", 4, is_iri);
-
-    hv_store(enc_keys, enc_key, klen * (is_iri ? -1 : 1), val, 0);
-  }
-
-  // Begin building the new query string from the existing one. As each key is
-  // encountered in the query string, exclude ones with a falsish value in the
-  // hash and keep the ones with a truish value. Any not present in the hash
-  // are kept unchanged.
-  query_scanner_init(&scanner, query, qlen);
-
-  while (!query_scanner_done(&scanner)) {
-    query_scanner_next(&scanner, &token);
-    if (token.type == DONE) continue;
-
-    // Use the encrypted keys hash to decide whether to copy this key (and
-    // value if present) over to dest. If the key exists, skip. It will be
-    // added to the filtered query string last.
-    copy = 1;
-    if (hv_exists(enc_keys, token.key, token.key_length * (is_iri ? -1 : 1))) {
-      refval = hv_fetch(enc_keys, token.key, token.key_length * (is_iri ? -1 : 1), 0);
-      // NULL shouldn't be possible since this is guarded with hv_exists, but
-      // perlguts, amirite?
-      copy = refval == NULL || SvTRUE(*refval);
-    }
-
-    if (copy) {
-      if (off > 0) {
-        dest[off++] = separator;
-      }
-
-      strncpy(&dest[off], token.key, token.key_length);
-      off += token.key_length;
-
-      if (token.type == PARAM) {
-        dest[off++] = '=';
-        strncpy(&dest[off], token.value, token.value_length);
-        off += token.value_length;
-      }
-    }
-  }
-
-  // Walk through the encoded-key hash, adding remaining keys.
-  iterlen = hv_iterinit(enc_keys);
-
-  for (i = 0; i < iterlen; ++i) {
-    ent = hv_iternext(enc_keys);
-    key = hv_iterkey(ent, &klen);
-    val = hv_iterval(enc_keys, ent);
-
-    if (SvTRUE(val)) {
-      // Add separator if the new query string is not empty
-      if (off > 0) {
-        dest[off++] = separator;
-      }
-
-      strncpy(&dest[off], key, klen);
-      off += klen;
-    }
-  }
-
-  dest[off++] = '\0';
-
-  clear_query(aTHX_ uri);
-  strncpy(URI_MEMBER(uri, query), dest, off);
-}
-
-static
-void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
-  int    is_iri = URI_MEMBER(uri, is_iri);
-  char   *key, *strval, *query = URI_MEMBER(uri, query);
-  size_t qlen = strlen(query), klen, vlen, slen, av_idx, i = 0, brk = 0, off = 0;
-  char   dest[URI_SIZE_query];
-  AV     *av_values;
-  SV     **refval;
-  uri_query_scanner_t scanner;
-  uri_query_token_t token;
-
-  // Build encoded key string
-  SvGETMAGIC(sv_key);
-  key = SvPV_nomg(sv_key, klen);
-  char enc_key[(3 * klen) + 1];
-  klen = uri_encode(key, strlen(key), enc_key, ":@?/", 4, is_iri);
-
-  // Get array of values to set
-  SvGETMAGIC(sv_values);
-  if (!SvROK(sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
-    croak("set_param: expected array of values");
-  }
-
-  av_values = (AV*) SvRV(sv_values);
-  av_idx = av_top_index(av_values);
-
-  // Begin building the new query string from the existing one, skipping
-  // keys (and their values, if any) matching sv_key.
-  query_scanner_init(&scanner, query, qlen);
-
-  while (!query_scanner_done(&scanner)) {
-    query_scanner_next(&scanner, &token);
-    if (token.type == DONE) continue;
-
-    // The key does not match the key being set
-    if (strncmp(enc_key, token.key, maxnum(klen, token.key_length)) != 0) {
-      // Add separator if this is not the first key being written
-      if (off > 0) {
-        dest[off++] = separator;
-      }
-
-      // Write the key to the buffer
-      strncpy(&dest[off], token.key, token.key_length);
-      off += token.key_length;
-
-      // The key has a value
-      if (token.type == PARAM) {
-        dest[off++] = '=';
-
-        // If the value's length is 0, it was parsed from "key=", so the value
-        // is not written after the '=' is added above.
-        if (token.value_length > 0) {
-          // Otherwise, write the value to the buffer
-          strncpy(&dest[off], token.value, token.value_length);
-          off += token.value_length;
-        }
-      }
-    }
-  }
-
-  // Add the new values to the query
-  for (i = 0; i <= av_idx; ++i) {
-    // Fetch next value from the array
-    refval = av_fetch(av_values, (SSize_t) i, 0);
-    if (refval == NULL) break;
-    if (!SvOK(*refval)) break;
-
-    // Break out after hitting the limit of the query slot
-    if (off == URI_SIZE_query) break;
-
-    // Add separator if needed to separate pairs
-    if (off > 0) dest[off++] = separator;
-
-    // Break out early if this key would overflow the struct member
-    if (off + klen + 1 > URI_SIZE_query) break;
-
-    // Copy key over
-    strncpy(&dest[off], enc_key, klen);
-    off += klen;
-
-    dest[off++] = '=';
-
-    // Copy value over
-    SvGETMAGIC(*refval);
-    strval = SvPV_nomg(*refval, slen);
-
-    vlen = uri_encode(strval, slen, &dest[off], ":@?/", 4, is_iri);
-    off += vlen;
-  }
-
-  clear_query(aTHX_ uri);
-  strncpy(URI_MEMBER(uri, query), dest, off);
 }
 
 /*

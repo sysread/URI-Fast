@@ -2,6 +2,20 @@
 
 #ifndef URI
 
+/*
+ * Utils
+ */
+
+// min of two numbers
+size_t minnum(size_t x, size_t y) {
+  return x <= y ? x : y;
+}
+
+// max of two numbers
+size_t maxnum(size_t x, size_t y) {
+  return x >= y ? x : y;
+}
+
 // return uri_t* from blessed pointer ref
 #define URI(obj) ((uri_t*) SvIV(SvRV(obj)))
 
@@ -10,6 +24,25 @@
 
 // quick sugar for calling uri_encode
 #define URI_ENCODE_MEMBER(uri, mem, val, allow, alen) uri_encode(val, minnum(strlen(val), URI_SIZE(mem)), URI_MEMBER(uri, mem), allow, alen, URI_MEMBER(uri, is_iri))
+
+// allowed characters; supplies (allowed, alen) to uri_encode/URI_ENCODE_MEMBER
+#define URI_AUTH_CHARS "!$&'()*+,;=:@"
+#define URI_AUTH_CHARS_LEN 14
+
+#define URI_PATH_CHARS "!$&'()*+,;=:@/"
+#define URI_PATH_CHARS_LEN 14
+
+#define URI_QUERY_CHARS ":@?/&="
+#define URI_QUERY_CHARS_LEN 6
+
+#define URI_QUERY_TOK_CHARS ":@?/"
+#define URI_QUERY_TOK_CHARS_LEN 4
+
+#define URI_FRAG_CHARS ":@?/"
+#define URI_FRAG_CHARS_LEN 4
+
+#define URI_USER_HOST_CHARS "!$&'()*+,;="
+#define URI_USER_HOST_CHARS_LEN 11
 
 // size constats
 #define URI_SIZE_scheme 32
