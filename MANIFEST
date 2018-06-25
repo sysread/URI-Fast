@@ -2,6 +2,7 @@ Changes
 Fast.xs
 lib/URI/Fast.pm
 lib/URI/Fast/Benchmarks.pod
+lib/URI/Fast/Test.pm
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP
@@ -12,6 +13,8 @@ t/basics.t
 t/compare.t
 t/encoding.t
 t/iri.t
+t/param.t
 t/parsing.t
 t/query_keyset.t
+t/test.t
 t/tied.t
