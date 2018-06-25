@@ -7,8 +7,8 @@ Makefile.PL
 MANIFEST
 MANIFEST.SKIP
 ppport.h
-query.c
 README.pod
+src/encoding.c
 src/query.c
 t/basics.t
 t/compare.t
