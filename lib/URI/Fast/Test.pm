@@ -8,7 +8,7 @@ use parent 'Exporter';
 
 our @EXPORT = qw(is_same_uri isnt_same_uri);
 
-sub _data {
+sub export_uri {
   return {
     scheme => $_[0]->scheme,
     usr    => $_[0]->usr,
@@ -23,12 +23,12 @@ sub _data {
 
 sub is_same_uri {
   my ($got, $expected, $msg) = @_;
-  is _data($got), _data($expected), $msg;
+  is export_uri($got), export_uri($expected), $msg;
 }
 
 sub isnt_same_uri {
   my ($got, $expected, $msg) = @_;
-  isnt _data($got), _data($expected), $msg;
+  isnt export_uri($got), export_uri($expected), $msg;
 }
 
 1;
@@ -57,5 +57,23 @@ comparison using C<is>.
 
 Builds a nested structure of uri components for comparison with Test2's deep
 comparison using C<isnt>.
+
+=head1 SUBROUTINES
+
+=head2 export_uri
+
+Exports a L<URI::Fast> object as a hash ref for use with L<Test2>'s comparison
+functions. The return value's structure is:
+
+  {
+    scheme => $uri->scheme,
+    usr    => $uri->usr,
+    pwd    => $uri->pwd,
+    host   => $uri->host,
+    port   => $uri->port,
+    path   => [$uri->path],
+    query  => $uri->query_hash,
+    frag   => $uri->frag,
+  }
 
 =cut
