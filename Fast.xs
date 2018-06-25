@@ -3,7 +3,7 @@
 #include "perl.h"
 #include "XSUB.h"
 #include "ppport.h"
-#include "query.c"
+#include "src/query.c"
 
 #ifndef URI
 
