@@ -14,17 +14,27 @@
 #define URI_MEMBER(obj, member) (URI(obj)->member)
 
 // quick sugar for calling uri_encode
-#define URI_ENCODE_MEMBER(uri, mem, val, allow, alen) uri_encode(val, minnum(strlen(val), URI_SIZE(mem)), URI_MEMBER(uri, mem), allow, alen, URI_MEMBER(uri, is_iri))
+#define URI_ENCODE_MEMBER(uri, mem, val, allow, alen) (\
+  uri_encode(               \
+    val,                    \
+    minnum(strlen(val),     \
+    URI_SIZE(mem)),         \
+    URI_MEMBER(uri, mem),   \
+    allow,                  \
+    alen,                   \
+    URI_MEMBER(uri, is_iri) \
+  )                         \
+)
 
 // size constats
-#define URI_SIZE_scheme 32
+#define URI_SIZE_scheme   32
 #define URI_SIZE_path   1024
 #define URI_SIZE_query  2048
-#define URI_SIZE_frag   64
-#define URI_SIZE_usr    64
-#define URI_SIZE_pwd    64
-#define URI_SIZE_host   256
-#define URI_SIZE_port   8
+#define URI_SIZE_frag     64
+#define URI_SIZE_usr      64
+#define URI_SIZE_pwd      64
+#define URI_SIZE_host    256
+#define URI_SIZE_port      8
 
 // enough to fit all pieces + 3 chars for separators (2 colons + @)
 #define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
