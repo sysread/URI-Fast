@@ -155,8 +155,8 @@ sub compare {
   $other = uri $other;
 
   return unless _cmp($self->scheme, $other->scheme)
-    && _cmp($self->usr, $other->usr)
-    && _cmp($self->pwd, $other->pwd)
+    && _cmp($self->usr,  $other->usr)
+    && _cmp($self->pwd,  $other->pwd)
     && _cmp($self->host, $other->host)
     && _cmp($self->port, $other->port)
     && _cmp($self->frag, $other->frag);
