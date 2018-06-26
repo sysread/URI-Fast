@@ -10,19 +10,19 @@ typedef enum {
 
 typedef struct {
   uri_query_token_type_t type;
-  char *key;   size_t key_length;
-  char *value; size_t value_length; // only present when type=PARAM
+  const char *key;   size_t key_length;
+  const char *value; size_t value_length; // only present when type=PARAM
 } uri_query_token_t;
 
 typedef struct {
   size_t  length;
   size_t  cursor;
-  char   *source;
+  const char   *source;
 } uri_query_scanner_t;
 
 void query_scanner_init(
     uri_query_scanner_t *scanner,
-    char *source,
+    const char *source,
     size_t length
   )
 {
