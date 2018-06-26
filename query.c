@@ -54,7 +54,7 @@ SCAN_KEY:
   }
 
   // Scan to end of token
-  brk = strcspn(&scanner->source[ scanner->cursor ], sep);
+  brk = strncspn(&scanner->source[ scanner->cursor ], scanner->length - scanner->cursor, sep);
 
   // Set key members in token struct
   token->key = &scanner->source[ scanner->cursor ];
@@ -69,7 +69,7 @@ SCAN_KEY:
     ++scanner->cursor;
 
     // Find the end of the value
-    brk = strcspn(&scanner->source[ scanner->cursor ], sep);
+    brk = strncspn(&scanner->source[ scanner->cursor ], scanner->length - scanner->cursor, sep);
 
     // Set the value and token type
     token->value = &scanner->source[ scanner->cursor ];
