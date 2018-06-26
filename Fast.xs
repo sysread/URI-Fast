@@ -79,11 +79,13 @@
 #endif
 
 // min of two numbers
+static inline
 size_t minnum(size_t x, size_t y) {
   return x <= y ? x : y;
 }
 
 // max of two numbers
+static inline
 size_t maxnum(size_t x, size_t y) {
   return x >= y ? x : y;
 }
@@ -127,6 +129,7 @@ static const char uri_encode_tbl[ sizeof(U32) * 0x100 ] = {
 };
 #undef _______
 
+static
 size_t uri_encode(const char* in, size_t len, char* out, const char* allow, size_t allow_len, int allow_utf8) {
   size_t i = 0;
   size_t j = 0;

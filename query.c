@@ -31,6 +31,7 @@ void query_scanner_init(
   scanner->cursor = 0;
 }
 
+static
 int query_scanner_done(uri_query_scanner_t *scanner) {
   return scanner->cursor >= scanner->length;
 }
@@ -39,6 +40,7 @@ int query_scanner_done(uri_query_scanner_t *scanner) {
  * Fills the token struct with the next token information. Does not decode
  * any values.
  */
+static
 void query_scanner_next(uri_query_scanner_t *scanner, uri_query_token_t *token) {
   size_t brk;
   const char sep[4] = {'&', ';', '=', '\0'};
