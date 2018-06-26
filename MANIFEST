@@ -12,6 +12,7 @@ README.pod
 t/basics.t
 t/compare.t
 t/encoding.t
+t/ipv.t
 t/iri.t
 t/param.t
 t/parsing.t

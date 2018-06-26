@@ -343,6 +343,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
   size_t brk1 = 0;
   size_t brk2 = 0;
   size_t i;
+  unsigned char flag;
 
   memset(&uri->usr,  '\0', sizeof(uri_usr_t));
   memset(&uri->pwd,  '\0', sizeof(uri_pwd_t));
@@ -357,26 +358,50 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
       brk2 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
       if (brk2 > 0 && brk2 < brk1) {
+        // user
         strncpy(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
         idx += brk2 + 1;
 
+        // password
         strncpy(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
         idx += brk1 - brk2;
       }
       else {
+        // user only
         strncpy(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
         idx += brk1 + 1;
       }
     }
 
     // Location
-    // TODO ":" can appear in ipv6 addresses
-    brk1 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
-    if (brk1 > 0 && brk1 != (len - idx)) {
-      strncpy(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
-      idx += brk1 + 1;
+    // Maybe an IPV6 address
+    flag = 0;
+    if (auth[idx] == '[') {
+      brk1 = minnum(len - idx, strcspn(&auth[idx], "]"));
 
+      if (auth[idx + brk1] == ']') {
+        // Copy, including the square brackets
+        strncpy(uri->host, &auth[idx], minnum(brk1 + 1, URI_SIZE_host));
+        idx += brk1 + 1;
+        flag = 1;
+      }
+
+      if (auth[idx] == ':') {
+        ++idx;
+      }
+    }
+
+    if (flag == 0) {
+      brk1 = minnum(len - idx, strcspn(&auth[idx], ":"));
+
+      if (brk1 > 0 && brk1 != (len - idx)) {
+        strncpy(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
+        idx += brk1 + 1;
+      }
+    }
+
+    if (uri->host[0] != '\0') {
       for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
         if (!isdigit(auth[i + idx])) {
           memset(&uri->port, '\0', URI_SIZE_port + 1);
@@ -395,9 +420,16 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
 /*
  * Scans a URI string and populates the uri_t struct.
+ *
+ * Correct:
+ *   scheme:[//[usr[:pwd]@]host[:port]]path[?query][#fragment]
+ *
+ * Incorrect but supported:
+ *   /path[?query][#fragment]
+ *
  */
 static
-void uri_scan(uri_t* uri, const char* src, size_t len) {
+void uri_scan(uri_t *uri, const char *src, size_t len) {
   size_t idx = 0;
   size_t brk = 0;
 

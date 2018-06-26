@@ -278,7 +278,9 @@ L</auth>.
 =head3 host
 
 The host name segment of the authorization string. May be a domain string or an
-IP address. Updating this value alters L</auth>.
+IP address. If the host is an IPV6 address, it must be surrounded by square
+brackets (per spec), which are included in the host string. Updating this value
+alters L</auth>.
 
 =head3 port
 
