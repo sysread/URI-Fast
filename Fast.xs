@@ -343,13 +343,12 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
   size_t brk1 = 0;
   size_t brk2 = 0;
   size_t i;
-  size_t chars;
   unsigned char flag;
 
-  uri->usr[0]  = '\0';
-  uri->pwd[0]  = '\0';
-  uri->host[0] = '\0';
-  uri->port[0] = '\0';
+  memset(&uri->usr,  '\0', sizeof(uri_usr_t));
+  memset(&uri->pwd,  '\0', sizeof(uri_pwd_t));
+  memset(&uri->host, '\0', sizeof(uri_host_t));
+  memset(&uri->port, '\0', sizeof(uri_port_t));
 
   if (len > 0) {
     // Credentials
@@ -360,22 +359,16 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
       if (brk2 > 0 && brk2 < brk1) {
         // user
-        chars = minnum(brk2, URI_SIZE_usr);
-        strncpy(uri->usr, &auth[idx], chars);
-        uri->usr[chars + 1] = '\0';
+        strncpy(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
         idx += brk2 + 1;
 
         // password
-        chars = minnum(brk1 - brk2 - 1, URI_SIZE_pwd);
-        strncpy(uri->pwd, &auth[idx], chars);
-        uri->usr[chars + 1] = '\0';
+        strncpy(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
         idx += brk1 - brk2;
       }
       else {
         // user only
-        chars = minnum(brk1, URI_SIZE_usr);
-        strncpy(uri->usr, &auth[idx], chars);
-        uri->usr[chars + 1] = '\0';
+        strncpy(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
         idx += brk1 + 1;
       }
     }
@@ -389,9 +382,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
       if (auth[idx + brk1] == ']') {
         // Copy, including the square brackets
-        chars = minnum(brk1 + 1, URI_SIZE_host);
-        strncpy(uri->host, &auth[idx], chars);
-        uri->host[chars + 1] = '\0';
+        strncpy(uri->host, &auth[idx], minnum(brk1 + 1, URI_SIZE_host));
         idx += brk1 + 1;
         flag = 1;
       }
@@ -405,33 +396,24 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
       brk1 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
       if (brk1 > 0 && brk1 != (len - idx)) {
-        chars = minnum(brk1, URI_SIZE_host);
         strncpy(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
-        uri->host[chars + 1] = '\0';
         idx += brk1 + 1;
       }
     }
 
     if (uri->host[0] != '\0') {
-      chars = 0;
       for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
         if (!isdigit(auth[i + idx])) {
           memset(&uri->port, '\0', URI_SIZE_port + 1);
-          chars = 0;
           break;
         }
         else {
           uri->port[i] = auth[i + idx];
-          ++chars;
         }
       }
-
-      uri->port[chars] = '\0';
     }
     else {
-      chars = minnum(len - idx, URI_SIZE_host);
-      strncpy(uri->host, &auth[idx], chars);
-      uri->host[chars + 1] = '\0';
+      strncpy(uri->host, &auth[idx], minnum(len - idx, URI_SIZE_host));
     }
   }
 }
