@@ -452,7 +452,6 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   brk = minnum(len - idx, strcspn(&src[idx], ":/@?#"));
   if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
     strncpy(uri->scheme, &src[idx], minnum(brk, URI_SIZE_scheme));
-    uri->scheme[brk] = '\0';
     idx += brk + 3;
 
     // Authority
@@ -467,7 +466,6 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   brk = minnum(len - idx, strcspn(&src[idx], "?#"));
   if (brk > 0) {
     strncpy(uri->path, &src[idx], minnum(brk, URI_SIZE_path));
-    uri->path[brk] = '\0';
     idx += brk;
   }
 
@@ -477,7 +475,6 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
     brk = minnum(len - idx, strcspn(&src[idx], "#"));
     if (brk > 0) {
       strncpy(uri->query, &src[idx], minnum(brk, URI_SIZE_query));
-      uri->query[brk] = '\0';
       idx += brk;
     }
   }
@@ -488,7 +485,6 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
     brk = len - idx;
     if (brk > 0) {
       strncpy(uri->frag, &src[idx], minnum(brk, URI_SIZE_frag));
-      uri->frag[brk] = '\0';
     }
   }
 }
