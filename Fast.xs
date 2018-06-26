@@ -431,7 +431,20 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 static
 void uri_scan(uri_t *uri, const char *src, size_t len) {
   size_t idx = 0;
-  size_t brk = 0;
+  size_t brk;
+  size_t i;
+
+  // Skip any leading whitespace
+  brk = minnum(len, strspn(&src[idx], " \r\n\t\f"));
+  idx += brk;
+
+  for (i = len - 1; i > 0; --i) {
+    if (isspace(src[i])) {
+      --len;
+    } else {
+      break;
+    }
+  }
 
   // Scheme
   brk = minnum(len, strcspn(&src[idx], ":/@?#"));

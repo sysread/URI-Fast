@@ -10,6 +10,7 @@
 -new module: URI::Fast::Test to make unit testing with Test2 easier (credit: merlyn)
 -bugfix: set_query, set_fragment, set_path unnecessarily encode permitted characters (credit: Dave Hubbard)
 -bugfix: correctly parse ipv6 addresses
+-new behavior: skip whitespace surrounding parsed uris
 
 0.34 2018-06-13
 -bugfix: set_param could clobber existing query parameters (credit: aeruder)

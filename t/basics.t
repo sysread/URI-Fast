@@ -26,6 +26,22 @@ subtest 'simple' => sub{
   ok !$uri->pwd, 'pwd';
   is $uri->host, 'www.test.com', 'host';
   ok !$uri->port, 'port';
+
+  subtest 'whitespace' => sub{
+    ok $uri = uri("   \r\n\t\f  $uris[1]   \r\n\t\f  "), 'ctor';
+
+    is $uri->scheme, 'http', 'scheme';
+    is $uri->auth, 'www.test.com', 'auth';
+    is $uri->path, '', 'path';
+    is [$uri->path], [], 'path';
+    ok !$uri->query, 'query';
+    ok !$uri->frag, 'frag';
+
+    ok !$uri->usr, 'usr';
+    ok !$uri->pwd, 'pwd';
+    is $uri->host, 'www.test.com', 'host';
+    ok !$uri->port, 'port';
+  }
 };
 
 subtest 'complete' => sub{
