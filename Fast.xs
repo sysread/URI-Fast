@@ -197,7 +197,6 @@ char unhex(const char *in) {
 static
 size_t uri_decode(const char *in, size_t len, char *out) {
   size_t i = 0, j = 0;
-  unsigned char v1, v2;
   char decoded;
 
   while (i < len) {
@@ -842,7 +841,7 @@ static
 void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
   int    is_iri = URI_MEMBER(uri, is_iri);
   char   *key, *strval, *query = URI_MEMBER(uri, query);
-  size_t qlen = strlen(query), klen, vlen, slen, av_idx, i = 0, brk = 0, off = 0;
+  size_t qlen = strlen(query), klen, vlen, slen, av_idx, i = 0, off = 0;
   char   dest[URI_SIZE_query];
   AV     *av_values;
   SV     **refval;
