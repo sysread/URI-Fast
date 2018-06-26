@@ -354,9 +354,9 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
   if (len > 0) {
     // Credentials
-    brk1 = minnum(len, strcspn(&auth[idx], "@"));
+    brk1 = minnum(len - idx, strcspn(&auth[idx], "@"));
 
-    if (brk1 > 0 && brk1 != len) {
+    if (brk1 > 0 && brk1 != (len - idx)) {
       brk2 = minnum(len - idx, strcspn(&auth[idx], ":"));
 
       if (brk2 > 0 && brk2 < brk1) {
@@ -437,7 +437,7 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   size_t i;
 
   // Skip any leading whitespace
-  brk = minnum(len, strspn(&src[idx], " \r\n\t\f"));
+  brk = minnum(len - idx, strspn(&src[idx], " \r\n\t\f"));
   idx += brk;
 
   for (i = len - 1; i > 0; --i) {
@@ -449,7 +449,7 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   }
 
   // Scheme
-  brk = minnum(len, strcspn(&src[idx], ":/@?#"));
+  brk = minnum(len - idx, strcspn(&src[idx], ":/@?#"));
   if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
     strncpy(uri->scheme, &src[idx], minnum(brk, URI_SIZE_scheme));
     uri->scheme[brk] = '\0';
