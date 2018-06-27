@@ -513,13 +513,13 @@ fun of me for naming certain methods too generically.
 
 =item Aran Deltac (BLUEFEET)
 
-=item Dave Hubbard
+=item Dave Hubbard (DAVEH)
 
 =item James Messrie
 
 =item Randal Schwartz (MERLYN)
 
-=item Sara Siegal
+=item Sara Siegal (SSIEGAL)
 
 =back
 
