@@ -1,16 +1,17 @@
 0.35 2018-06-??
--new method query_keyset({...})
--new method compare($other) with overloaded eq
--document stringification with overloaded ""
--change in behavior: all query scanning functions now treat '&' and ';' as
- valid separators
--change in behavior: explicitly specifying a separator in a query setter
- replaces existing separators in the query
--new aliases: url_encode, url_decode (credit: bluefeet)
--new module: URI::Fast::Test to make unit testing with Test2 easier (credit: merlyn)
--bugfix: set_query, set_fragment, set_path unnecessarily encode permitted characters (credit: Dave Hubbard)
+-behavior: all query scanning functions now treat '&' and ';' as valid separators
+-behavior: explicitly specifying a separator in a query setter replaces existing separators in the query
+-behavior: skip whitespace surrounding parsed uris
 -bugfix: correctly parse ipv6 addresses
--new behavior: skip whitespace surrounding parsed uris
+-bugfix: possible buffer overflow in uri_scan_auth
+-bugfix: set_query, set_fragment, set_path unnecessarily encode permitted characters (credit: Dave Hubbard)
+-documention: stringification with overloaded ""
+-new method: compare($other) with overloaded eq
+-new method: query_keyset({...})
+-new method: url_encode/url_decode aliased to encode/decode (credit: bluefeet)
+-new module: URI::Fast::Test to make unit testing with Test2 easier (credit: merlyn)
+-optimization: faster and more consistent query scanning
+-optimization: reduced memset usage (credit: aeruder)
 
 0.34 2018-06-13
 -bugfix: set_param could clobber existing query parameters (credit: aeruder)

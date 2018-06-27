@@ -280,7 +280,7 @@ See L<URI::Fast::Benchmarks>.
 
 L</uri> does a single, fast pass over the input string and copies portions into
 the struct members. Some compound fields, such as the query and path, are only
-parsed as needed. Switching to a zero-copy strategy would make the initial pass
+parsed as needed. Switching to a zero-copy strategy could make the initial pass
 faster, reduce time spent zeroing out the struct, and make better use of the
 cache.
 
@@ -314,6 +314,28 @@ dedication to quality software development this distribution would not exist.
 =head1 AUTHOR
 
 Jeff Ober <sysread@fastmail.fm>
+
+=head1 CONTRIBUTORS
+
+The following people have contributed to this module with patches, bug reports,
+API advice, identifying areas where the documentation is unclear, or by making
+fun of me for naming certain methods too generically.
+
+=over
+
+=item Andy Ruder
+
+=item Aran Deltac (BLUEFEET)
+
+=item Dave Hubbard
+
+=item James Messrie
+
+=item Randal Schwartz (MERLYN)
+
+=item Sara Siegal
+
+=back
 
 =head1 COPYRIGHT AND LICENSE
 
