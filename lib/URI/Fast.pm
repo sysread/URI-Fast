@@ -475,6 +475,11 @@ cache.
 Currently, queries are restricted to keys or key/value pairs and decoded into
 utf8 strings.
 
+=item Compat module
+
+Add a compatibility layer with URI that implements what functionality is
+possible and croaks loudly otherwise.
+
 =back
 
 =head1 SEE ALSO
