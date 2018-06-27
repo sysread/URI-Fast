@@ -348,11 +348,6 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
   size_t i;
   unsigned char flag;
 
-  memset(&uri->usr,  '\0', sizeof(uri_usr_t));
-  memset(&uri->pwd,  '\0', sizeof(uri_pwd_t));
-  memset(&uri->host, '\0', sizeof(uri_host_t));
-  memset(&uri->port, '\0', sizeof(uri_port_t));
-
   if (len > 0) {
     // Credentials
     brk1 = strncspn(&auth[idx], len - idx, "@");
@@ -670,6 +665,11 @@ const char* set_scheme(pTHX_ SV* uri_obj, const char* value) {
 
 static
 SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
+  memset(URI_MEMBER(uri_obj, usr),  '\0', sizeof(uri_usr_t));
+  memset(URI_MEMBER(uri_obj, pwd),  '\0', sizeof(uri_pwd_t));
+  memset(URI_MEMBER(uri_obj, host), '\0', sizeof(uri_host_t));
+  memset(URI_MEMBER(uri_obj, port), '\0', sizeof(uri_port_t));
+
   // auth isn't stored as an individual field, so encode to local array and rescan
   char auth[URI_SIZE_auth];
   size_t len = uri_encode(value, strlen(value), (char*) &auth, URI_CHARS_AUTH, URI_CHARS_AUTH_LEN, URI_MEMBER(uri_obj, is_iri));
