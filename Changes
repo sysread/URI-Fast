@@ -6,6 +6,7 @@
 -bugfix: possible buffer overflow in uri_scan_auth
 -bugfix: set_query, set_fragment, set_path unnecessarily encode permitted characters (credit: Dave Hubbard)
 -bugfix: when stringifying, use ':' instead of '://' when no authority section present
+-bugfix: when stringifying, path is always separated from authority by '/'
 -documention: stringification with overloaded ""
 -new method: compare($other) with overloaded eq
 -new method: query_keyset({...})

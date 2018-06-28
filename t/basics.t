@@ -127,6 +127,22 @@ subtest 'auth' => sub{
     is $uri->port, '1234', 'get';
     is $uri->auth, 'www.test.com:1234', 'updated: auth';
   };
+
+  subtest 'scheme/authority/path separation' => sub{
+    my $uri = uri;
+
+    $uri->scheme('http');
+    is "$uri", 'http:', 'scheme only';
+
+    $uri->path('foo/bar');
+    is "$uri", 'http:foo/bar', 'scheme + path';
+
+    $uri->host('www.example.com');
+    is "$uri", 'http://www.example.com/foo/bar', 'scheme + host + path';
+
+    $uri->path('');
+    is "$uri", 'http://www.example.com', 'scheme + host';
+  };
 };
 
 subtest 'path' => sub{

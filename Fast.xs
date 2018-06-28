@@ -936,29 +936,36 @@ static
 SV* to_string(pTHX_ SV* uri_obj) {
   uri_t *uri = URI(uri_obj);
   SV *out = newSVpv("", 0);
-  SV *tmp;
+  SV *auth = get_auth(aTHX_ uri_obj);
 
   if (uri->scheme[0] != '\0') {
     sv_catpv(out, uri->scheme);
-    sv_catpv(out, ":");
+    sv_catpvn(out, ":", 1);
   }
 
-  tmp = get_auth(aTHX_ uri_obj);
+  if (SvTRUE(auth)) {
+    // When the authority section is present, the scheme must be followed by
+    // two forward slashes
+    sv_catpvn(out, "//", 2);
 
-  if (SvTRUE(tmp)) {
-    sv_catpv(out, "//");
-    sv_catsv(out, sv_2mortal(tmp));
+    sv_catsv(out, sv_2mortal(auth));
+
+    // When the authority section is present, any path must be separated from
+    // the authority section by a forward slash
+    if (uri->path[0] != '\0' && uri->path[0] != '/') {
+      sv_catpvn(out, "/", 1);
+    }
   }
 
   sv_catpv(out, uri->path);
 
   if (uri->query[0] != '\0') {
-    sv_catpv(out, "?");
+    sv_catpvn(out, "?", 1);
     sv_catpv(out, uri->query);
   }
 
   if (uri->frag[0] != '\0') {
-    sv_catpv(out, "#");
+    sv_catpvn(out, "#", 1);
     sv_catpv(out, uri->frag);
   }
 
