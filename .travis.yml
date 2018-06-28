@@ -17,5 +17,9 @@ perl:
   - "5.26"
   - "5.28"
 
+cache:
+  directories:
+    - ~/perl5
+
 before_install:
-  - eval $(curl https://travis-perl.github.io/init) --auto
+  - eval $(curl https://travis-perl.github.io/init) --auto --always-upgrade-modules

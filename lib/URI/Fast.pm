@@ -1,16 +1,15 @@
 package URI::Fast;
+# ABSTRACT: A fast(er) URI parser
 
 use strict;
 use warnings;
 no strict 'refs';
 
-our $VERSION = '0.35';
-
 use Carp;
 use Exporter;
 
 require XSLoader;
-XSLoader::load('URI::Fast', $VERSION);
+XSLoader::load('URI::Fast');
 
 use Exporter 'import';
 
@@ -19,6 +18,8 @@ our @EXPORT_OK = qw(
   encode url_encode
   decode url_decode
 );
+
+require URI::Fast::IRI;
 
 use overload '""' => sub{ $_[0]->to_string },
              'eq' => sub{ $_[0]->compare($_[1]) };
@@ -185,10 +186,6 @@ sub compare {
 }
 
 =encoding UTF8
-
-=head1 NAME
-
-URI::Fast - A fast(er) URI parser
 
 =head1 SYNOPSIS
 
@@ -523,10 +520,6 @@ Thanks to L<ZipRecruiter|https://www.ziprecruiter.com> for encouraging their
 employees to contribute back to the open source ecosystem. Without their
 dedication to quality software development this distribution would not exist.
 
-=head1 AUTHOR
-
-Jeff Ober <sysread@fastmail.fm>
-
 =head1 CONTRIBUTORS
 
 The following people have contributed to this module with patches, bug reports,
@@ -549,17 +542,6 @@ fun of me for naming certain methods too generically.
 
 =back
 
-=head1 COPYRIGHT AND LICENSE
-
-This software is copyright (c) 2018 by Jeff Ober.
-
-This is free software; you can redistribute it and/or modify it under the same
-terms as the Perl 5 programming language system itself.
-
 =cut
 
-1;
-
-package URI::Fast::IRI;
-our @ISA = qw(URI::Fast);
 1;

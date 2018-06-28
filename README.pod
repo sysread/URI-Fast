@@ -1,8 +1,14 @@
-=encoding UTF8
+=pod
+
+=encoding UTF-8
 
 =head1 NAME
 
 URI::Fast - A fast(er) URI parser
+
+=head1 VERSION
+
+version 0.36
 
 =head1 SYNOPSIS
 
@@ -337,10 +343,6 @@ Thanks to L<ZipRecruiter|https://www.ziprecruiter.com> for encouraging their
 employees to contribute back to the open source ecosystem. Without their
 dedication to quality software development this distribution would not exist.
 
-=head1 AUTHOR
-
-Jeff Ober <sysread@fastmail.fm>
-
 =head1 CONTRIBUTORS
 
 The following people have contributed to this module with patches, bug reports,
@@ -363,10 +365,15 @@ fun of me for naming certain methods too generically.
 
 =back
 
+=head1 AUTHOR
+
+Jeff Ober <sysread@fastmail.fm>
+
 =head1 COPYRIGHT AND LICENSE
 
 This software is copyright (c) 2018 by Jeff Ober.
 
-This is free software; you can redistribute it and/or modify it under the same
-terms as the Perl 5 programming language system itself.
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
+=cut

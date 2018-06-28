@@ -1,18 +1,18 @@
-branches:
-  except:
-    - /travis/
-
 skip_tags: true
 
+build: off
+
 cache:
-  - C:\strawberry
+  - C:\strawberry -> appveyor.yml
 
 install:
   - if not exist "C:\strawberry" cinst strawberryperl
   - set PATH=C:\strawberry\perl\bin;C:\strawberry\perl\site\bin;C:\strawberry\c\bin;%PATH%
   - cd C:\projects\%APPVEYOR_PROJECT_NAME%
-  - cpanm --notest --installdeps -v .
+  - perl -v
+  - cpanm --quiet --notest Dist::Zilla
+  - dzil authordeps --missing | cpanm --notest --quiet
+  - dzil listdeps --missing | cpanm --notest --quiet
 
-build_script:
-  - perl Makefile.PL
-  - gmake test TEST_VERBOSE=1
+test_script:
+  - dzil test

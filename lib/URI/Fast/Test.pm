@@ -1,4 +1,5 @@
 package URI::Fast::Test;
+# ABSTRACT: Unit test comparisons for URI::Fast objects
 
 use strict;
 use warnings;

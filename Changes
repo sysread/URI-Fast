@@ -1,3 +1,6 @@
+{{$NEXT}}
+-build: switch to Dist::Zilla
+
 0.35 2018-06-28
 -behavior: all query scanning functions now treat '&' and ';' as valid separators
 -behavior: explicitly specifying a separator in a query setter replaces existing separators in the query
