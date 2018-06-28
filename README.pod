@@ -123,6 +123,8 @@ C<?>. The query string may be set in several ways.
 In list context, returns a hash ref mapping query keys to array refs of their
 values (see L</query_hash>).
 
+Both '&' and ';' are treated as separators for key/value parameters.
+
 =head2 frag
 
 The fragment section of the URI, excluding the leading C<#>.
@@ -134,10 +136,14 @@ The fragment section of the URI, excluding the leading C<#>.
 Does a fast scan of the query string and returns a list of unique parameter
 names that appear in the query string.
 
+Both '&' and ';' are treated as separators for key/value parameters.
+
 =head2 query_hash
 
 Scans the query string and returns a hash ref of key/value pairs. Values are
 returned as an array ref, as keys may appear multiple times.
+
+Both '&' and ';' are treated as separators for key/value parameters.
 
 =head2 param
 
@@ -155,14 +161,19 @@ parameter to C<undef> deletes the parameter from the URI.
   # Delete 'foo'
   $uri->param('foo', undef);
 
-An optional third parameter may be specified to control the character used to
-separate key/value pairs.
+Both '&' and ';' are treated as separators for key/value parameters when
+parsing the query string. An optional third parameter explicitly selects the
+character used to separate key/value pairs.
 
   $uri->param('foo', 'bar', ';'); # foo=bar
   $uri->param('baz', 'bat', ';'); # foo=bar;baz=bat
 
-When included, separators in the query string will be normalized to the
-character specified.
+When unspecified, '&' is chosen as the default. I<In either case, all
+separators in the query string will be normalized to the chosen separator>.
+
+  $uri->param('foo', 'bar', ';'); # foo=bar
+  $uri->param('baz', 'bat', ';'); # foo=bar;baz=bat
+  $uri->param('fnord', 'slack');  # foo=bar&baz=bat&fnord=slack
 
 =head2 add_param
 
@@ -172,6 +183,17 @@ altering the original value.
 
   $uri->add_param('foo', 'bar'); # foo=bar
   $uri->add_param('foo', 'baz'); # foo=bar&foo=baz
+
+This method is simply sugar for calling:
+
+  $uri->param('key', [$uri->param('key'), 'new value']);
+
+As with L</param>, the separator character may be specified as the final
+parameter. The same caveats apply with regard to normalization of the query
+string separator.
+
+  $uri->add_param('foo', 'bar', ';'); # foo=bar
+  $uri->add_param('foo', 'baz', ';'); # foo=bar;foo=baz
 
 =head2 query_keyset
 
@@ -193,9 +215,8 @@ untouched. A negative value will remove the key and value.
   $uri->query_keyset({foo => 1, baz => 0}); # foo=bar&bat
 
 An optional second parameter may be specified to control the separator
-character used when updating the query string. When the separator is explicitly
-specified, all separators in the query string will be normalized to the
-specified separator.
+character used when updating the query string. The same caveats apply with
+regard to normalization of the query string separator.
 
 =head2 to_string
 
