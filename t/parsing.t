@@ -16,7 +16,7 @@ is uri(undef), '', 'undef';
 is uri(''), '', 'empty string';
 
 is uri('/foo')->scheme, '', 'missing scheme';
-is uri('http://'), 'http://', 'non-file scheme w/o host';
+is uri('http:'), 'http:', 'non-file scheme w/o host';
 is uri('http://test'), 'http://test', 'auth w/ invalid host';
 
 is uri('http://usr:pwd')->usr, '', 'no usr w/o @';

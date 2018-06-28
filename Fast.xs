@@ -934,15 +934,22 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
 
 static
 SV* to_string(pTHX_ SV* uri_obj) {
-  uri_t* uri = URI(uri_obj);
-  SV*    out = newSVpv("", 0);
+  uri_t *uri = URI(uri_obj);
+  SV *out = newSVpv("", 0);
+  SV *tmp;
 
   if (uri->scheme[0] != '\0') {
     sv_catpv(out, uri->scheme);
-    sv_catpv(out, "://");
+    sv_catpv(out, ":");
   }
 
-  sv_catsv(out, sv_2mortal(get_auth(aTHX_ uri_obj)));
+  tmp = get_auth(aTHX_ uri_obj);
+
+  if (SvTRUE(tmp)) {
+    sv_catpv(out, "//");
+    sv_catsv(out, sv_2mortal(tmp));
+  }
+
   sv_catpv(out, uri->path);
 
   if (uri->query[0] != '\0') {
