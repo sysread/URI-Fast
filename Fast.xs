@@ -62,6 +62,22 @@
 #define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
 #define URI_SIZE(member) (URI_SIZE_##member)
 
+// selects sv_catpv or sv_catpv_flags based on the value of is_iri
+#define uri_sv_catpv(uri, mem, sv_out) \
+  if (uri->is_iri) { \
+    sv_catpv_flags(sv_out, uri->mem, SV_CATUTF8); \
+  } else { \
+    sv_catpv(sv_out, uri->mem); \
+  }
+
+// selects sv_catpvn or sv_catpvn_flags based on the value of is_iri
+#define uri_sv_catpvn(uri, mem, n, sv_out) \
+  if (uri->is_iri) { \
+    sv_catpvn_flags(sv_out, uri->mem, n, SV_CATUTF8); \
+  } else { \
+    sv_catpvn(sv_out, n, uri->mem); \
+  }
+
 #endif
 
 /*
@@ -508,17 +524,23 @@ SV* get_auth(pTHX_ SV* uri_obj) {
 
   if (uri->usr[0] != '\0') {
     if (uri->pwd[0] != '\0') {
-      sv_catpvf(out, "%s:%s@", uri->usr, uri->pwd);
+      uri_sv_catpv(uri, usr, out);
+      sv_catpvn(out, ":", 1);
+      uri_sv_catpv(uri, pwd, out);
+      sv_catpvn(out, "@", 1);
     } else {
-      sv_catpvf(out, "%s@", uri->usr);
+      uri_sv_catpv(uri, usr, out);
+      sv_catpvn(out, "@", 1);
     }
   }
 
   if (uri->host[0] != '\0') {
     if (uri->port[0] != '\0') {
-      sv_catpvf(out, "%s:%s", uri->host, uri->port);
+      uri_sv_catpv(uri, host, out);
+      sv_catpvn(out, ":", 1);
+      uri_sv_catpv(uri, port, out);
     } else {
-      sv_catpv(out, uri->host);
+      uri_sv_catpv(uri, host, out);
     }
   }
 
@@ -939,7 +961,7 @@ SV* to_string(pTHX_ SV* uri_obj) {
   SV *auth = get_auth(aTHX_ uri_obj);
 
   if (uri->scheme[0] != '\0') {
-    sv_catpv(out, uri->scheme);
+    uri_sv_catpv(uri, scheme, out);
     sv_catpvn(out, ":", 1);
   }
 
@@ -957,16 +979,16 @@ SV* to_string(pTHX_ SV* uri_obj) {
     }
   }
 
-  sv_catpv(out, uri->path);
+  uri_sv_catpv(uri, path, out);
 
   if (uri->query[0] != '\0') {
     sv_catpvn(out, "?", 1);
-    sv_catpv(out, uri->query);
+    uri_sv_catpv(uri, query, out);
   }
 
   if (uri->frag[0] != '\0') {
     sv_catpvn(out, "#", 1);
-    sv_catpv(out, uri->frag);
+    uri_sv_catpv(uri, frag, out);
   }
 
   return out;

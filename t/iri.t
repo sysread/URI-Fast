@@ -21,15 +21,17 @@ subtest 'getters' => sub{
   is $iri->path, $path, 'path';
   is $iri->frag, $frag, 'frag';
 
-  is $iri->query_hash, hash{ field $foo => array{ item $bar; end; }; end; }, 'query_hash';
-  is [sort $iri->query_keys], array{ item $foo; end; }, 'query_keys';
+  is $iri->query_hash, {$foo => [$bar]}, 'query_hash';
+  is [sort $iri->query_keys], [$foo], 'query_keys';
   is $iri->param($foo), $bar, 'get param';
+
+  is "$iri", $iri_str, 'to_string';
 };
 
 subtest 'setters' => sub{
   is $iri->param($baz, $bat), $bat, 'set param';
   is $iri->param($baz), $bat, 'get param';
-  is [sort $iri->query_keys], array{ item $baz; item $foo; end; }, 'query_keys';
+  is [sort $iri->query_keys], [$baz, $foo], 'query_keys';
 
   is $iri->host($host), $host, 'set host';
   is $iri->path($path), $path, 'set path';
