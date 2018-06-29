@@ -1130,7 +1130,7 @@ MODULE = URI::Fast  PACKAGE = URI::Fast
 
 PROTOTYPES: DISABLE
 
-VERSIONCHECK: DISABLE
+VERSIONCHECK: ENABLE
 
 #-------------------------------------------------------------------------------
 # URL-encoding
