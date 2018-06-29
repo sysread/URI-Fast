@@ -16,4 +16,5 @@ on test => sub {
   requires 'Test::Pod'         => '1.41';
   requires 'URI::Encode::XS'   => '0.11';
   requires 'URI::Split'        => '0';
+  requires 'Unicode::GCString' => '0';
 };
