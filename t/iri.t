@@ -24,6 +24,8 @@ subtest 'getters' => sub{
   is $iri->query_hash, hash{ field $foo => array{ item $bar; end; }; end; }, 'query_hash';
   is [sort $iri->query_keys], array{ item $foo; end; }, 'query_keys';
   is $iri->param($foo), $bar, 'get param';
+
+  is "$iri", $iri_str, 'to_string';
 };
 
 subtest 'setters' => sub{

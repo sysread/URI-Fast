@@ -506,17 +506,27 @@ SV* get_auth(pTHX_ SV* uri_obj) {
   uri_t* uri = URI(uri_obj);
   SV* out = newSVpv("", 0);
 
+  if (uri->is_iri) {
+    SvUTF8_on(out);
+  }
+
   if (uri->usr[0] != '\0') {
     if (uri->pwd[0] != '\0') {
-      sv_catpvf(out, "%s:%s@", uri->usr, uri->pwd);
+      sv_catpv(out, uri->usr);
+      sv_catpvn(out, ":", 1);
+      sv_catpv(out, uri->pwd);
+      sv_catpvn(out, "@", 1);
     } else {
-      sv_catpvf(out, "%s@", uri->usr);
+      sv_catpv(out, uri->usr);
+      sv_catpvn(out, "@", 1);
     }
   }
 
   if (uri->host[0] != '\0') {
     if (uri->port[0] != '\0') {
-      sv_catpvf(out, "%s:%s", uri->host, uri->port);
+      sv_catpv(out, uri->host);
+      sv_catpvn(out, ":", 1);
+      sv_catpv(out, uri->port);
     } else {
       sv_catpv(out, uri->host);
     }
@@ -937,6 +947,10 @@ SV* to_string(pTHX_ SV* uri_obj) {
   uri_t *uri = URI(uri_obj);
   SV *out = newSVpv("", 0);
   SV *auth = get_auth(aTHX_ uri_obj);
+
+  if (uri->is_iri) {
+    SvUTF8_on(out);
+  }
 
   if (uri->scheme[0] != '\0') {
     sv_catpv(out, uri->scheme);
