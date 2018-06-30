@@ -62,6 +62,15 @@
 #define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
 #define URI_SIZE(member) (URI_SIZE_##member)
 
+/*
+ * Uses memcpy to copy n bytes from src to dest and null-terminates. The caller
+ * must ensure that dest is at least n + 1 bytes long and that src has at least
+ * n bytes of data to copy.
+ */
+#define set_str(dest, src, n) \
+  memcpy(dest, src, n); \
+  (dest)[n] = '\0';
+
 #endif
 
 /*
@@ -357,16 +366,16 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
       if (brk2 > 0 && brk2 < brk1) {
         // user
-        strncpy(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
+        set_str(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
         idx += brk2 + 1;
 
         // password
-        strncpy(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
+        set_str(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
         idx += brk1 - brk2;
       }
       else {
         // user only
-        strncpy(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
+        set_str(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
         idx += brk1 + 1;
       }
     }
@@ -380,7 +389,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
       if (auth[idx + brk1] == ']') {
         // Copy, including the square brackets
-        strncpy(uri->host, &auth[idx], minnum(brk1 + 1, URI_SIZE_host));
+        set_str(uri->host, &auth[idx], minnum(brk1 + 1, URI_SIZE_host));
         idx += brk1 + 1;
         flag = 1;
       }
@@ -394,7 +403,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
       brk1 = strncspn(&auth[idx], len - idx, ":");
 
       if (brk1 > 0 && brk1 != (len - idx)) {
-        strncpy(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
+        set_str(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
         idx += brk1 + 1;
       }
     }
@@ -411,7 +420,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
       }
     }
     else {
-      strncpy(uri->host, &auth[idx], minnum(len - idx, URI_SIZE_host));
+      set_str(uri->host, &auth[idx], minnum(len - idx, URI_SIZE_host));
     }
   }
 }
@@ -447,7 +456,7 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   // Scheme
   brk = strncspn(&src[idx], len - idx, ":/@?#");
   if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
-    strncpy(uri->scheme, &src[idx], minnum(brk, URI_SIZE_scheme));
+    set_str(uri->scheme, &src[idx], minnum(brk, URI_SIZE_scheme));
     idx += brk + 3;
 
     // Authority
@@ -461,7 +470,7 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   // path
   brk = strncspn(&src[idx], len - idx, "?#");
   if (brk > 0) {
-    strncpy(uri->path, &src[idx], minnum(brk, URI_SIZE_path));
+    set_str(uri->path, &src[idx], minnum(brk, URI_SIZE_path));
     idx += brk;
   }
 
@@ -470,26 +479,26 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
     ++idx; // skip past ?
     brk = strncspn(&src[idx], len - idx, "#");
     if (brk > 0) {
-      strncpy(uri->query, &src[idx], minnum(brk, URI_SIZE_query));
+      set_str(uri->query, &src[idx], minnum(brk, URI_SIZE_query));
       idx += brk;
     }
   }
 
 // DEBUG
-if (uri->is_iri) {
+/*if (uri->is_iri) {
   warn("DEBUG: %lu/%lu = '%c'", brk, idx, src[idx]);
   size_t i;
   for (i = idx; i < len; ++i) {
     warn("  %lu: %X\n", i, src[i]);
   }
-}
+}*/
 
   // fragment
   if (src[idx] == '#') {
     ++idx; // skip past #
     brk = len - idx;
     if (brk > 0) {
-      strncpy(uri->frag, &src[idx], minnum(brk, URI_SIZE_frag));
+      set_str(uri->frag, &src[idx], minnum(brk, URI_SIZE_frag));
     }
   }
 }
@@ -817,12 +826,12 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
         dest[off++] = separator;
       }
 
-      strncpy(&dest[off], token.key, token.key_length);
+      set_str(&dest[off], token.key, token.key_length);
       off += token.key_length;
 
       if (token.type == PARAM) {
         dest[off++] = '=';
-        strncpy(&dest[off], token.value, token.value_length);
+        set_str(&dest[off], token.value, token.value_length);
         off += token.value_length;
       }
     }
@@ -842,7 +851,7 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
         dest[off++] = separator;
       }
 
-      strncpy(&dest[off], key, klen);
+      set_str(&dest[off], key, klen);
       off += klen;
     }
   }
@@ -850,7 +859,7 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
   dest[off++] = '\0';
 
   clear_query(aTHX_ uri);
-  strncpy(URI_MEMBER(uri, query), dest, off);
+  set_str(URI_MEMBER(uri, query), dest, off);
 }
 
 static
@@ -895,7 +904,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
       }
 
       // Write the key to the buffer
-      strncpy(&dest[off], token.key, token.key_length);
+      set_str(&dest[off], token.key, token.key_length);
       off += token.key_length;
 
       // The key has a value
@@ -906,7 +915,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
         // is not written after the '=' is added above.
         if (token.value_length > 0) {
           // Otherwise, write the value to the buffer
-          strncpy(&dest[off], token.value, token.value_length);
+          set_str(&dest[off], token.value, token.value_length);
           off += token.value_length;
         }
       }
@@ -930,7 +939,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
     if (off + klen + 1 > URI_SIZE_query) break;
 
     // Copy key over
-    strncpy(&dest[off], enc_key, klen);
+    set_str(&dest[off], enc_key, klen);
     off += klen;
 
     dest[off++] = '=';
@@ -944,7 +953,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
   }
 
   clear_query(aTHX_ uri);
-  strncpy(URI_MEMBER(uri, query), dest, off);
+  set_str(URI_MEMBER(uri, query), dest, off);
 }
 
 /*
