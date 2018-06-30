@@ -52,10 +52,10 @@
 #define URI_SIZE_scheme   32
 #define URI_SIZE_path   1024
 #define URI_SIZE_query  2048
-#define URI_SIZE_frag     64
-#define URI_SIZE_usr      64
-#define URI_SIZE_pwd      64
-#define URI_SIZE_host    256
+#define URI_SIZE_frag    128
+#define URI_SIZE_usr     128
+#define URI_SIZE_pwd     128
+#define URI_SIZE_host    512
 #define URI_SIZE_port      8
 
 // enough to fit all pieces + 3 chars for separators (2 colons + @)
@@ -477,7 +477,11 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
 
 // DEBUG
 if (uri->is_iri) {
-  warn("DEBUG: [%lu/%lu = '%c'] \"%s\"", brk, idx, src[idx], &src[idx]);
+  warn("DEBUG: %lu/%lu = '%c'", brk, idx, src[idx]);
+  size_t i;
+  for (i = idx; i < len; ++i) {
+    warn("  %lu: %X\n", i, src[i]);
+  }
 }
 
   // fragment
@@ -1005,6 +1009,19 @@ void explain(pTHX_ SV* uri_obj) {
 }
 
 static
+void debug(pTHX_ SV* uri_obj) {
+  warn("scheme: %s\n",  URI_MEMBER(uri_obj, scheme));
+  warn("auth:\n");
+  warn("  -usr: %s\n",  URI_MEMBER(uri_obj, usr));
+  warn("  -pwd: %s\n",  URI_MEMBER(uri_obj, pwd));
+  warn("  -host: %s\n", URI_MEMBER(uri_obj, host));
+  warn("  -port: %s\n", URI_MEMBER(uri_obj, port));
+  warn("path: %s\n",    URI_MEMBER(uri_obj, path));
+  warn("query: %s\n",   URI_MEMBER(uri_obj, query));
+  warn("frag: %s\n",    URI_MEMBER(uri_obj, frag));
+}
+
+static
 SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
   const char* src;
   size_t len;
@@ -1430,6 +1447,11 @@ void explain(uri_obj)
   SV* uri_obj
   CODE:
     explain(aTHX_ uri_obj);
+
+void debug(uri_obj)
+  SV* uri_obj
+  CODE:
+    debug(aTHX_ uri_obj);
 
 void uri_split(uri)
   SV* uri
