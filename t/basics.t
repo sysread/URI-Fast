@@ -34,13 +34,13 @@ subtest 'simple' => sub{
     is $uri->auth, 'www.test.com', 'auth';
     is $uri->path, '', 'path';
     is [$uri->path], [], 'path';
-    ok !$uri->query, 'query';
-    ok !$uri->frag, 'frag';
+    is $uri->query, '', 'query';
+    is $uri->frag, '', 'frag';
 
-    ok !$uri->usr, 'usr';
-    ok !$uri->pwd, 'pwd';
+    is $uri->usr, '', 'usr';
+    is $uri->pwd, '', 'pwd';
     is $uri->host, 'www.test.com', 'host';
-    ok !$uri->port, 'port';
+    is $uri->port, '', 'port';
   }
 };
 

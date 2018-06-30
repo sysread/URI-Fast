@@ -3,13 +3,13 @@ use ExtUtils::testlib;
 use Test2::V0;
 use URI::Fast qw(iri);
 
-my $host    = 'www.çæ∂î∫∫å.com';
-my $path    = '/ƒø∫∂é®';
-my $frag    = 'ƒ®å©';
-my $foo     = 'ƒøø';
-my $bar     = 'ßå®';
-my $baz     = 'ßåΩ';
-my $bat     = 'ßå†';
+my $host = 'www.çæ∂î∫∫å.com';
+my $path = '/ƒø∫∂é®';
+my $frag = 'ƒ®å©';
+my $foo  = 'ƒøø';
+my $bar  = 'ßå®';
+my $baz  = 'ßåΩ';
+my $bat  = 'ßå†';
 
 my $iri_str = "http://$host$path?$foo=$bar#$frag";
 

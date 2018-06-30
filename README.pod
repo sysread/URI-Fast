@@ -8,7 +8,7 @@ URI::Fast - A fast(er) URI parser
 
 =head1 VERSION
 
-version 0.35_2
+version 0.35_3
 
 =head1 SYNOPSIS
 

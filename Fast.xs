@@ -475,6 +475,11 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
     }
   }
 
+// DEBUG
+if (uri->is_iri) {
+  warn("DEBUG: [%lu/%lu = '%c'] \"%s\"", brk, idx, src[idx], &src[idx]);
+}
+
   // fragment
   if (src[idx] == '#') {
     ++idx; // skip past #
@@ -1000,7 +1005,7 @@ void explain(pTHX_ SV* uri_obj) {
 }
 
 static
-SV* new(pTHX_ const char* class, SV* uri_str) {
+SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
   const char* src;
   size_t len;
   uri_t* uri;
@@ -1009,6 +1014,7 @@ SV* new(pTHX_ const char* class, SV* uri_str) {
 
   Newx(uri, 1, uri_t);
   memset(uri, '\0', sizeof(uri_t));
+  uri->is_iri = is_iri;
 
   obj = newSViv((IV) uri);
   obj_ref = newRV_noinc(obj);
@@ -1028,13 +1034,6 @@ SV* new(pTHX_ const char* class, SV* uri_str) {
   uri_scan(uri, src, len);
 
   return obj_ref;
-}
-
-static
-SV* new_iri(pTHX_ const char* class, SV* uri_str) {
-  SV* obj = new(aTHX_ "URI::Fast::IRI", uri_str);
-  URI_MEMBER(obj, is_iri) = 1;
-  return obj;
 }
 
 static
@@ -1160,7 +1159,7 @@ SV* new(class, uri_str)
   const char* class
   SV* uri_str
   CODE:
-    RETVAL = new(aTHX_ class, uri_str);
+    RETVAL = new(aTHX_ class, uri_str, 0);
   OUTPUT:
     RETVAL
 
@@ -1168,7 +1167,7 @@ SV* new_iri(class, uri_str)
   const char* class;
   SV* uri_str
   CODE:
-    RETVAL = new_iri(aTHX_ class, uri_str);
+    RETVAL = new(aTHX_ "URI::Fast::IRI", uri_str, 1);
   OUTPUT:
     RETVAL
 

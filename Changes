@@ -1,6 +1,6 @@
 {{$NEXT}}
 
-0.35_2 2018-06-29
+0.35_3
 -build: switch to Dist::Zilla
 -bugfix: set utf8 flag in compound iri accessors
 
