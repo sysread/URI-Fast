@@ -2,20 +2,11 @@ skip_tags: true
 
 build: off
 
-#cache:
-#  - C:\strawberry -> appveyor.yml
-
-platform:
-  - x86
-  - x64
-
-environment:
-  matrix:
-    - PERL_VERSION: "5.16.3"
-    - PERL_VERSION: "5.26.2"
+cache:
+  - C:\strawberry -> appveyor.yml
 
 install:
-  - cinst strawberryperl --version %PERL_VERSION%
+  - if not exist "C:\strawberry" cinst strawberryperl
   - set PATH=C:\strawberry\perl\bin;C:\strawberry\perl\site\bin;C:\strawberry\c\bin;%PATH%
   - cd C:\projects\%APPVEYOR_PROJECT_NAME%
   - perl -v
