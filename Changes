@@ -1,7 +1,4 @@
-{{$NEXT}}
-
-0.35_4 2018-07-01
--build: switch to Dist::Zilla
+0.35 2018-07-??
 -bugfix: set utf8 flag in compound iri accessors
 -bugfix: increase some member sizes to allow room for utf8 sequences
 -bugfix: encode non-utf8 input strings in new() and uri_split()
