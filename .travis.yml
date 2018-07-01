@@ -7,7 +7,7 @@ notifications:
 
 cache:
   directories:
-    - ~/perl5
+    - /home/travis/perl5
 
 perl:
   - "5.10"
@@ -43,6 +43,7 @@ before_script:
   - coverage-setup
 
 script:
+  - perl Makefile.PL && make
   - prove -l -j$(test-jobs) $(test-files)   # parallel testing
 
 after_success:
