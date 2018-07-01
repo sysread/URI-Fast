@@ -19,4 +19,4 @@ install:
   - dzil listdeps --missing | cpanm --notest --quiet
 
 test_script:
-  - dzil test
+  - dzil test -j 4
