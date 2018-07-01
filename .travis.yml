@@ -5,10 +5,6 @@ sudo: false
 notifications:
   email: false
 
-cache:
-  directories:
-    - /home/travis/perl5
-
 perl:
   - "5.10"
   - "5.12"
@@ -24,4 +20,4 @@ perl:
   - "5.28"
 
 before_install:
-  - eval $(curl https://travis-perl.github.io/init) --auto --always-upgrade-modules
+  - eval $(curl https://travis-perl.github.io/init) --auto
