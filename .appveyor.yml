@@ -2,6 +2,9 @@ skip_tags: true
 
 build: off
 
+cache:
+  - C:\strawberry
+
 platform:
   - x86
   - x64
