@@ -485,13 +485,13 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   }
 
 // DEBUG
-/*if (uri->is_iri) {
+if (uri->is_iri) {
   warn("DEBUG: %lu/%lu = '%c'", brk, idx, src[idx]);
   size_t i;
   for (i = idx; i < len; ++i) {
     warn("  %lu: %X\n", i, src[i]);
   }
-}*/
+}
 
   // fragment
   if (src[idx] == '#') {
