@@ -14,9 +14,9 @@ install:
   - set PATH=C:\strawberry\perl\bin;C:\strawberry\perl\site\bin;C:\strawberry\c\bin;%PATH%
   - cd C:\projects\%APPVEYOR_PROJECT_NAME%
   - perl -v
-  - cpanm --quiet --notest Dist::Zilla
-  - dzil authordeps --missing | cpanm --notest --quiet
-  - dzil listdeps --missing | cpanm --notest --quiet
+  - cpanm --quiet --notest --installdeps .
 
-test_script:
-  - dzil test -j 4
+build_script:
+  - perl Makefile.PL
+  - gmake test
+

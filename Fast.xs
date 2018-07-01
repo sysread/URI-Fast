@@ -70,7 +70,6 @@
 #define set_str(dest, src, n) \
   memcpy(dest, src, n); \
   (dest)[n] = '\0';
-
 #endif
 
 /*

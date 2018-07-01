@@ -1,5 +1,7 @@
 package URI::Fast;
-# ABSTRACT: A fast(er) URI parser
+
+our $XS_VERSION = our $VERSION = '0.35_4';
+$VERSION =~ tr/_//;
 
 use utf8;
 use strict;
@@ -10,7 +12,7 @@ use Carp;
 use Exporter;
 
 require XSLoader;
-XSLoader::load('URI::Fast');
+XSLoader::load('URI::Fast', $XS_VERSION);
 
 use Exporter 'import';
 
@@ -187,6 +189,10 @@ sub compare {
 }
 
 =encoding UTF8
+
+=head1 NAME
+
+URI::Fast - A fast(er) URI parser
 
 =head1 SYNOPSIS
 
@@ -542,6 +548,16 @@ fun of me for naming certain methods too generically.
 =item Sara Siegal (SSIEGAL)
 
 =back
+
+=head1 AUTHOR
+
+Jeff Ober <sysread@fastmail.fm>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Jeff Ober. This is free software; you
+can redistribute it and/or modify it under the same terms as the Perl 5
+programming language system itself.
 
 =cut
 
