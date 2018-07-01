@@ -23,10 +23,5 @@ perl:
   - "5.26-mb"
   - "5.28"
 
-matrix:
-  include:
-    - perl: 5.26
-      env: COVERAGE=1
-
 before_install:
   - eval $(curl https://travis-perl.github.io/init) --auto --always-upgrade-modules
