@@ -28,23 +28,4 @@ matrix:
       env: COVERAGE=1
 
 before_install:
-  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
-  - source ~/travis-perl-helpers/init
-  - build-perl
-  - perl -V
-  - build-dist
-  - cd $BUILD_DIR
-
-install:
-  - cpan-install --deps
-  - cpan-install --coverage
-
-before_script:
-  - coverage-setup
-
-script:
-  - perl Makefile.PL && make
-  - prove -lm -j$(test-jobs) $(test-files) || prove -lmv $(test-files)
-
-after_success:
-  - coverage-report
+  - eval $(curl https://travis-perl.github.io/init) --auto
