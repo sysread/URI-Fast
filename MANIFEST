@@ -1,5 +1,4 @@
 Changes
-cpanfile
 Fast.xs
 lib/URI/Fast.pm
 lib/URI/Fast/Benchmarks.pod
