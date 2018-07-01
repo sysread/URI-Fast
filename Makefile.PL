@@ -12,6 +12,13 @@ misc : readme manifest
 release : test dist
 \tcpan-upload \$(DISTVNAME).tar.gz
 
+prove :
+ifeq ("\$(J)", "")
+\tprove -lm t
+else
+\tprove -lm -j \$(J) t
+endif
+
 EOS
 }
 
