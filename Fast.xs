@@ -1054,7 +1054,15 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
     len = 0;
   }
   else {
+    // Copy input string *before* calling SvUTF8() in case the SV is an object
+    // with string overloading, which may trigger the utf8 flag.
     src = SvPV_nomg_const(uri_str, len);
+
+    if (!SvUTF8(uri_str)) {
+      uri_str = sv_2mortal(newSVpvn(src, len));
+      sv_utf8_encode(uri_str);
+      src = SvPV_const(uri_str, len);
+    }
   }
 
   uri_scan(uri, src, len);
