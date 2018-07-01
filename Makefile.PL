@@ -63,12 +63,10 @@ WriteMakefile(
 
   TEST_REQUIRES => {
     'ExtUtils::testlib' => '0',
-    'JSON::PP'          => '2.27300',
     'Test2'             => '1.302125',
     'Test2::Suite'      => '0.000100',
     'Test2::V0'         => '0',
     'Test::LeakTrace'   => '0.16',
-    'Test::Pod'         => '1.41',
     'URI::Encode::XS'   => '0.11',
     'URI::Split'        => '0',
     'Unicode::GCString' => '0',
