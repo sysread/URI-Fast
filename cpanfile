@@ -9,6 +9,7 @@ on build => sub {
 
 on test => sub {
   requires 'ExtUtils::testlib' => '0';
+  requires 'JSON::PP'          => '2.27300';
   requires 'Test2'             => '1.302125';
   requires 'Test2::Suite'      => '0.000100';
   requires 'Test2::V0'         => '0';
