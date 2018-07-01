@@ -7,17 +7,26 @@ use ExtUtils::MakeMaker;
 sub MY::postamble {
   return <<EOS;
 
+# Set default number of workers for target prove
+ifeq ("\$(J)", "")
+J=1
+endif
+
+ifneq ("\$(TEST_VERBOSE)", "1")
+PROVE_ARGS=-lm -j \$(J)
+else
+PROVE_ARGS=-lmv
+endif
+
 misc : readme manifest
+
 
 release : test dist
 \tcpan-upload \$(DISTVNAME).tar.gz
 
-prove :
-ifeq ("\$(J)", "")
-\tprove -lm t
-else
-\tprove -lm -j \$(J) t
-endif
+
+prove : all
+\tprove \$(PROVE_ARGS) t
 
 EOS
 }
