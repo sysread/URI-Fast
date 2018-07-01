@@ -2,9 +2,6 @@ skip_tags: true
 
 build: off
 
-cache:
-  - C:\strawberry -> appveyor.yml
-
 platform:
   - x86
   - x64
