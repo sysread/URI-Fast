@@ -20,13 +20,30 @@ perl:
   - "5.24"
   - "5.26"
   - "5.26-thr"
-  - "5.28"
+
+matrix:
+  include:
+    - perl: 5.28
+      env: COVERAGE=1
+
+before_install:
+  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+  - source ~/travis-perl-helpers/init
+  - build-perl
+  - perl -V
+  - build-dist
+  - cd $BUILD_DIR             # $BUILD_DIR is set by the build-dist command
 
 install:
-  - perl -v
-  - cpanm --quiet --notest Dist::Zilla
-  - dzil authordeps --missing | cpanm --notest --quiet
-  - dzil listdeps   --missing | cpanm --notest --quiet
+  - cpan-install --deps       # installs prereqs, including recommends
+  - cpan-install --coverage   # installs converage prereqs, if enabled
+
+before_script:
+  - coverage-setup
 
 script:
-  - dzil test -j 4
+  - perl Makefile.PL && make
+  - prove -lm -j$(test-jobs) $(test-files)   # parallel testing
+
+after_success:
+  - coverage-report
