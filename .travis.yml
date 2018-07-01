@@ -5,6 +5,10 @@ sudo: false
 notifications:
   email: false
 
+cache:
+  directories:
+    - ~/perl5
+
 perl:
   - "5.10"
   - "5.12"
