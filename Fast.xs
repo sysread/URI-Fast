@@ -486,7 +486,7 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
 
 // DEBUG
 if (uri->is_iri) {
-  warn("DEBUG: %lu/%lu = '%c'", brk, idx, src[idx]);
+  warn("DEBUG: brk:%lu, idx:%lu, len:%lu | '%c' == '=' -> %d", brk, idx, len, src[idx], src[idx] == '#' ? 1 : 0);
   size_t i;
   for (i = idx; i < len; ++i) {
     warn("  %lu: %X\n", i, src[i]);
