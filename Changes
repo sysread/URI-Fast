@@ -4,7 +4,7 @@
 -build: switch to Dist::Zilla
 -bugfix: set utf8 flag in compound iri accessors
 -bugfix: increase some member sizes to allow room for utf8 sequences
--bugfix: encode non-utf8 input strings in new()
+-bugfix: encode non-utf8 input strings in new() and uri_split()
 -optimization: use memcpy instead of strncpy in some cases
 
 0.35 2018-06-28

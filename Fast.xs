@@ -1094,6 +1094,12 @@ void uri_split(pTHX_ SV* uri) {
   }
   else {
     src = SvPV_nomg_const(uri, len);
+
+    if (!SvUTF8(uri)) {
+      uri = sv_2mortal(newSVpvn(src, len));
+      sv_utf8_encode(uri);
+      src = SvPV_const(uri, len);
+    }
   }
 
   dXSARGS;
