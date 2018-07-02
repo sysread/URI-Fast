@@ -1,4 +1,4 @@
-0.35 2018-07-??
+0.36 2018-07-??
 -bugfix: set utf8 flag in compound iri accessors
 -bugfix: increase some member sizes to allow room for utf8 sequences
 -bugfix: encode non-utf8 input strings in new() and uri_split()
