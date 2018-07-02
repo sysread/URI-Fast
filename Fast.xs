@@ -276,9 +276,8 @@ SV* decode(pTHX_ SV* in) {
 
   SvGETMAGIC(in);
 
-  if (SvUTF8(in)) {
+  if (DO_UTF8(in)) {
     in = sv_mortalcopy(in);
-
     SvUTF8_on(in);
 
     if (!sv_utf8_downgrade(in, TRUE)) {
@@ -482,15 +481,6 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
       idx += brk;
     }
   }
-
-// DEBUG
-if (uri->is_iri) {
-  warn("DEBUG: brk:%lu, idx:%lu, len:%lu | '%c' == '=' -> %d", brk, idx, len, src[idx], src[idx] == '#' ? 1 : 0);
-  size_t i;
-  for (i = idx; i < len; ++i) {
-    warn("  %lu: %X\n", i, src[i]);
-  }
-}
 
   // fragment
   if (src[idx] == '#') {
@@ -1037,15 +1027,18 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
   SV*    obj;
   SV*    obj_ref;
 
+  // Initialize the struct
   Newx(uri, 1, uri_t);
   memset(uri, '\0', sizeof(uri_t));
   uri->is_iri = is_iri;
 
+  // Build the blessed instance
   obj = newSViv((IV) uri);
   obj_ref = newRV_noinc(obj);
   sv_bless(obj_ref, gv_stashpv(class, GV_ADD));
   SvREADONLY_on(obj);
 
+  // Scan the input string to fill the struct
   SvGETMAGIC(uri_str);
 
   if (!SvOK(uri_str)) {
@@ -1053,11 +1046,16 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
     len = 0;
   }
   else {
-    // Copy input string *before* calling SvUTF8() in case the SV is an object
+    // Copy input string *before* calling DO_UTF8() in case the SV is an object
     // with string overloading, which may trigger the utf8 flag.
     src = SvPV_nomg_const(uri_str, len);
 
-    if (!SvUTF8(uri_str)) {
+// DEBUG
+if (is_iri) {
+  warn("DEBUG new: utf8=%d, len=%lu, src=\"%s\"\n", DO_UTF8(uri_str), len, src);
+}
+
+    if (!DO_UTF8(uri_str)) {
       uri_str = sv_2mortal(newSVpvn(src, len));
       sv_utf8_encode(uri_str);
       src = SvPV_const(uri_str, len);
@@ -1094,7 +1092,7 @@ void uri_split(pTHX_ SV* uri) {
   else {
     src = SvPV_nomg_const(uri, len);
 
-    if (!SvUTF8(uri)) {
+    if (!DO_UTF8(uri)) {
       uri = sv_2mortal(newSVpvn(src, len));
       sv_utf8_encode(uri);
       src = SvPV_const(uri, len);

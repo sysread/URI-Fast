@@ -13,18 +13,7 @@ my $bat  = 'ßå†';
 
 my $iri_str = "http://$host$path?$foo=$bar#$frag";
 
-diag $iri_str;
-
-# DEBUG
-diag "\n";
-diag '--------------------------------------------------------------------------------';
-diag 'Length: ' . length($iri_str);
-my $iri = iri($iri_str);
-diag '--------------------------------------------------------------------------------';
-$iri->debug;
-diag '--------------------------------------------------------------------------------';
-
-ok $iri, 'ctor';
+ok my $iri = iri($iri_str), 'ctor';
 ok $iri->isa('URI::Fast::IRI'), 'isa';
 
 subtest 'getters' => sub{
@@ -50,28 +39,6 @@ subtest 'setters' => sub{
 
   is $iri->host, $host, 'host';
   is $iri->path, $path, 'path';
-  is $iri->frag, $frag, 'frag';
-};
-
-subtest 'debug: append end char' => sub{
-  my $iri_str = "http://$host$path?$foo=$bar#$frag" . "ƒ";
-  my $iri = iri($iri_str);
-  $iri->debug;
-  is $iri->frag, $frag . "ƒ", 'frag';
-};
-
-subtest 'debug: replace end char' => sub{
-  my $iri_str = "http://$host$path?$foo=$bar#ƒ®åƒ";
-  my $iri = iri($iri_str);
-  $iri->debug;
-  is $iri->frag, "ƒ®åƒ", 'frag';
-};
-
-subtest 'debug: manually flip utf8 on' => sub{
-  my $iri_str = "http://$host$path?$foo=$bar#$frag";
-  utf8::upgrade($iri_str);
-  my $iri = iri($iri_str);
-  $iri->debug;
   is $iri->frag, $frag, 'frag';
 };
 
