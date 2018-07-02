@@ -149,16 +149,21 @@ size_t uri_encode(const char* in, size_t len, char* out, const char* allow, size
   while (i < len) {
     octet = in[i];
 
+    if (allow_utf8 && octet & 0xc0) {
+      skip = UTF8SKIP(&in[i]);
+
+      if (skip > 0) {
+        for (k = 0; k < skip; ++k) {
+          out[j++] = in[i++];
+        }
+
+        continue;
+      }
+    }
+
     if (is_allowed(octet, allow, allow_len)) {
       out[j++] = octet;
       ++i;
-    }
-    else if (allow_utf8 && octet & 0xc0) {
-      skip = UTF8SKIP(&in[i]);
-
-      for (k = 0; k < skip; ++k) {
-        out[j++] = in[i++];
-      }
     }
     else {
       code = ((U32*) uri_encode_tbl)[(unsigned char) octet];
@@ -749,7 +754,6 @@ const char* set_usr(pTHX_ SV* uri_obj, const char* value) {
 static
 const char* set_pwd(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, pwd, value, URI_CHARS_USER, URI_CHARS_USER_LEN);
-
   return URI_MEMBER(uri_obj, pwd);
 }
 
