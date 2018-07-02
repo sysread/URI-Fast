@@ -142,14 +142,23 @@ static
 size_t uri_encode(const char* in, size_t len, char* out, const char* allow, size_t allow_len, int allow_utf8) {
   size_t i = 0;
   size_t j = 0;
-  char octet;
+  size_t k, skip;
+  U8 octet;
   U32 code;
 
   while (i < len) {
-    octet = in[i++];
+    octet = in[i];
 
-    if (is_allowed(octet, allow, allow_len) || (allow_utf8 && octet & 0X8000)) {
+    if (is_allowed(octet, allow, allow_len)) {
       out[j++] = octet;
+      ++i;
+    }
+    else if (allow_utf8 && octet & 0xc0) {
+      skip = UTF8SKIP(&in[i]);
+
+      for (k = 0; k < skip; ++k) {
+        out[j++] = in[i++];
+      }
     }
     else {
       code = ((U32*) uri_encode_tbl)[(unsigned char) octet];
@@ -161,6 +170,8 @@ size_t uri_encode(const char* in, size_t len, char* out, const char* allow, size
       else {
         out[j++] = octet;
       }
+
+      ++i;
     }
   }
 
@@ -637,14 +648,31 @@ static
 SV* get_param(pTHX_ SV* uri, SV* sv_key) {
   int is_iri = URI_MEMBER(uri, is_iri);
   char* query = URI_MEMBER(uri, query);
+  const char *key;
   size_t qlen = strlen(query), klen, vlen, elen;
   uri_query_scanner_t scanner;
   uri_query_token_t token;
   AV* out = newAV();
   SV* value;
 
+  // Read key to search
   SvGETMAGIC(sv_key);
-  const char* key = SvPV_nomg_const(sv_key, klen);
+
+  if (!SvOK(sv_key)) {
+    croak("get_param: expected key to search");
+  }
+  else {
+    // Copy input string *before* calling DO_UTF8() in case the SV is an object
+    // with string overloading, which may trigger the utf8 flag.
+    key = SvPV_const(sv_key, klen);
+
+    if (!DO_UTF8(sv_key)) {
+      sv_key = sv_2mortal(newSVpvn(key, klen));
+      sv_utf8_encode(sv_key);
+      key = SvPV_const(sv_key, klen);
+    }
+  }
+
   char enc_key[(klen * 3) + 2];
   elen = uri_encode(key, klen, enc_key, ":@?/", 4, is_iri);
 
