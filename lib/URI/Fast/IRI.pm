@@ -1,5 +1,8 @@
 package URI::Fast::IRI;
 
+use strict;
+use warnings;
+
 our @ISA = qw(URI::Fast);
 
 =head1 NAME
