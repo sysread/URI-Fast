@@ -141,9 +141,13 @@ Both '&' and ';' are treated as separators for key/value parameters.
 =head2 query_hash
 
 Scans the query string and returns a hash ref of key/value pairs. Values are
-returned as an array ref, as keys may appear multiple times.
+returned as an array ref, as keys may appear multiple times. Both '&' and ';'
+are treated as separators for key/value parameters.
 
-Both '&' and ';' are treated as separators for key/value parameters.
+May optionally be called with a new hash of parameters to replace the query
+string with, in which case keys may map to scalar values or arrays of scalar
+values. As with all query setter methods, a third parameter may be used to
+explicitly specify the separator to use when generating the new query string.
 
 =head2 param
 

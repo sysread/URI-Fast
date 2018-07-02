@@ -5,6 +5,7 @@
 -bugfix: increase some member sizes to allow room for utf8 sequences
 -bugfix: set utf8 flag in compound iri accessors
 -optimization: use memcpy instead of strncpy in some cases
+-behavior: query_hash now accepts hash ref as a parameter
 
 0.35 2018-06-28
 -behavior: all query scanning functions now treat '&' and ';' as valid separators
