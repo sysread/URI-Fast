@@ -46,9 +46,9 @@ subtest 'setters' => sub{
 };
 
 subtest 'debug' => sub{
-  is(iri("http://$host$path?$foo=$bar")->frag, '', 'no fragment') or $iri->debug;
-  is(iri("http://$host$path?$foo=$bar#asdf")->frag, 'asdf', 'ascii fragment') or $iri->debug;
-  is(iri("http://$host$path?$foo=$bar#$bar")->frag, $bar, 'different utf8 fragment') or $iri->debug;
+  $iri = iri("http://$host$path?$foo=$bar"); is($iri->frag, '', 'no fragment') or $iri->debug;
+  $iri = iri("http://$host$path?$foo=$bar#asdf"); is($iri->frag, 'asdf', 'ascii fragment') or $iri->debug;
+  $iri = iri("http://$host$path?$foo=$bar#$bar"); is($iri->frag, $bar, 'different utf8 fragment') or $iri->debug;
 };
 
 done_testing;
