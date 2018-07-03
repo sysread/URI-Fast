@@ -19,7 +19,7 @@ ok $iri->isa('URI::Fast::IRI'), 'isa';
 subtest 'getters' => sub{
   is $iri->host, $host, 'host';
   is $iri->path, $path, 'path';
-  is $iri->frag, $frag, 'frag';
+  is $iri->frag, $frag, 'frag' or $iri->debug;
 
   is $iri->query_hash, {$foo => [$bar]}, 'query_hash';
   is [sort $iri->query_keys], [$foo], 'query_keys';
@@ -40,6 +40,12 @@ subtest 'setters' => sub{
   is $iri->host, $host, 'host';
   is $iri->path, $path, 'path';
   is $iri->frag, $frag, 'frag';
+};
+
+subtest 'debug' => sub{
+  is iri("http://$host$path?$foo=$bar")->frag, '', 'no fragment';
+  is iri("http://$host$path?$foo=$bar#asdf")->frag, 'asdf', 'ascii fragment';
+  is iri("http://$host$path?$foo=$bar#$bar")->frag, $bar, 'different utf8 fragment';
 };
 
 done_testing;

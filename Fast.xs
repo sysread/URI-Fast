@@ -278,17 +278,17 @@ SV* encode(pTHX_ SV* in, ...) {
   PUTBACK;
 
   olen = uri_encode(src, ilen, dest, allowed, alen, 0);
-  out  = newSVpv(dest, olen);
+  out  = newSVpvn(dest, olen);
   sv_utf8_downgrade(out, FALSE);
 
   return out;
 }
 
 static
-SV* decode(pTHX_ SV* in) {
+SV* decode(pTHX_ SV *in) {
   size_t ilen, olen;
-  const char* src;
-  SV* out;
+  const char *src;
+  SV *out;
 
   SvGETMAGIC(in);
 
@@ -306,10 +306,9 @@ SV* decode(pTHX_ SV* in) {
     src = SvPV_nomg_const(in, ilen);
   }
 
-  char dest[ilen + 1];
-
+  U8 dest[ilen + 1];
   olen = uri_decode(src, ilen, dest);
-  out  = newSVpv(dest, olen);
+  out = newSVpvn(dest, olen);
   sv_utf8_decode(out);
 
   return out;
@@ -527,7 +526,7 @@ static const char* get_port(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, po
 static
 SV* get_auth(pTHX_ SV* uri_obj) {
   uri_t* uri = URI(uri_obj);
-  SV* out = newSVpv("", 0);
+  SV* out = newSVpvn("", 0);
 
   if (uri->is_iri) {
     SvUTF8_on(out);
@@ -640,7 +639,7 @@ SV* query_hash(pTHX_ SV* uri) {
     if (token.type == PARAM) {
       char val[token.value_length + 1];
       vlen = uri_decode(token.value, token.value_length, val);
-      tmp = newSVpv(val, vlen);
+      tmp = newSVpvn(val, vlen);
       sv_utf8_decode(tmp);
       av_push(arr, tmp);
     }
@@ -691,7 +690,7 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
       if (token.type == PARAM) {
         char val[token.value_length + 1];
         vlen = uri_decode(token.value, token.value_length, val);
-        value = newSVpv(val, vlen);
+        value = newSVpvn(val, vlen);
         sv_utf8_decode(value);
         av_push(out, value);
       }
@@ -724,7 +723,7 @@ SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
   char auth[URI_SIZE_auth];
   size_t len = uri_encode(value, strlen(value), (char*) &auth, URI_CHARS_AUTH, URI_CHARS_AUTH_LEN, URI_MEMBER(uri_obj, is_iri));
   uri_scan_auth(URI(uri_obj), auth, len);
-  return newSVpv(auth, len);
+  return newSVpvn(auth, len);
 }
 
 static
@@ -984,7 +983,7 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
 static
 SV* to_string(pTHX_ SV* uri_obj) {
   uri_t *uri = URI(uri_obj);
-  SV *out = newSVpv("", 0);
+  SV *out = newSVpvn("", 0);
   SV *auth = get_auth(aTHX_ uri_obj);
 
   if (uri->is_iri) {
@@ -1137,16 +1136,16 @@ void uri_split(pTHX_ SV* uri) {
   // Scheme
   brk = strcspn(&src[idx], ":/@?#");
   if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
-    XPUSHs(sv_2mortal(newSVpv(&src[idx], brk)));
+    XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
     idx += brk + 3;
 
     // Authority
     brk = strcspn(&src[idx], "/?#");
     if (brk > 0) {
-      XPUSHs(sv_2mortal(newSVpv(&src[idx], brk)));
+      XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
       idx += brk;
     } else {
-      XPUSHs(sv_2mortal(newSVpv("",0)));
+      XPUSHs(sv_2mortal(newSVpvn("",0)));
     }
   }
   else {
@@ -1157,10 +1156,10 @@ void uri_split(pTHX_ SV* uri) {
   // path
   brk = strcspn(&src[idx], "?#");
   if (brk > 0) {
-    XPUSHs(sv_2mortal(newSVpv(&src[idx], brk)));
+    XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
     idx += brk;
   } else {
-    XPUSHs(sv_2mortal(newSVpv("",0)));
+    XPUSHs(sv_2mortal(newSVpvn("", 0)));
   }
 
   // query
@@ -1168,7 +1167,7 @@ void uri_split(pTHX_ SV* uri) {
     ++idx; // skip past ?
     brk = strcspn(&src[idx], "#");
     if (brk > 0) {
-      XPUSHs(sv_2mortal(newSVpv(&src[idx], brk)));
+      XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
       idx += brk;
     } else {
       XPUSHs(&PL_sv_undef);
@@ -1182,7 +1181,7 @@ void uri_split(pTHX_ SV* uri) {
     ++idx; // skip past #
     brk = len - idx;
     if (brk > 0) {
-      XPUSHs(sv_2mortal(newSVpv(&src[idx], brk)));
+      XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
     } else {
       XPUSHs(&PL_sv_undef);
     }
@@ -1320,7 +1319,7 @@ const char* get_query(uri_obj)
     RETVAL
 
 const char* get_frag(uri_obj)
-  SV* uri_obj
+  SV *uri_obj
   CODE:
     RETVAL = get_frag(aTHX_ uri_obj);
   OUTPUT:
