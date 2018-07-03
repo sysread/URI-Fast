@@ -14,8 +14,6 @@ my $bat  = 'ßå†';
 my $iri_str = "http://$host$path?$foo=$bar#$frag";
 ok utf8::is_utf8($iri_str), 'IRI string in file with "use utf8" is flagged utf8 by perl';
 
-warn 'encoded: "' . URI::Fast::encode($iri_str) . "\"\n";
-
 ok my $iri = iri($iri_str), 'ctor';
 ok $iri->isa('URI::Fast::IRI'), 'isa';
 
@@ -43,12 +41,6 @@ subtest 'setters' => sub{
   is $iri->host, $host, 'host';
   is $iri->path, $path, 'path';
   is $iri->frag, $frag, 'frag';
-};
-
-subtest 'debug' => sub{
-  $iri = iri("http://$host$path?$foo=$bar"); is($iri->frag, '', 'no fragment') or $iri->debug;
-  $iri = iri("http://$host$path?$foo=$bar#asdf"); is($iri->frag, 'asdf', 'ascii fragment') or $iri->debug;
-  $iri = iri("http://$host$path?$foo=$bar#$bar"); is($iri->frag, $bar, 'different utf8 fragment') or $iri->debug;
 };
 
 done_testing;

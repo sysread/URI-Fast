@@ -454,18 +454,6 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   size_t brk;
   size_t i;
 
-  // Skip any leading whitespace
-  brk = strnspn(&src[idx], len - idx, " \r\n\t\f");
-  idx += brk;
-
-  for (i = len - 1; i > 0; --i) {
-    if (isspace(src[i])) {
-      --len;
-    } else {
-      break;
-    }
-  }
-
   // Scheme
   brk = strncspn(&src[idx], len - idx, ":/@?#");
   if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
@@ -1081,21 +1069,10 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
     // with string overloading, which may trigger the utf8 flag.
     src = SvPV_nomg_const(uri_str, len);
 
-// DEBUG
-if (is_iri) {
-  warn("DEBUG new (raw): utf8=%d, len=%lu, src=\"%s\"\n", DO_UTF8(uri_str), len, src);
-}
-
     if (!DO_UTF8(uri_str)) {
       uri_str = sv_2mortal(newSVpvn(src, len));
       sv_utf8_encode(uri_str);
       src = SvPV_const(uri_str, len);
-
-// DEBUG
-if (is_iri) {
-  warn("DEBUG new (enc): utf8=%d, len=%lu, src=\"%s\"\n", DO_UTF8(uri_str), len, src);
-}
-
     }
   }
 

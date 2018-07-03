@@ -27,6 +27,7 @@ subtest 'simple' => sub{
   is $uri->host, 'www.test.com', 'host';
   ok !$uri->port, 'port';
 
+=cut
   subtest 'whitespace' => sub{
     ok $uri = uri("   \r\n\t\f  $uris[1]   \r\n\t\f  "), 'ctor';
 
@@ -42,6 +43,8 @@ subtest 'simple' => sub{
     is $uri->host, 'www.test.com', 'host';
     is $uri->port, '', 'port';
   }
+=cut
+
 };
 
 subtest 'complete' => sub{
