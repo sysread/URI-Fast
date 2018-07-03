@@ -14,6 +14,8 @@ my $bat  = 'ßå†';
 my $iri_str = "http://$host$path?$foo=$bar#$frag";
 ok utf8::is_utf8($iri_str), 'IRI string in file with "use utf8" is flagged utf8 by perl';
 
+warn 'encoded: "' . URI::Fast::encode($iri_str) . "\"\n";
+
 ok my $iri = iri($iri_str), 'ctor';
 ok $iri->isa('URI::Fast::IRI'), 'isa';
 
