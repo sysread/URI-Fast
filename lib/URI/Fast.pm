@@ -1,6 +1,6 @@
 package URI::Fast;
 
-our $XS_VERSION = our $VERSION = '0.35_8';
+our $XS_VERSION = our $VERSION = '0.35_9';
 $VERSION =~ tr/_//;
 
 use utf8;
