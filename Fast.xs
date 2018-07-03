@@ -87,6 +87,19 @@
 #define av_top_index(av) av_len(av)
 #endif
 
+// returns true for an ASCII whitespace char
+static inline
+bool my_isspace(const char c) {
+  switch (c) {
+    case ' ':  case '\t':
+    case '\r': case '\n':
+    case '\f': case '\v':
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 // min of two numbers
 static inline
 size_t minnum(size_t x, size_t y) {
@@ -453,6 +466,9 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   size_t idx = 0;
   size_t brk;
   size_t i;
+
+  while (my_isspace(src[idx]) == 1)     ++idx; // Trim leading whitespace
+  while (my_isspace(src[len - 1]) == 1) --len; // Trim trailing whitespace
 
   // Scheme
   brk = strncspn(&src[idx], len - idx, ":/@?#");
