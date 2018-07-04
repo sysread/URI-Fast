@@ -8,6 +8,7 @@
 -bugfix: path correctly handles forward slashes in segments when set with array
 -bugfix: set utf8 flag in compound iri accessors
 -optimization: use memcpy instead of strncpy in some cases
+-optimization: xs setters return void
 
 0.35 2018-06-28
 -behavior: all query scanning functions now treat '&' and ';' as valid separators
