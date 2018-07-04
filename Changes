@@ -5,6 +5,7 @@
 -bugfix: drop logic incompatible with bsd make
 -bugfix: encode non-utf8 input strings in new() and uri_split()
 -bugfix: increase some member sizes to allow room for utf8 sequences
+-bugfix: path correctly handles forward slashes in segments when set with array
 -bugfix: set utf8 flag in compound iri accessors
 -optimization: use memcpy instead of strncpy in some cases
 

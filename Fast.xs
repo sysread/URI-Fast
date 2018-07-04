@@ -17,6 +17,10 @@
 #define URI_CHARS_PATH "!$&'()*+,;:=@/"
 #define URI_CHARS_PATH_LEN 14
 
+#define URI_CHARS_PATH_SEGMENT "!$&'()*+,;:=@"
+#define URI_CHARS_PATH_SEGMENT_LEN 14
+
+// TODO double-check on ':'
 #define URI_CHARS_HOST "!$&'()[]*+,.;:=@/"
 #define URI_CHARS_HOST_LEN 17
 
@@ -116,7 +120,7 @@ size_t maxnum(size_t x, size_t y) {
  * Percent encoding
  */
 static inline
-char is_allowed(char c, const char* allowed, size_t len) {
+char char_in_str(char c, const char* allowed, size_t len) {
   size_t i;
   for (i = 0; i < len; ++i) {
     if (c == allowed[i]) {
@@ -174,7 +178,7 @@ size_t uri_encode(const char* in, size_t len, char* out, const char* allow, size
       }
     }
 
-    if (is_allowed(octet, allow, allow_len)) {
+    if (char_in_str(octet, allow, allow_len)) {
       out[j++] = octet;
       ++i;
     }
@@ -233,7 +237,7 @@ char unhex(const char *in) {
 }
 
 static
-size_t uri_decode(const char *in, size_t len, char *out) {
+size_t uri_decode(const char *in, size_t len, char *out, const char *ignore, size_t ignore_len) {
   size_t i = 0, j = 0;
   char decoded;
 
@@ -243,12 +247,14 @@ size_t uri_decode(const char *in, size_t len, char *out) {
     switch (in[i]) {
       case '+':
         decoded = ' ';
-        ++i;
-        break;
+        if (!char_in_str(decoded, ignore, ignore_len)) {
+          ++i;
+          break;
+        }
       case '%':
         if (i + 2 < len) {
           decoded = unhex( &in[i + 1] );
-          if (decoded != '\0') {
+          if (decoded != '\0' && !char_in_str(decoded, ignore, ignore_len)) {
             i += 3;
             break;
           }
@@ -320,7 +326,7 @@ SV* decode(pTHX_ SV *in) {
   }
 
   U8 dest[ilen + 1];
-  olen = uri_decode(src, ilen, dest);
+  olen = uri_decode(src, ilen, dest, "", 0);
   out = newSVpvn(dest, olen);
   sv_utf8_decode(out);
 
@@ -519,13 +525,26 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
  * Getters
  */
 static const char* get_scheme(pTHX_ SV* uri_obj) { return URI_MEMBER(uri_obj, scheme); }
-static const char* get_path(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, path);   }
 static const char* get_query(pTHX_ SV* uri_obj)  { return URI_MEMBER(uri_obj, query);  }
 static const char* get_frag(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, frag);   }
 static const char* get_usr(pTHX_ SV* uri_obj)    { return URI_MEMBER(uri_obj, usr);    }
 static const char* get_pwd(pTHX_ SV* uri_obj)    { return URI_MEMBER(uri_obj, pwd);    }
 static const char* get_host(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, host);   }
 static const char* get_port(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, port);   }
+
+static
+SV* get_path(pTHX_ SV *uri_obj) {
+  const char *in = URI_MEMBER(uri_obj, path);
+  size_t ilen = strlen(in);
+
+  char buf[ilen + 1];
+  size_t len = uri_decode(in, ilen, buf, "/", 1);
+
+  SV* out = newSVpvn(buf, len);
+  sv_utf8_decode(out);
+
+  return out;
+}
 
 static
 SV* get_auth(pTHX_ SV* uri_obj) {
@@ -563,23 +582,34 @@ SV* get_auth(pTHX_ SV* uri_obj) {
 
 static
 SV* split_path(pTHX_ SV* uri) {
-  size_t brk, idx = 0;
+  size_t len, segment_len, brk, idx = 0;
   AV* arr = newAV();
   SV* tmp;
 
-  size_t path_len = strlen(URI_MEMBER(uri, path));
+  /*size_t path_len = strlen(URI_MEMBER(uri, path));
   char str[path_len + 1];
-  size_t len = uri_decode(URI_MEMBER(uri, path), path_len, str);
+  size_t len = uri_decode(URI_MEMBER(uri, path), path_len, str, "/", 1);*/
+
+  const char *str = URI_MEMBER(uri, path);
+  len = strlen(str);
 
   if (str[0] == '/') {
     ++idx; // skip past leading /
   }
 
   while (idx < len) {
+    // Find the next separator
     brk = strcspn(&str[idx], "/");
-    tmp = newSVpvn(&str[idx], brk);
+
+    // Decode the segment
+    char segment[brk + 1];
+    segment_len = uri_decode(&str[idx], brk, segment, "", 0);
+
+    // Push new SV to AV
+    tmp = newSVpvn(segment, segment_len);
     sv_utf8_decode(tmp);
     av_push(arr, tmp);
+
     idx += brk + 1;
   }
 
@@ -600,7 +630,7 @@ SV* get_query_keys(pTHX_ SV* uri) {
     query_scanner_next(&scanner, &token);
     if (token.type == DONE) continue;
     char key[token.key_length];
-    klen = uri_decode(token.key, token.key_length, key);
+    klen = uri_decode(token.key, token.key_length, key, "", 0);
     hv_store(out, key, -klen, &PL_sv_undef, 0);
   }
 
@@ -625,7 +655,7 @@ SV* query_hash(pTHX_ SV* uri) {
 
     // Get decoded key
     char key[token.key_length + 1];
-    klen = uri_decode(token.key, token.key_length, key);
+    klen = uri_decode(token.key, token.key_length, key, "", 0);
 
     // Values are stored in an array; this block is the rough equivalent of:
     //   $out{$key} = [] unless exists $out{$key};
@@ -642,7 +672,7 @@ SV* query_hash(pTHX_ SV* uri) {
     // Get decoded value if there is one
     if (token.type == PARAM) {
       char val[token.value_length + 1];
-      vlen = uri_decode(token.value, token.value_length, val);
+      vlen = uri_decode(token.value, token.value_length, val, "", 0);
       tmp = newSVpvn(val, vlen);
       sv_utf8_decode(tmp);
       av_push(arr, tmp);
@@ -693,7 +723,7 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
     if (strncmp(enc_key, token.key, maxnum(elen, token.key_length)) == 0) {
       if (token.type == PARAM) {
         char val[token.value_length + 1];
-        vlen = uri_decode(token.value, token.value_length, val);
+        vlen = uri_decode(token.value, token.value_length, val, "", 0);
         value = newSVpvn(val, vlen);
         sv_utf8_decode(value);
         av_push(out, value);
@@ -734,6 +764,50 @@ static
 const char* set_path(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, path, value, URI_CHARS_PATH, URI_CHARS_PATH_LEN);
   return URI_MEMBER(uri_obj, path);
+}
+
+static
+void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
+  SV **refval, *tmp;
+  AV *av_path;
+  size_t i, av_idx, seg_len, wrote;
+  const char *seg;
+  char *out = URI_MEMBER(uri_obj, path);
+
+  // Inspect input array
+  av_path = (AV*) SvRV(sv_path);
+  av_idx  = av_top_index(av_path);
+
+  // Wipe the existing path
+  clear_path(aTHX_ uri_obj);
+
+  // Build the new path
+  for (i = 0; i <= av_idx; ++i) {
+    *out = '/';
+    ++out;
+
+    // Fetch next segment
+    refval = av_fetch(av_path, (SSize_t) i, 0);
+    if (refval == NULL) break;
+    if (!SvOK(*refval)) break;
+
+    // Copy value over
+    SvGETMAGIC(*refval);
+
+    if (SvOK(*refval)) {
+      seg = SvPV_nomg_const(*refval, seg_len);
+
+      // Convert octets to utf8 if necessary
+      if (!DO_UTF8(*refval)) {
+        tmp = sv_2mortal(newSVpvn(seg, seg_len));
+        sv_utf8_encode(tmp);
+        seg = SvPV_const(tmp, seg_len);
+      }
+
+      wrote = uri_encode(seg, seg_len, out, URI_CHARS_PATH_SEGMENT, URI_CHARS_PATH_SEGMENT_LEN, URI_MEMBER(uri_obj, is_iri));
+      out += wrote;
+    }
+  }
 }
 
 static
@@ -1085,6 +1159,7 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
     // with string overloading, which may trigger the utf8 flag.
     src = SvPV_nomg_const(uri_str, len);
 
+    // Ensure the pv bytes are utf8-encoded
     if (!DO_UTF8(uri_str)) {
       uri_str = sv_2mortal(newSVpvn(src, len));
       sv_utf8_encode(uri_str);
@@ -1303,7 +1378,7 @@ const char* get_scheme(uri_obj)
   OUTPUT:
     RETVAL
 
-const char* get_path(uri_obj)
+SV* get_path(uri_obj)
   SV* uri_obj
   CODE:
     RETVAL = get_path(aTHX_ uri_obj);
@@ -1417,6 +1492,15 @@ const char* set_path(uri_obj, value)
   const char* value
   CODE:
     RETVAL = set_path(aTHX_ uri_obj, value);
+  OUTPUT:
+    RETVAL
+
+SV* set_path_array(uri_obj, segments)
+  SV *uri_obj
+  SV *segments
+  CODE:
+    set_path_array(aTHX_ uri_obj, segments);
+    RETVAL = get_path(aTHX_ uri_obj);
   OUTPUT:
     RETVAL
 

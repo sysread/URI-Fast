@@ -59,10 +59,10 @@ sub auth {
 
   if (@_ == 2) {
     if (ref $val) {
-      $self->set_usr($val->{usr}   // '');
-      $self->set_pwd($val->{pwd}   // '');
-      $self->set_host($val->{host} // '');
-      $self->set_port($val->{port} // '');
+      $self->set_usr($val->{usr}   || '');
+      $self->set_pwd($val->{pwd}   || '');
+      $self->set_host($val->{host} || '');
+      $self->set_port($val->{port} || '');
     }
     else {
       $self->set_auth($val);
@@ -78,15 +78,17 @@ sub path {
   my ($self, $val) = @_;
 
   if (@_ == 2) {
-    $val = '/' . join '/', @$val if ref $val;
-    $self->set_path($val);
+    if (ref $val) {
+      $self->set_path_array($val);
+    } else {
+      $self->set_path($val);
+    }
   }
 
   if (wantarray) {
     @{ $self->split_path };
-  }
-  elsif (defined wantarray) {
-    decode($self->get_path);
+  } elsif (defined wantarray) {
+    $self->get_path;
   }
 }
 
@@ -442,20 +444,21 @@ Overloads the C<eq> operator.
 
 C<URI::Fast> tries to do the right thing in most cases with regard to reserved
 and non-ASCII characters. C<URI::Fast> will fully encode reserved and non-ASCII
-characters when setting C<individual> values. However, the "right thing" is a
+characters when setting I<individual> values. However, the "right thing" is a
 bit ambiguous when it comes to setting compound fields like L</auth>, L</path>,
 and L</query>.
 
 When setting these fields with a string value, reserved characters are expected
 to be present, and are therefore accepted as-is. However, any non-ASCII
 characters will be percent-encoded (since they are unambiguous and there is no
-risk of double-encoding them).
+risk of double-encoding them). Thus,
 
   $uri->auth('someone:secret@Ῥόδος.com:1234');
   print $uri->auth; # "someone:secret@%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82.com:1234"
 
-On the other hand, when setting these fields with a I<reference> value, each
-field is fully percent-encoded:
+On the other hand, when setting these fields with a I<reference> value (assumed
+to be a hash ref for L</auth> and L</query> or an array ref for L</path>; see
+individual methods' docs for details), each field is fully percent-encoded:
 
   $uri->auth({usr => 'some one', host => 'somewhere.com'});
   print $uri->auth; # "some%20one@somewhere.com"
