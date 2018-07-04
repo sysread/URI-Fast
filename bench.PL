@@ -73,91 +73,91 @@ sub test {
   print "\n";
 }
 
-test 'Constructor', 1_000_000, {
+test 'Constructor', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]) },
   'URI::Fast' => sub{ my $uri = uri $urls[3] },
 };
 
-test 'Parse scheme', 1_000_000, {
+test 'Parse scheme', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->scheme },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->scheme },
 };
 
-test 'Update scheme', 1_000_000, {
+test 'Update scheme', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[1]); $uri->scheme('https') },
   'URI::Fast' => sub{ my $uri = uri $urls[1]; $uri->scheme('https') },
 };
 
-test 'Parse authorization', 1_000_000, {
+test 'Parse authorization', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->host },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host },
 };
 
-test 'Update authorization', 1_000_000, {
+test 'Update authorization', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->host('test.com') },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host('test.com') },
 };
 
-test 'Parse path (scalar)', 1_000_000, {
+test 'Parse path (scalar)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $p = $uri->path },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $p = $uri->path },
 };
 
-test 'Parse path (list)', 1_000_000, {
+test 'Parse path (list)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my @p = $uri->path_segments },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my @p = $uri->path },
 };
 
-test 'Update path (scalar)', 1_000_000, {
+test 'Update path (scalar)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/foo/bar') },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->path('/foo/bar') },
 };
 
-test 'Update path (array)', 1_000_000, {
+test 'Update path (array)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/' . join('/', 'foo', 'bar')) },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->path(['foo', 'bar']) },
 };
 
-test 'Parse query', 1_000_000, {
+test 'Parse query', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my %q = $uri->query_form },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my @v = $uri->param('asdf') },
 };
 
-test 'Set query parameter', 1_000_000, {
+test 'Set query parameter', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->query_form(foo => 'bar') },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->param('foo', 'bar') },
 };
 
-test 'Query form', 1_000_000, {
+test 'Query form', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my %q = $uri->query_form },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $q = $uri->query_hash },
 };
 
-test 'Query keys', 1_000_000, {
+test 'Query keys', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my @k = keys %{$uri->query_form} },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my @k = $uri->query_keys },
 };
 
-test 'Stringification', 1_000_000, {
+test 'Stringification', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $str = "$uri" },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $str = "$uri" },
 };
 
-test 'uri_split', 1_000_000, {
+test 'uri_split', 500_000, {
   'URI::Split' => sub{ my @uri = URI::Split::uri_split($urls[3]) },
   'URI::Split' => sub{ my @uri = URI::Split::uri_split($urls[3]) },
   'URI::Fast' => sub{ my @uri = uri_split($urls[3]) },
 };
 
 if ($ENV{BENCH_ALL} || $ENV{UPDATEBENCH}) {
-  test 'Encode', 1_000_000, {
+  test 'Encode', 500_000, {
     'URI::Escape' => sub{ URI::Escape::uri_escape_utf8($encode_input) },
     'URL::Encode' => sub{ URL::Encode::url_encode_utf8($encode_input) },
     'URI::Encode::XS' => sub{ URI::Encode::XS::uri_encode_utf8($encode_input) },
     'URI::Fast' => sub{ URI::Fast::encode($encode_input) },
   };
 
-  test 'Decode', 1_000_000, {
+  test 'Decode', 500_000, {
     'URI::Escape' => sub{ URI::Escape::uri_unescape($decode_input) },
     'URL::Encode' => sub{ URL::Encode::url_decode_utf8($decode_input) },
     'URI::Encode::XS' => sub{ URI::Encode::XS::uri_decode_utf8($decode_input) },
