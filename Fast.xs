@@ -713,13 +713,12 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
  * Setters
  */
 static
-const char* set_scheme(pTHX_ SV* uri_obj, const char* value) {
+void set_scheme(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, scheme, value, "");
-  return URI_MEMBER(uri_obj, scheme);
 }
 
 static
-SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
+void set_auth(pTHX_ SV *uri_obj, const char *value) {
   memset(URI_MEMBER(uri_obj, usr),  '\0', sizeof(uri_usr_t));
   memset(URI_MEMBER(uri_obj, pwd),  '\0', sizeof(uri_pwd_t));
   memset(URI_MEMBER(uri_obj, host), '\0', sizeof(uri_host_t));
@@ -729,13 +728,11 @@ SV* set_auth(pTHX_ SV* uri_obj, const char* value) {
   char auth[URI_SIZE_auth];
   size_t len = uri_encode(value, strlen(value), (char*) &auth, URI_CHARS_AUTH, URI_MEMBER(uri_obj, is_iri));
   uri_scan_auth(URI(uri_obj), auth, len);
-  return newSVpvn(auth, len);
 }
 
 static
-const char* set_path(pTHX_ SV* uri_obj, const char* value) {
+void set_path(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, path, value, URI_CHARS_PATH);
-  return URI_MEMBER(uri_obj, path);
 }
 
 static
@@ -783,37 +780,32 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
 }
 
 static
-const char* set_query(pTHX_ SV* uri_obj, const char* value) {
+void set_query(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, query, value, URI_CHARS_QUERY);
-  return value;
 }
 
 static
-const char* set_frag(pTHX_ SV* uri_obj, const char* value) {
+void set_frag(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, frag, value, URI_CHARS_FRAG);
-  return URI_MEMBER(uri_obj, frag);
 }
 
 static
-const char* set_usr(pTHX_ SV* uri_obj, const char* value) {
+void set_usr(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, usr, value, URI_CHARS_USER);
-  return URI_MEMBER(uri_obj, usr);
 }
 
 static
-const char* set_pwd(pTHX_ SV* uri_obj, const char* value) {
+void set_pwd(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, pwd, value, URI_CHARS_USER);
-  return URI_MEMBER(uri_obj, pwd);
 }
 
 static
-const char* set_host(pTHX_ SV* uri_obj, const char* value) {
+void set_host(pTHX_ SV* uri_obj, const char* value) {
   URI_ENCODE_MEMBER(uri_obj, host, value, URI_CHARS_HOST);
-  return URI_MEMBER(uri_obj, host);
 }
 
 static
-const char* set_port(pTHX_ SV* uri_obj, const char* value) {
+void set_port(pTHX_ SV* uri_obj, const char* value) {
   size_t len = minnum(strlen(value), URI_SIZE_port);
   size_t i;
 
@@ -826,8 +818,6 @@ const char* set_port(pTHX_ SV* uri_obj, const char* value) {
       break;
     }
   }
-
-  return URI_MEMBER(uri_obj, port);
 }
 
 static
@@ -1443,86 +1433,65 @@ SV* get_param(uri, sv_key)
 #-------------------------------------------------------------------------------
 # Setters
 #-------------------------------------------------------------------------------
-const char* set_scheme(uri_obj, value)
-  SV* uri_obj
-  const char* value
+void set_scheme(uri_obj, value)
+  SV *uri_obj
+  const char *value
   CODE:
-    RETVAL = set_scheme(aTHX_ uri_obj, value);
-  OUTPUT:
-    RETVAL
+    set_scheme(aTHX_ uri_obj, value);
 
-SV* set_auth(uri_obj, value)
-  SV* uri_obj
-  const char* value
+void set_auth(uri_obj, value)
+  SV *uri_obj
+  const char *value
   CODE:
-    RETVAL = set_auth(aTHX_ uri_obj, value);
-  OUTPUT:
-    RETVAL
+    set_auth(aTHX_ uri_obj, value);
 
-const char* set_path(uri_obj, value)
-  SV* uri_obj
-  const char* value
+void set_path(uri_obj, value)
+  SV *uri_obj
+  const char *value
   CODE:
-    RETVAL = set_path(aTHX_ uri_obj, value);
-  OUTPUT:
-    RETVAL
+    set_path(aTHX_ uri_obj, value);
 
-SV* set_path_array(uri_obj, segments)
+void set_path_array(uri_obj, segments)
   SV *uri_obj
   SV *segments
   CODE:
     set_path_array(aTHX_ uri_obj, segments);
-    RETVAL = get_path(aTHX_ uri_obj);
-  OUTPUT:
-    RETVAL
 
-const char* set_query(uri_obj, value)
-  SV* uri_obj
-  const char* value
+void set_query(uri_obj, value)
+  SV *uri_obj
+  const char *value
   CODE:
-    RETVAL = set_query(aTHX_ uri_obj, value);
-  OUTPUT:
-    RETVAL
+    set_query(aTHX_ uri_obj, value);
 
-const char* set_frag(uri_obj, value)
-  SV* uri_obj
-  const char* value
+void set_frag(uri_obj, value)
+  SV *uri_obj
+  const char *value
   CODE:
-    RETVAL = set_frag(aTHX_ uri_obj, value);
-  OUTPUT:
-    RETVAL
+    set_frag(aTHX_ uri_obj, value);
 
-const char* set_usr(uri_obj, value)
-  SV* uri_obj
-  const char* value
+void set_usr(uri_obj, value)
+  SV *uri_obj
+  const char *value
   CODE:
-    RETVAL = set_usr(aTHX_ uri_obj, value);
-  OUTPUT:
-    RETVAL
+    set_usr(aTHX_ uri_obj, value);
 
-const char* set_pwd(uri_obj, value)
-  SV* uri_obj
-  const char* value
+void set_pwd(uri_obj, value)
+  SV *uri_obj
+  const char *value
   CODE:
-    RETVAL = set_pwd(aTHX_ uri_obj, value);
-  OUTPUT:
-    RETVAL
+    set_pwd(aTHX_ uri_obj, value);
 
-const char* set_host(uri_obj, value)
-  SV* uri_obj
-  const char* value
+void set_host(uri_obj, value)
+  SV *uri_obj
+  const char *value
   CODE:
-    RETVAL = set_host(aTHX_ uri_obj, value);
-  OUTPUT:
-    RETVAL
+    set_host(aTHX_ uri_obj, value);
 
-const char* set_port(uri_obj, value)
-  SV* uri_obj
-  const char* value
+void set_port(uri_obj, value)
+  SV *uri_obj
+  const char *value
   CODE:
-    RETVAL = set_port(aTHX_ uri_obj, value);
-  OUTPUT:
-    RETVAL
+    set_port(aTHX_ uri_obj, value);
 
 void set_param(uri, sv_key, sv_values, separator)
   SV* uri

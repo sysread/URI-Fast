@@ -51,13 +51,13 @@ subtest 'utf8' => sub{
   is $uri->pwd, $u, 'pwd';
   is $uri->host, "www.$u.com", 'host';
 
-  is $uri->path("/$u/$u"), "/$u/$u", "path" or $uri->debug;
+  is $uri->path("/$u/$u"), "/$u/$u", "path";
   is $uri->path([$u, $a]), "/$u/$a", "path";
 
   is $uri->query("x=$u"), "x=$a", "query";
-  is $uri->param('x'), $u, 'param', $uri->get_query;
-  is $uri->query({x => $u}), "x=$a", "query", $uri->get_query;
-  is $uri->param('x'), $u, 'param', $uri->get_query;
+  is $uri->param('x'), $u, 'param';
+  is $uri->query({x => $u}), "x=$a", "query";
+  is $uri->param('x'), $u, 'param';
 
   ok my $mal = URI::Fast::decode($malformed), 'decode: malformed';
   ok !utf8::is_utf8($mal), 'decode: utf8 flag not set when malformed';
