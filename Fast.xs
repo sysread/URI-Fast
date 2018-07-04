@@ -21,7 +21,7 @@
 #define URI_CHARS_PATH_SEGMENT_LEN 14
 
 #define URI_CHARS_HOST "!$&'()[]*+,.;=@/"
-#define URI_CHARS_HOST_LEN 17
+#define URI_CHARS_HOST_LEN 16
 
 #define URI_CHARS_QUERY ":@?/&=;"
 #define URI_CHARS_QUERY_LEN 7
