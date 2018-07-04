@@ -51,7 +51,7 @@ subtest 'utf8' => sub{
   is $uri->pwd, $u, 'pwd';
   is $uri->host, "www.$u.com", 'host';
 
-  is $uri->path("/$u/$u"), "/$u/$u", "path";
+  is $uri->path("/$u/$u"), "/$u/$u", "path" or $uri->debug;
   is $uri->path([$u, $a]), "/$u/$a", "path";
 
   is $uri->query("x=$u"), "x=$a", "query";

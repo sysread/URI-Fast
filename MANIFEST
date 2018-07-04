@@ -19,6 +19,7 @@ t/iri.t
 t/memory.t
 t/param.t
 t/parsing.t
+t/path.t
 t/query_keyset.t
 t/test.t
 t/tied.t

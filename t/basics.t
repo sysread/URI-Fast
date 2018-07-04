@@ -145,20 +145,6 @@ subtest 'auth' => sub{
   };
 };
 
-subtest 'path' => sub{
-  ok my $uri = uri($uris[2]), 'ctor';
-  is $uri->path, '/some/path', 'get (scalar)';
-  is [$uri->path], [qw(some path)], 'get (list)';
-
-  is $uri->path('/foo/bar'), '/foo/bar', 'set (scalar)';
-  is $uri->path, '/foo/bar', 'get (scalar)';
-  is [$uri->path], [qw(foo bar)], 'get (list)';
-
-  is $uri->path([qw(baz bat)]), '/baz/bat', 'set (array)';
-  is $uri->path, '/baz/bat', 'get (scalar)';
-  is [$uri->path], [qw(baz bat)], 'get (list)';
-};
-
 subtest 'query' => sub{
   ok my $uri = uri($uris[2]), 'ctor';
   is $uri->query, 'aaaa=bbbb&cccc=dddd&eeee=ffff', 'get (scalar)';
