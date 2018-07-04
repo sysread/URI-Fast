@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
+my $OPTIMIZE = $ENV{DEBUG} ? '-g -O1' : '-O2';
+
 sub MY::postamble {
   return <<EOS;
 
@@ -23,7 +25,7 @@ WriteMakefile(
   LICENSE          => 'perl_5',
   MIN_PERL_VERSION => '5.010',
   PREREQ_PRINT     => 1,
-  OPTIMIZE         => '-O2',
+  OPTIMIZE         => $OPTIMIZE,
 
   META_MERGE => {
     'meta-spec' => {
