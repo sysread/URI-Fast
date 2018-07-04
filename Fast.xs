@@ -750,9 +750,6 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
   av_path = (AV*) SvRV(sv_path);
   av_idx  = av_top_index(av_path);
 
-  // Wipe the existing path
-  clear_path(aTHX_ uri_obj);
-
   // Build the new path
   for (i = 0; i <= av_idx; ++i) {
     *out = '/';
@@ -780,6 +777,8 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
       out += wrote;
     }
   }
+
+  *out = '\0';
 }
 
 static
