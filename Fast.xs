@@ -36,7 +36,7 @@
   )                           \
 )
 
-// size constats
+// size constants
 #define URI_SIZE_scheme   32
 #define URI_SIZE_path   1024
 #define URI_SIZE_query  2048
