@@ -752,13 +752,14 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
 
   // Build the new path
   for (i = 0; i <= av_idx; ++i) {
-    *out = '/';
-    ++out;
+    // Add separator. If the next value fetched from the array is invalid, it
+    // just gets an empty segment.
+    *(out++) = '/';
 
     // Fetch next segment
     refval = av_fetch(av_path, (SSize_t) i, 0);
-    if (refval == NULL) break;
-    if (!SvOK(*refval)) break;
+    if (refval == NULL) continue;
+    if (!SvOK(*refval)) continue;
 
     // Copy value over
     SvGETMAGIC(*refval);
