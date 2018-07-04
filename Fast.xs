@@ -27,14 +27,13 @@
 
 // quick sugar for calling uri_encode
 #define URI_ENCODE_MEMBER(uri, mem, val, allow) (\
-  uri_encode(                 \
-    (val),                    \
-    minnum(strlen(val),       \
-    URI_SIZE(mem)),           \
-    URI_MEMBER((uri), mem),   \
-    (allow),                  \
-    URI_MEMBER((uri), is_iri) \
-  )                           \
+  uri_encode(                           \
+    (val),                              \
+    minnum(strlen(val), URI_SIZE(mem)), \
+    URI_MEMBER((uri), mem),             \
+    (allow),                            \
+    URI_MEMBER((uri), is_iri)           \
+  )                                     \
 )
 
 // size constants
