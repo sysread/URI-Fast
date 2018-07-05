@@ -9,7 +9,7 @@ my $OPTIMIZE = $ENV{DEBUG} ? '-g -O1' : '-O2';
 sub MY::postamble {
   return <<EOS;
 
-misc : readme manifest
+misc : readme distcheck manifest
 
 release : test misc dist
 \tcpan-upload \$(DISTVNAME).tar.gz
