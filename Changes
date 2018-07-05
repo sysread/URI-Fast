@@ -1,3 +1,6 @@
+0.37 2018-07-05
+-cpan indexer issue with URI::Fast::IRI addressed
+
 0.36 2018-07-05
 -behavior: query_hash now accepts hash ref as a parameter
 -bugfix: correctly count and skip utf8 bytes when encoding an IRI

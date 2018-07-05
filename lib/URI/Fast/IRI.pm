@@ -3,6 +3,8 @@ package URI::Fast::IRI;
 use strict;
 use warnings;
 
+our $VERSION = '0.37';
+
 our @ISA = qw(URI::Fast);
 
 =head1 NAME
