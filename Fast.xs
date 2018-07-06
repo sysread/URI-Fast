@@ -128,14 +128,14 @@ typedef struct {
 /*
  * Clearers
  */
-static void clear_scheme(pTHX_ SV* uri_obj) { memset(&((URI(uri_obj))->scheme), '\0', sizeof(uri_scheme_t)); }
-static void clear_path(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->path),   '\0', sizeof(uri_path_t));   }
-static void clear_query(pTHX_ SV* uri_obj)  { memset(&((URI(uri_obj))->query),  '\0', sizeof(uri_query_t));  }
-static void clear_frag(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->frag),   '\0', sizeof(uri_frag_t));   }
-static void clear_usr(pTHX_ SV* uri_obj)    { memset(&((URI(uri_obj))->usr),    '\0', sizeof(uri_usr_t));    }
-static void clear_pwd(pTHX_ SV* uri_obj)    { memset(&((URI(uri_obj))->pwd),    '\0', sizeof(uri_pwd_t));    }
-static void clear_host(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->host),   '\0', sizeof(uri_host_t));   }
-static void clear_port(pTHX_ SV* uri_obj)   { memset(&((URI(uri_obj))->port),   '\0', sizeof(uri_port_t));   }
+static void clear_scheme(pTHX_ SV* uri_obj) { Zero(&((URI(uri_obj))->scheme), 1, uri_scheme_t); }
+static void clear_path(pTHX_ SV* uri_obj)   { Zero(&((URI(uri_obj))->path),   1, uri_path_t);   }
+static void clear_query(pTHX_ SV* uri_obj)  { Zero(&((URI(uri_obj))->query),  1, uri_query_t);  }
+static void clear_frag(pTHX_ SV* uri_obj)   { Zero(&((URI(uri_obj))->frag),   1, uri_frag_t);   }
+static void clear_usr(pTHX_ SV* uri_obj)    { Zero(&((URI(uri_obj))->usr),    1, uri_usr_t);    }
+static void clear_pwd(pTHX_ SV* uri_obj)    { Zero(&((URI(uri_obj))->pwd),    1, uri_pwd_t);    }
+static void clear_host(pTHX_ SV* uri_obj)   { Zero(&((URI(uri_obj))->host),   1, uri_host_t);   }
+static void clear_port(pTHX_ SV* uri_obj)   { Zero(&((URI(uri_obj))->port),   1, uri_port_t);   }
 
 static
 void clear_auth(pTHX_ SV* uri_obj) {
@@ -210,7 +210,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
     if (uri->host[0] != '\0') {
       for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
         if (!isdigit(auth[i + idx])) {
-          memset(&uri->port, '\0', URI_SIZE_port + 1);
+          Zero(&uri->port, 1, uri_port_t);
           break;
         }
         else {
@@ -510,10 +510,10 @@ void set_scheme(pTHX_ SV* uri_obj, const char* value) {
 
 static
 void set_auth(pTHX_ SV *uri_obj, const char *value) {
-  memset(URI_MEMBER(uri_obj, usr),  '\0', sizeof(uri_usr_t));
-  memset(URI_MEMBER(uri_obj, pwd),  '\0', sizeof(uri_pwd_t));
-  memset(URI_MEMBER(uri_obj, host), '\0', sizeof(uri_host_t));
-  memset(URI_MEMBER(uri_obj, port), '\0', sizeof(uri_port_t));
+  Zero(URI_MEMBER(uri_obj, usr),  URI_SIZE_usr, char);
+  Zero(URI_MEMBER(uri_obj, pwd),  URI_SIZE_pwd, char);
+  Zero(URI_MEMBER(uri_obj, host), URI_SIZE_host, char);
+  Zero(URI_MEMBER(uri_obj, port), URI_SIZE_port, char);
 
   // auth isn't stored as an individual field, so encode to local array and rescan
   char auth[URI_SIZE_auth];
@@ -891,7 +891,7 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
 
   // Initialize the struct
   Newx(uri, 1, uri_t);
-  memset(uri, '\0', sizeof(uri_t));
+  Zero(uri, 1, uri_t);
   uri->is_iri = is_iri;
 
   // Build the blessed instance
