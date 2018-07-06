@@ -1,3 +1,6 @@
+0.38 2018-??-??
+-uri_t member path increased from 1024 bytes to 2048
+
 0.37 2018-07-05
 -cpan indexer issue with URI::Fast::IRI addressed
 
