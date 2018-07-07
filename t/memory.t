@@ -56,25 +56,25 @@ SKIP: {
   };
 
   subtest 'overruns' => sub{
-     # scheme: 16
-     # auth:   267
-     # path:   256
-     # query:  1024
-     # frag:   32
-     # usr:    64
-     # pwd:    64
-     # host:   128
+     # scheme: 32
+     # path:   2048
+     # query:  2048
+     # frag:   128
+     # usr:    128
+     # pwd:    128
+     # host:   512
      # port:   8
+     # auth:   779 = 128 (usr) + 128 (pwd) + 512 (host) + 8 (port) + 3 (separator chars)
      my $uri = uri 'http://www.test.com';
-     ok $uri->scheme('x' x 17), 'scheme';
-     ok $uri->auth('x' x 268), 'auth';
-     ok $uri->path('x' x 257), 'path';
-     ok $uri->query('x' x 1025), 'query';
-     ok $uri->frag('x' x 33), 'frag';
-     ok $uri->usr('x' x 65), 'usr';
-     ok $uri->pwd('x' x 65), 'pwd';
-     ok $uri->host('x' x 129), 'host';
-     ok $uri->port('1234567890'), 'port';
+     ok dies{ $uri->scheme('x' x 33) }, 'scheme';
+     ok dies{ $uri->auth('x' x 780) }, 'auth';
+     ok dies{ $uri->path('x' x 2049) }, 'path';
+     ok dies{ $uri->query('x' x 2049) }, 'query';
+     ok dies{ $uri->frag('x' x 129) }, 'frag';
+     ok dies{ $uri->usr('x' x 129) }, 'usr';
+     ok dies{ $uri->pwd('x' x 129) }, 'pwd';
+     ok dies{ $uri->host('x' x 513) }, 'host';
+     ok dies{ $uri->port('1234567890') }, 'port';
   };
 };
 

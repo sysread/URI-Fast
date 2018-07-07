@@ -509,8 +509,8 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
 
 static
 void set_port(pTHX_ SV* uri_obj, const char* value) {
-  size_t len = minnum(strlen(value), URI_SIZE_port);
-  size_t i;
+  size_t i, len = strlen(value);
+  URI_SIZECHECK(port, len);
 
   for (i = 0; i < len; ++i) {
     if (isdigit(value[i])) {
