@@ -23,17 +23,6 @@
 // expands to member reference
 #define URI_MEMBER(obj, member) (URI(obj)->member)
 
-// quick sugar for calling uri_encode
-#define URI_ENCODE_MEMBER(uri, mem, val, allow) (\
-  uri_encode(                           \
-    (val),                              \
-    minnum(strlen(val), URI_SIZE(mem)), \
-    URI_MEMBER((uri), mem),             \
-    (allow),                            \
-    URI_MEMBER((uri), is_iri)           \
-  )                                     \
-)
-
 // size constants
 #define URI_SIZE_scheme   32
 #define URI_SIZE_path   2048
@@ -48,6 +37,21 @@
 #define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
 
 #define URI_SIZE(member) (URI_SIZE_##member)
+
+#define URI_SIZECHECK(member, bytes) \
+  if ((bytes) > URI_SIZE_##member) \
+    croak("URI::Fast: input required %lu bytes but only %lu is allocated for '" #member "'", (bytes), URI_SIZE_##member);
+
+// quick sugar for calling uri_encode
+#define URI_ENCODE_MEMBER(uri, mem, val, allow) (\
+  uri_encode(                           \
+    (val),                              \
+    minnum(strlen(val), URI_SIZE(mem)), \
+    URI_MEMBER((uri), mem),             \
+    (allow),                            \
+    URI_MEMBER((uri), is_iri)           \
+  )                                     \
+)
 
 /*
  * Uses memcpy to copy n bytes from src to dest and null-terminates. The caller

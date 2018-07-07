@@ -53,6 +53,13 @@ typedef struct {
   uri_pwd_t    pwd;
 } uri_t;
 
+static inline
+void sizecheck_croak(const char *member, size_t max, size_t actual) {
+  if (actual > max) {
+    croak("URI::Fast: input required %lu bytes but only %lu is allocated for member field %s", actual, max, member);
+  }
+}
+
 /*
  * Clearers
  */
@@ -93,16 +100,19 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
       if (brk2 > 0 && brk2 < brk1) {
         // user
-        set_str(uri->usr, &auth[idx], minnum(brk2, URI_SIZE_usr));
+        URI_SIZECHECK(usr, brk2);
+        set_str(uri->usr, &auth[idx], brk2);
         idx += brk2 + 1;
 
         // password
-        set_str(uri->pwd, &auth[idx], minnum(brk1 - brk2 - 1, URI_SIZE_pwd));
+        URI_SIZECHECK(pwd, brk1 - brk2 - 1);
+        set_str(uri->pwd, &auth[idx], brk1 - brk2 - 1);
         idx += brk1 - brk2;
       }
       else {
         // user only
-        set_str(uri->usr, &auth[idx], minnum(brk1, URI_SIZE_usr));
+        URI_SIZECHECK(usr, brk1);
+        set_str(uri->usr, &auth[idx], brk1);
         idx += brk1 + 1;
       }
     }
@@ -116,7 +126,8 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
 
       if (auth[idx + brk1] == ']') {
         // Copy, including the square brackets
-        set_str(uri->host, &auth[idx], minnum(brk1 + 1, URI_SIZE_host));
+        URI_SIZECHECK(host, brk1 + 1);
+        set_str(uri->host, &auth[idx], brk1 + 1);
         idx += brk1 + 1;
         flag = 1;
       }
@@ -130,12 +141,14 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
       brk1 = strncspn(&auth[idx], len - idx, ":");
 
       if (brk1 > 0 && brk1 != (len - idx)) {
-        set_str(uri->host, &auth[idx], minnum(brk1, URI_SIZE_host));
+        URI_SIZECHECK(host, brk1);
+        set_str(uri->host, &auth[idx], brk1);
         idx += brk1 + 1;
       }
     }
 
     if (uri->host[0] != '\0') {
+      URI_SIZECHECK(port, len - idx);
       for (i = 0; i < (len - idx) && i < URI_SIZE_port; ++i) {
         if (!isdigit(auth[i + idx])) {
           Zero(&uri->port, 1, uri_port_t);
@@ -147,7 +160,8 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
       }
     }
     else {
-      set_str(uri->host, &auth[idx], minnum(len - idx, URI_SIZE_host));
+      URI_SIZECHECK(host, len - idx);
+      set_str(uri->host, &auth[idx], len - idx);
     }
   }
 }
@@ -174,7 +188,8 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   // Scheme
   brk = strncspn(&src[idx], len - idx, ":/@?#");
   if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
-    set_str(uri->scheme, &src[idx], minnum(brk, URI_SIZE_scheme));
+    URI_SIZECHECK(scheme, brk);
+    set_str(uri->scheme, &src[idx], brk);
     idx += brk + 3;
 
     // Authority
@@ -188,7 +203,8 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
   // path
   brk = strncspn(&src[idx], len - idx, "?#");
   if (brk > 0) {
-    set_str(uri->path, &src[idx], minnum(brk, URI_SIZE_path));
+    URI_SIZECHECK(path, brk);
+    set_str(uri->path, &src[idx], brk);
     idx += brk;
   }
 
@@ -197,7 +213,8 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
     ++idx; // skip past ?
     brk = strncspn(&src[idx], len - idx, "#");
     if (brk > 0) {
-      set_str(uri->query, &src[idx], minnum(brk, URI_SIZE_query));
+      URI_SIZECHECK(query, brk);
+      set_str(uri->query, &src[idx], brk);
       idx += brk;
     }
   }
@@ -207,7 +224,8 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
     ++idx; // skip past #
     brk = len - idx;
     if (brk > 0) {
-      set_str(uri->frag, &src[idx], minnum(brk, URI_SIZE_frag));
+      URI_SIZECHECK(frag, brk);
+      set_str(uri->frag, &src[idx], brk);
     }
   }
 }
