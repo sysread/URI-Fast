@@ -77,7 +77,7 @@ void clear_auth(pTHX_ SV* uri_obj) {
  * Scans the authorization portion of the URI string
  */
 static
-void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
+void uri_scan_auth(pTHX_ uri_t* uri, const char* auth, const size_t len) {
   size_t idx  = 0;
   size_t brk1 = 0;
   size_t brk2 = 0;
@@ -170,7 +170,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
  *
  */
 static
-void uri_scan(uri_t *uri, const char *src, size_t len) {
+void uri_scan(pTHX_ uri_t *uri, const char *src, size_t len) {
   size_t idx = 0;
   size_t brk;
   size_t i;
@@ -188,7 +188,7 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
     // Authority
     brk = strncspn(&src[idx], len - idx, "/?#");
     if (brk > 0) {
-      uri_scan_auth(uri, &src[idx], brk);
+      uri_scan_auth(aTHX_ uri, &src[idx], brk);
       idx += brk;
     }
   }
@@ -230,13 +230,13 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
 /*
  * Getters
  */
-static const char* get_scheme(pTHX_ SV* uri_obj) { return URI_MEMBER(uri_obj, scheme); }
-static const char* get_query(pTHX_ SV* uri_obj)  { return URI_MEMBER(uri_obj, query);  }
-static const char* get_frag(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, frag);   }
-static const char* get_usr(pTHX_ SV* uri_obj)    { return URI_MEMBER(uri_obj, usr);    }
-static const char* get_pwd(pTHX_ SV* uri_obj)    { return URI_MEMBER(uri_obj, pwd);    }
-static const char* get_host(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, host);   }
-static const char* get_port(pTHX_ SV* uri_obj)   { return URI_MEMBER(uri_obj, port);   }
+static const char* get_scheme(SV *uri_obj) { return URI_MEMBER(uri_obj, scheme); }
+static const char* get_query(SV *uri_obj)  { return URI_MEMBER(uri_obj, query);  }
+static const char* get_frag(SV *uri_obj)   { return URI_MEMBER(uri_obj, frag);   }
+static const char* get_usr(SV *uri_obj)    { return URI_MEMBER(uri_obj, usr);    }
+static const char* get_pwd(SV *uri_obj)    { return URI_MEMBER(uri_obj, pwd);    }
+static const char* get_host(SV *uri_obj)   { return URI_MEMBER(uri_obj, host);   }
+static const char* get_port(SV *uri_obj)   { return URI_MEMBER(uri_obj, port);   }
 
 static
 SV* get_path(pTHX_ SV *uri_obj) {
@@ -457,7 +457,7 @@ void set_auth(pTHX_ SV *uri_obj, const char *value) {
   // auth isn't stored as an individual field, so encode to local array and rescan
   char auth[URI_SIZE_auth];
   size_t len = uri_encode(value, strlen(value), (char*) &auth, URI_CHARS_AUTH, URI_MEMBER(uri_obj, is_iri));
-  uri_scan_auth(URI(uri_obj), auth, len);
+  uri_scan_auth(pTHX_ URI(uri_obj), auth, len);
 }
 
 static
@@ -859,7 +859,7 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
     }
   }
 
-  uri_scan(uri, src, len);
+  uri_scan(pTHX_ uri, src, len);
 
   return obj_ref;
 }
@@ -1066,63 +1066,56 @@ void clear_auth(uri_obj)
 const char* get_scheme(uri_obj)
   SV* uri_obj
   CODE:
-    RETVAL = get_scheme(aTHX_ uri_obj);
+    RETVAL = get_scheme(uri_obj);
   OUTPUT:
     RETVAL
 
 SV* get_path(uri_obj)
   SV* uri_obj
   CODE:
-    RETVAL = get_path(aTHX_ uri_obj);
+    RETVAL = get_path(uri_obj);
   OUTPUT:
     RETVAL
 
 const char* get_query(uri_obj)
   SV* uri_obj
   CODE:
-    RETVAL = get_query(aTHX_ uri_obj);
+    RETVAL = get_query(uri_obj);
   OUTPUT:
     RETVAL
 
 const char* get_frag(uri_obj)
   SV *uri_obj
   CODE:
-    RETVAL = get_frag(aTHX_ uri_obj);
+    RETVAL = get_frag(uri_obj);
   OUTPUT:
     RETVAL
 
 const char* get_usr(uri_obj)
   SV* uri_obj
   CODE:
-    RETVAL = get_usr(aTHX_ uri_obj);
+    RETVAL = get_usr(uri_obj);
   OUTPUT:
     RETVAL
 
 const char* get_pwd(uri_obj)
   SV* uri_obj
   CODE:
-    RETVAL = get_pwd(aTHX_ uri_obj);
+    RETVAL = get_pwd(uri_obj);
   OUTPUT:
     RETVAL
 
 const char* get_host(uri_obj)
   SV* uri_obj
   CODE:
-    RETVAL = get_host(aTHX_ uri_obj);
+    RETVAL = get_host(uri_obj);
   OUTPUT:
     RETVAL
 
 const char* get_port(uri_obj)
   SV* uri_obj
   CODE:
-    RETVAL = get_port(aTHX_ uri_obj);
-  OUTPUT:
-    RETVAL
-
-SV* get_auth(uri_obj)
-  SV* uri_obj
-  CODE:
-    RETVAL = get_auth(aTHX_ uri_obj);
+    RETVAL = get_port(uri_obj);
   OUTPUT:
     RETVAL
 
@@ -1130,6 +1123,13 @@ SV* get_auth(uri_obj)
 #-------------------------------------------------------------------------------
 # Compound getters
 #-------------------------------------------------------------------------------
+SV* get_auth(uri_obj)
+  SV* uri_obj
+  CODE:
+    RETVAL = get_auth(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
 SV* split_path(uri)
   SV* uri
   CODE:
