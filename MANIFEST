@@ -1,4 +1,5 @@
 Changes
+fast.h
 Fast.xs
 lib/URI/Fast.pm
 lib/URI/Fast/Benchmarks.pod

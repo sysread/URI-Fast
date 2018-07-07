@@ -1,4 +1,4 @@
-#include "perl.h"
+#include "fast.h"
 
 // sugar for strchr
 #define char_in_str(c, set) (strchr((set), (c)) != NULL)
