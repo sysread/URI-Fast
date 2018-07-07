@@ -442,10 +442,13 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
 /*
  * Setters
  */
-static
-void set_scheme(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, scheme, value, "");
-}
+URI_SIMPLE_SETTER(scheme, "");
+URI_SIMPLE_SETTER(path,   URI_CHARS_PATH);
+URI_SIMPLE_SETTER(query,  URI_CHARS_QUERY);
+URI_SIMPLE_SETTER(frag,   URI_CHARS_FRAG);
+URI_SIMPLE_SETTER(usr,    URI_CHARS_USER);
+URI_SIMPLE_SETTER(pwd,    URI_CHARS_USER);
+URI_SIMPLE_SETTER(host,   URI_CHARS_HOST);
 
 static
 void set_auth(pTHX_ SV *uri_obj, const char *value) {
@@ -458,11 +461,6 @@ void set_auth(pTHX_ SV *uri_obj, const char *value) {
   char auth[URI_SIZE_auth];
   size_t len = uri_encode(value, strlen(value), (char*) &auth, URI_CHARS_AUTH, URI_MEMBER(uri_obj, is_iri));
   uri_scan_auth(aTHX_ URI(uri_obj), auth, len);
-}
-
-static
-void set_path(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, path, value, URI_CHARS_PATH);
 }
 
 static
@@ -507,31 +505,6 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
   }
 
   *out = '\0';
-}
-
-static
-void set_query(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, query, value, URI_CHARS_QUERY);
-}
-
-static
-void set_frag(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, frag, value, URI_CHARS_FRAG);
-}
-
-static
-void set_usr(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, usr, value, URI_CHARS_USER);
-}
-
-static
-void set_pwd(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, pwd, value, URI_CHARS_USER);
-}
-
-static
-void set_host(pTHX_ SV* uri_obj, const char* value) {
-  URI_ENCODE_MEMBER(uri_obj, host, value, URI_CHARS_HOST);
 }
 
 static
@@ -1166,7 +1139,7 @@ SV* get_param(uri, sv_key)
 #-------------------------------------------------------------------------------
 void set_scheme(uri_obj, value)
   SV *uri_obj
-  const char *value
+  SV *value
   CODE:
     set_scheme(aTHX_ uri_obj, value);
 
@@ -1178,7 +1151,7 @@ void set_auth(uri_obj, value)
 
 void set_path(uri_obj, value)
   SV *uri_obj
-  const char *value
+  SV *value
   CODE:
     set_path(aTHX_ uri_obj, value);
 
@@ -1190,31 +1163,31 @@ void set_path_array(uri_obj, segments)
 
 void set_query(uri_obj, value)
   SV *uri_obj
-  const char *value
+  SV *value
   CODE:
     set_query(aTHX_ uri_obj, value);
 
 void set_frag(uri_obj, value)
   SV *uri_obj
-  const char *value
+  SV *value
   CODE:
     set_frag(aTHX_ uri_obj, value);
 
 void set_usr(uri_obj, value)
   SV *uri_obj
-  const char *value
+  SV *value
   CODE:
     set_usr(aTHX_ uri_obj, value);
 
 void set_pwd(uri_obj, value)
   SV *uri_obj
-  const char *value
+  SV *value
   CODE:
     set_pwd(aTHX_ uri_obj, value);
 
 void set_host(uri_obj, value)
   SV *uri_obj
-  const char *value
+  SV *value
   CODE:
     set_host(aTHX_ uri_obj, value);
 

@@ -55,6 +55,22 @@
   )                                     \
 )
 
+#define URI_SIMPLE_SETTER(member, allowed) \
+static void set_##member(pTHX_ SV *uri_obj, SV *sv_value) { \
+  if (SvOK(sv_value)) { \
+    size_t len_value, len_enc; \
+    const char *value = SvPV_const(sv_value, len_value); \
+    URI_SIZECHECK(member, len_value); \
+    char enc[len_value * 3]; \
+    len_enc = uri_encode(value, len_value, enc, allowed, URI_MEMBER(uri_obj, is_iri)); \
+    URI_SIZECHECK(member, len_enc); \
+    Copy(enc, URI_MEMBER(uri_obj, member), len_enc + 1, char); \
+  } \
+  else { \
+    URI_MEMBER(uri_obj, member)[0] = '\0'; \
+  } \
+}
+
 /*
  * Uses memcpy to copy n bytes from src to dest and null-terminates. The caller
  * must ensure that dest is at least n + 1 bytes long and that src has at least
