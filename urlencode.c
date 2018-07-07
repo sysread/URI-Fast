@@ -201,7 +201,7 @@ SV* decode(pTHX_ SV *in) {
     src = SvPV_nomg_const(in, ilen);
   }
 
-  U8 dest[ilen + 1];
+  char dest[ilen + 1];
   olen = uri_decode(src, ilen, dest, "");
   out = newSVpvn(dest, olen);
   sv_utf8_decode(out);

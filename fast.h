@@ -24,14 +24,14 @@
 #define URI_MEMBER(obj, member) (URI(obj)->member)
 
 // size constants
-#define URI_SIZE_scheme   32
-#define URI_SIZE_path   2048
-#define URI_SIZE_query  2048
-#define URI_SIZE_frag    128
-#define URI_SIZE_usr     128
-#define URI_SIZE_pwd     128
-#define URI_SIZE_host    512
-#define URI_SIZE_port      8
+#define URI_SIZE_scheme   32UL
+#define URI_SIZE_path   2048UL
+#define URI_SIZE_query  2048UL
+#define URI_SIZE_frag    128UL
+#define URI_SIZE_usr     128UL
+#define URI_SIZE_pwd     128UL
+#define URI_SIZE_host    512UL
+#define URI_SIZE_port      8UL
 
 // enough to fit all pieces + 3 chars for separators (2 colons + @)
 #define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
@@ -40,7 +40,7 @@
 
 #define URI_SIZECHECK(member, bytes) \
   if ((bytes) > URI_SIZE_##member) \
-    croak("URI::Fast: input required %lu bytes but only %lu is allocated for '" #member "'", (bytes), URI_SIZE_##member);
+    croak("URI::Fast: input required %lu bytes but only %lu is allocated for '" #member "'", (unsigned long)(bytes), URI_SIZE_##member);
 
 // quick sugar for calling uri_encode
 #define URI_ENCODE_MEMBER(uri, mem, val, allow) (\
