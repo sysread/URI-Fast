@@ -451,6 +451,22 @@ URI_SIMPLE_SETTER(pwd,    URI_CHARS_USER);
 URI_SIMPLE_SETTER(host,   URI_CHARS_HOST);
 
 static
+void set_port(pTHX_ SV* uri_obj, const char* value) {
+  size_t i, len = strlen(value);
+  URI_SIZECHECK(port, len);
+
+  for (i = 0; i < len; ++i) {
+    if (isdigit(value[i])) {
+      URI_MEMBER(uri_obj, port)[i] = value[i];
+    }
+    else {
+      clear_port(aTHX_ uri_obj);
+      break;
+    }
+  }
+}
+
+static
 void set_auth(pTHX_ SV *uri_obj, const char *value) {
   Zero(URI_MEMBER(uri_obj, usr),  URI_SIZE_usr, char);
   Zero(URI_MEMBER(uri_obj, pwd),  URI_SIZE_pwd, char);
@@ -505,22 +521,6 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
   }
 
   *out = '\0';
-}
-
-static
-void set_port(pTHX_ SV* uri_obj, const char* value) {
-  size_t i, len = strlen(value);
-  URI_SIZECHECK(port, len);
-
-  for (i = 0; i < len; ++i) {
-    if (isdigit(value[i])) {
-      URI_MEMBER(uri_obj, port)[i] = value[i];
-    }
-    else {
-      clear_port(aTHX_ uri_obj);
-      break;
-    }
-  }
 }
 
 static
