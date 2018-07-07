@@ -969,13 +969,14 @@ VERSIONCHECK: ENABLE
 # URL-encoding
 #-------------------------------------------------------------------------------
 SV* encode(in, ...)
-  SV* in
+  SV *in
     PREINIT:
-      I32* temp;
+      SV *temp = NULL;
     CODE:
-      temp = PL_markstack_ptr++;
-      RETVAL = encode(aTHX_ in);
-      PL_markstack_ptr = temp;
+      if (items > 1) {
+        temp = ST(1);
+      }
+      RETVAL = encode(aTHX_ in, temp);
     OUTPUT:
       RETVAL
 

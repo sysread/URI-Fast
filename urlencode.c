@@ -150,9 +150,8 @@ size_t uri_decode(const char *in, size_t len, char *out, const char *ignore) {
 }
 
 // EOT (end of theft)
-
 static
-SV* encode(pTHX_ SV* in, ...) {
+SV* encode(pTHX_ SV *in, SV *sv_allowed) {
   size_t ilen, olen, alen;
   const char *allowed;
   SV* out;
@@ -161,16 +160,11 @@ SV* encode(pTHX_ SV* in, ...) {
   const char *src = SvPV_nomg_const(in, ilen);
   char dest[(ilen * 3) + 1];
 
-  dXSARGS;
-
-  if (items > 1) {
-    allowed = SvPV_nomg_const(ST(1), alen);
-  } else {
+  if (sv_allowed == NULL) {
     allowed = "";
-    alen = 0;
+  } else {
+    allowed = SvPV_nomg_const(sv_allowed, alen);
   }
-
-  PUTBACK;
 
   olen = uri_encode(src, ilen, dest, allowed, 0);
   out  = newSVpvn(dest, olen);
