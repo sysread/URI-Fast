@@ -22,63 +22,63 @@ increased significantly over Perl compiled for MacOS.
         URI::Fast      1111111/s           760%             --
 
 
-=head2 Parse scheme
+=head2 Get scheme
 
                             Rate            URI      URI::Fast
               URI       104384/s             --           -88%
         URI::Fast       877193/s           740%             --
 
 
-=head2 Update scheme
+=head2 Set scheme
 
                             Rate            URI      URI::Fast
               URI        65274/s             --           -92%
         URI::Fast       847458/s          1198%             --
 
 
-=head2 Parse authorization
+=head2 Get authority
 
                             Rate            URI      URI::Fast
-              URI        88810/s             --           -90%
-        URI::Fast       892857/s           905%             --
+              URI        89445/s             --           -90%
+        URI::Fast       925926/s           935%             --
 
 
-=head2 Update authorization
+=head2 Set authority
 
                             Rate            URI      URI::Fast
               URI        46253/s             --           -93%
         URI::Fast       684932/s          1381%             --
 
 
-=head2 Parse path (scalar)
+=head2 Get path (scalar)
 
                             Rate            URI      URI::Fast
               URI        86207/s             --           -86%
         URI::Fast       625000/s           625%             --
 
 
-=head2 Parse path (list)
+=head2 Get path (list)
 
                             Rate            URI      URI::Fast
               URI        71633/s             --           -85%
         URI::Fast       480769/s           571%             --
 
 
-=head2 Update path (scalar)
+=head2 Set path (scalar)
 
                             Rate            URI      URI::Fast
               URI        76923/s             --           -88%
         URI::Fast       617284/s           702%             --
 
 
-=head2 Update path (array)
+=head2 Set path (array)
 
                             Rate            URI      URI::Fast
               URI        75988/s             --           -85%
         URI::Fast       515464/s           578%             --
 
 
-=head2 Parse query
+=head2 Get query
 
                             Rate            URI      URI::Fast
               URI        47483/s             --           -89%
@@ -92,18 +92,18 @@ increased significantly over Perl compiled for MacOS.
         URI::Fast       438596/s           678%             --
 
 
-=head2 Query form
+=head2 Get query (hash)
 
                             Rate            URI      URI::Fast
               URI        48263/s             --           -87%
         URI::Fast       364964/s           656%             --
 
 
-=head2 Query keys
+=head2 Get query keys
 
                             Rate            URI      URI::Fast
-              URI        49020/s             --           -88%
-        URI::Fast       406504/s           729%             --
+              URI        49801/s             --           -88%
+        URI::Fast       416667/s           737%             --
 
 
 =head2 Stringification
@@ -116,8 +116,8 @@ increased significantly over Perl compiled for MacOS.
 =head2 uri_split
 
                             Rate     URI::Split      URI::Fast
-       URI::Split       500000/s             --           -64%
-        URI::Fast      1388889/s           178%             --
+       URI::Split       495050/s             --           -64%
+        URI::Fast      1388889/s           181%             --
 
 
 =head2 Encode
@@ -141,11 +141,11 @@ increased significantly over Perl compiled for MacOS.
 =head2 IRI - ctor
 
                             Rate            IRI      URI::Fast
-              IRI        15101/s             --           -99%
-        URI::Fast      1111111/s          7258%             --
+              IRI        13998/s             --           -99%
+        URI::Fast      1136364/s          8018%             --
 
 
-=head2 IRI - query_hash
+=head2 IRI - set query (hash)
 
                             Rate            IRI      URI::Fast
               IRI        12610/s             --           -98%
@@ -155,14 +155,14 @@ increased significantly over Perl compiled for MacOS.
 =head2 IRI - set param
 
                             Rate            IRI      URI::Fast
-              IRI        12726/s             --           -98%
-        URI::Fast       537634/s          4125%             --
+              IRI        11729/s             --           -98%
+        URI::Fast       510204/s          4250%             --
 
 
-=head2 IRI - update path
+=head2 IRI - set path
 
                             Rate            IRI      URI::Fast
-              IRI        13455/s             --           -98%
-        URI::Fast       714286/s          5209%             --
+              IRI        11765/s             --           -98%
+        URI::Fast       675676/s          5643%             --
 
 

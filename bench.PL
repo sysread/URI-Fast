@@ -81,47 +81,47 @@ test 'Constructor', 500_000, {
   'URI::Fast' => sub{ my $uri = uri $urls[3] },
 };
 
-test 'Parse scheme', 500_000, {
+test 'Get scheme', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->scheme },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->scheme },
 };
 
-test 'Update scheme', 500_000, {
+test 'Set scheme', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[1]); $uri->scheme('https') },
   'URI::Fast' => sub{ my $uri = uri $urls[1]; $uri->scheme('https') },
 };
 
-test 'Parse authorization', 500_000, {
+test 'Get authority', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->host },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host },
 };
 
-test 'Update authorization', 500_000, {
+test 'Set authority', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->host('test.com') },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->host('test.com') },
 };
 
-test 'Parse path (scalar)', 500_000, {
+test 'Get path (scalar)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my $p = $uri->path },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $p = $uri->path },
 };
 
-test 'Parse path (list)', 500_000, {
+test 'Get path (list)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my @p = $uri->path_segments },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my @p = $uri->path },
 };
 
-test 'Update path (scalar)', 500_000, {
+test 'Set path (scalar)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/foo/bar') },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->path('/foo/bar') },
 };
 
-test 'Update path (array)', 500_000, {
+test 'Set path (array)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); $uri->path('/' . join('/', 'foo', 'bar')) },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->path(['foo', 'bar']) },
 };
 
-test 'Parse query', 500_000, {
+test 'Get query', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my %q = $uri->query_form },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my @v = $uri->param('asdf') },
 };
@@ -131,12 +131,12 @@ test 'Set query parameter', 500_000, {
   'URI::Fast' => sub{ my $uri = uri $urls[3]; $uri->param('foo', 'bar') },
 };
 
-test 'Query form', 500_000, {
+test 'Get query (hash)', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my %q = $uri->query_form },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $q = $uri->query_hash },
 };
 
-test 'Query keys', 500_000, {
+test 'Get query keys', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]); my @k = keys %{$uri->query_form} },
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my @k = $uri->query_keys },
 };
@@ -172,7 +172,7 @@ if ($ENV{BENCH_ALL} || $ENV{UPDATEBENCH}) {
     'URI::Fast' => sub{ my $iri = iri $urls[4] },
   };
 
-  test 'IRI - query_hash', 500_000, {
+  test 'IRI - set query (hash)', 500_000, {
     'IRI' => sub{ my $iri = IRI->new($urls[4]); my %q = $iri->query_form },
     'URI::Fast' => sub{ my $iri = iri $urls[4]; my $q = $iri->query_hash },
   };
@@ -182,7 +182,7 @@ if ($ENV{BENCH_ALL} || $ENV{UPDATEBENCH}) {
     'URI::Fast' => sub{ my $iri = iri $urls[4]; $iri->param('ßåΩ', 'ßå†') },
   };
 
-  test 'IRI - update path', 500_000, {
+  test 'IRI - set path', 500_000, {
     'IRI' => sub{ my $iri = IRI->new($urls[4]); $iri->path('/Ῥόδος¢€') },
     'URI::Fast' => sub{ my $iri = iri $urls[4]; $iri->path('/Ῥόδος¢€') },
   };
