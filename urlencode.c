@@ -6,11 +6,11 @@ bool char_in_str(const char c, const char *set) {
 
   for (i = 0; set[i] != '\0'; ++i) {
     if (set[i] == c) {
-      return true;
+      return 1;
     }
   }
 
-  return false;
+  return 0;
 }
 
 /*
