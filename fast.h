@@ -36,11 +36,13 @@
 // enough to fit all pieces + 3 chars for separators (2 colons + @)
 #define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
 
+// returns the size of the member in bytes
 #define URI_SIZE(member) (URI_SIZE_##member)
 
+// croaks if bytes > URI_SIZE_member
 #define URI_SIZECHECK(member, bytes) \
-  if ((bytes) > URI_SIZE_##member) \
-    croak("URI::Fast: input required %lu bytes but only %lu is allocated for '" #member "'", (unsigned long)(bytes), URI_SIZE_##member);
+  if ((bytes) > URI_SIZE(member)) \
+    croak("URI::Fast: input required %lu bytes but only %lu is allocated for '" #member "'", (unsigned long)(bytes), URI_SIZE(member));
 
 // quick sugar for calling uri_encode
 #define URI_ENCODE_MEMBER(uri, mem, val, allow) (\

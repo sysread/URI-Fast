@@ -53,13 +53,6 @@ typedef struct {
   uri_pwd_t    pwd;
 } uri_t;
 
-static inline
-void sizecheck_croak(const char *member, size_t max, size_t actual) {
-  if (actual > max) {
-    croak("URI::Fast: input required %lu bytes but only %lu is allocated for member field %s", actual, max, member);
-  }
-}
-
 /*
  * Clearers
  */
