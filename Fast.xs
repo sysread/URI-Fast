@@ -77,7 +77,7 @@ void clear_auth(pTHX_ SV* uri_obj) {
  * Scans the authorization portion of the URI string
  */
 static
-void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
+void uri_scan_auth(pTHX_ uri_t* uri, const char* auth, const size_t len) {
   size_t idx  = 0;
   size_t brk1 = 0;
   size_t brk2 = 0;
@@ -170,7 +170,7 @@ void uri_scan_auth(uri_t* uri, const char* auth, const size_t len) {
  *
  */
 static
-void uri_scan(uri_t *uri, const char *src, size_t len) {
+void uri_scan(pTHX_ uri_t *uri, const char *src, size_t len) {
   size_t idx = 0;
   size_t brk;
   size_t i;
@@ -188,7 +188,7 @@ void uri_scan(uri_t *uri, const char *src, size_t len) {
     // Authority
     brk = strncspn(&src[idx], len - idx, "/?#");
     if (brk > 0) {
-      uri_scan_auth(uri, &src[idx], brk);
+      uri_scan_auth(aTHX_ uri, &src[idx], brk);
       idx += brk;
     }
   }
@@ -457,7 +457,7 @@ void set_auth(pTHX_ SV *uri_obj, const char *value) {
   // auth isn't stored as an individual field, so encode to local array and rescan
   char auth[URI_SIZE_auth];
   size_t len = uri_encode(value, strlen(value), (char*) &auth, URI_CHARS_AUTH, URI_MEMBER(uri_obj, is_iri));
-  uri_scan_auth(URI(uri_obj), auth, len);
+  uri_scan_auth(aTHX_ URI(uri_obj), auth, len);
 }
 
 static
@@ -859,7 +859,7 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
     }
   }
 
-  uri_scan(uri, src, len);
+  uri_scan(aTHX_ uri, src, len);
 
   return obj_ref;
 }
