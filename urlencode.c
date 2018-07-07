@@ -1,7 +1,17 @@
 #include "fast.h"
 
-// sugar for strchr
-#define char_in_str(c, set) (strchr((set), (c)) != NULL)
+static inline
+bool char_in_str(const char c, const char *set) {
+  size_t i;
+
+  for (i = 0; set[i] != '\0'; ++i) {
+    if (set[i] == c) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 /*
  * Percent encoding

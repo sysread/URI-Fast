@@ -68,7 +68,8 @@ sub test {
   print $POD "=head2 $msg\n\n";
 
   foreach (@$results) {
-    printf $POD "  %15s%15s%15s%15s\n", @$_;
+    my $fmt = '  ' . ('%15s' x scalar(@$_)) . "\n";
+    printf $POD $fmt, @$_;
   }
 
   print $POD "\n\n";

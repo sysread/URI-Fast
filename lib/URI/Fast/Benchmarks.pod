@@ -122,20 +122,20 @@ increased significantly over Perl compiled for MacOS.
 
 =head2 Encode
 
-                            Rate    URI::Escape    URL::Encode
-      URI::Escape         5624/s             --           -27%
-      URL::Encode         7748/s            38%             --
-        URI::Fast       574713/s         10118%          7317%
-  URI::Encode::XS      1190476/s         21067%         15264%
+                            Rate    URI::Escape    URL::Encode      URI::Fast URI::Encode::XS
+      URI::Escape         5962/s             --           -26%          -100%           -100%
+      URL::Encode         8071/s            35%             --           -99%            -99%
+        URI::Fast      1282051/s         21403%         15785%             --            -18%
+  URI::Encode::XS      1562500/s         26106%         19259%            22%             --
 
 
 =head2 Decode
 
-                            Rate    URI::Escape    URL::Encode
-      URI::Escape         5953/s             --            -1%
-      URL::Encode         6021/s             1%             --
-        URI::Fast       295858/s          4870%          4814%
-  URI::Encode::XS       833333/s         13898%         13740%
+                            Rate    URL::Encode    URI::Escape      URI::Fast URI::Encode::XS
+      URL::Encode         6053/s             --            -1%           -99%            -99%
+      URI::Escape         6098/s             1%             --           -99%            -99%
+        URI::Fast       602410/s          9853%          9778%             --            -30%
+  URI::Encode::XS       862069/s         14143%         14036%            43%              --
 
 
 =head2 IRI - ctor
