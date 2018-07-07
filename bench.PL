@@ -36,11 +36,14 @@ print $POD q{# PODNAME: URI::Fast::Benchmarks
 Various operations comparing L<URI::Fast> against L<URI>'s performance. The
 script to recreate is included in the C<bench> folder of the distribution.
 
-Tests were performed on a Pixelbook (i5) and Perl 5.26 installed with
-L<perlbrew|https://perlbrew.pl>. Earlier testing was done with a similarly
-equipped MacBook Pro. It is interesting to note that URI::Fast's rate is
-roughly the same, but URI's rate increased significantly over Perl compiled for
-MacOS.
+Tests were performed on a Pixelbook (i5) and Perl 5.26.2 installed with
+L<perlbrew|https://perlbrew.pl>:
+
+  perlbrew install --clang --Dusemymalloc perl-5.26.2
+
+Earlier testing was done with a similarly equipped MacBook Pro. It is
+interesting to note that URI::Fast's rate is roughly the same, but URI's rate
+increased significantly over Perl compiled for MacOS.
 
 };
 

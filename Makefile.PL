@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
-my $OPTIMIZE = $ENV{DEBUG} ? '-g -O1' : '-O2';
+my $OPTIMIZE = $ENV{DEBUG} ? '-g -O1' : ($ENV{OPTIMIZE} || '-O2');
 
 sub MY::postamble {
   return <<EOS;
