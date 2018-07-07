@@ -483,19 +483,21 @@ static
 void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
   SV **refval, *tmp;
   AV *av_path;
-  size_t i, av_idx, seg_len, wrote;
+  size_t i, av_idx, seg_len, wrote, idx;
   const char *seg;
-  char *out = URI_MEMBER(uri_obj, path);
+  char out[URI_SIZE_path];
 
   // Inspect input array
   av_path = (AV*) SvRV(sv_path);
   av_idx  = av_top_index(av_path);
 
+  idx = 0;
+
   // Build the new path
   for (i = 0; i <= av_idx; ++i) {
     // Add separator. If the next value fetched from the array is invalid, it
     // just gets an empty segment.
-    *(out++) = '/';
+    out[idx++] = '/';
 
     // Fetch next segment
     refval = av_fetch(av_path, (SSize_t) i, 0);
@@ -515,12 +517,13 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
         seg = SvPV_const(tmp, seg_len);
       }
 
-      wrote = uri_encode(seg, seg_len, out, URI_CHARS_PATH_SEGMENT, URI_MEMBER(uri_obj, is_iri));
-      out += wrote;
+      idx += uri_encode(seg, seg_len, &out[idx], URI_CHARS_PATH_SEGMENT, URI_MEMBER(uri_obj, is_iri));
     }
   }
 
-  *out = '\0';
+  out[idx++] = '\0';
+  URI_SIZECHECK(path, idx);
+  Copy(out, URI_MEMBER(uri_obj, path), idx, char);
 }
 
 static
@@ -621,6 +624,8 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
 
   dest[off++] = '\0';
 
+  URI_SIZECHECK(query, off);
+
   clear_query(aTHX_ uri);
   set_str(URI_MEMBER(uri, query), dest, off);
 }
@@ -714,6 +719,8 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
     vlen = uri_encode(strval, slen, &dest[off], ":@?/", is_iri);
     off += vlen;
   }
+
+  URI_SIZECHECK(query, off);
 
   clear_query(aTHX_ uri);
   set_str(URI_MEMBER(uri, query), dest, off);
