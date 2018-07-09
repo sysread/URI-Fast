@@ -180,17 +180,23 @@ void uri_scan(pTHX_ uri_t *uri, const char *src, size_t len) {
 
   // Scheme
   brk = strncspn(&src[idx], len - idx, ":/@?#");
-  if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
+
+  if (brk > 0 && src[idx + brk] == ':') {
     URI_SIZECHECK(scheme, brk);
     set_str(uri->scheme, &src[idx], brk);
     idx += brk + 3;
 
-    // Authority
-    brk = strncspn(&src[idx], len - idx, "/?#");
-    if (brk > 0) {
-      uri_scan_auth(aTHX_ uri, &src[idx], brk);
-      idx += brk;
+    // Authority section following scheme must be separated by //
+    if (src[idx + brk] == '/' && src[idx + brk + 1] == '/') {
+      idx += 2;
     }
+  }
+
+  // Authority
+  brk = strncspn(&src[idx], len - idx, "/?#");
+  if (brk > 0) {
+    uri_scan_auth(aTHX_ uri, &src[idx], brk);
+    idx += brk;
   }
 
   // path
