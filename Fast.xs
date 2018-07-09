@@ -768,13 +768,15 @@ SV* to_string(pTHX_ SV* uri_obj) {
   if (uri->scheme[0] != '\0') {
     sv_catpv(out, uri->scheme);
     sv_catpvn(out, ":", 1);
+
+    if (SvTRUE(auth)) {
+      // When the authority section is present, the scheme must be followed by
+      // two forward slashes
+      sv_catpvn(out, "//", 2);
+    }
   }
 
   if (SvTRUE(auth)) {
-    // When the authority section is present, the scheme must be followed by
-    // two forward slashes
-    sv_catpvn(out, "//", 2);
-
     sv_catsv(out, sv_2mortal(auth));
 
     // When the authority section is present, any path must be separated from

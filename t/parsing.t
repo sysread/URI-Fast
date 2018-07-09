@@ -10,8 +10,6 @@ my @uris = (
   'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
 );
 
-uri('http:')->debug;
-
 ok(uri($_), "uri: $_") foreach @uris;
 
 is uri(undef), '', 'undef';
