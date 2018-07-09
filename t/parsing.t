@@ -10,7 +10,7 @@ my @uris = (
   'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
 );
 
-ok(uri($_), 'uri') foreach @uris;
+ok(uri($_), "uri: $_") foreach @uris;
 
 is uri(undef), '', 'undef';
 is uri(''), '', 'empty string';

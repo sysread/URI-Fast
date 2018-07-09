@@ -39,11 +39,6 @@
 // returns the size of the member in bytes
 #define URI_SIZE(member) (URI_SIZE_##member)
 
-// croaks if bytes > URI_SIZE_member
-#define URI_SIZECHECK(member, bytes) \
-  if ((bytes) > URI_SIZE(member)) \
-    croak("URI::Fast: input required %lu bytes but only %lu is allocated for '" #member "'", (unsigned long)(bytes), URI_SIZE(member));
-
 // quick sugar for calling uri_encode
 #define URI_ENCODE_MEMBER(uri, mem, val, allow) (\
   uri_encode(                           \
@@ -58,13 +53,14 @@
 #define URI_SIMPLE_SETTER(member, allowed) \
 static void set_##member(pTHX_ SV *uri_obj, SV *sv_value) { \
   if (SvOK(sv_value)) { \
+    int truncated = 0; \
     size_t len_value, len_enc; \
     const char *value = SvPV_const(sv_value, len_value); \
-    URI_SIZECHECK(member, len_value); \
     char enc[len_value * 3]; \
     len_enc = uri_encode(value, len_value, enc, allowed, URI_MEMBER(uri_obj, is_iri)); \
-    URI_SIZECHECK(member, len_enc); \
-    Copy(enc, URI_MEMBER(uri_obj, member), len_enc + 1, char); \
+    if (len_enc > URI_SIZE(member)) truncated = 1; \
+    Copy(enc, URI_MEMBER(uri_obj, member), minnum(URI_SIZE(member), len_enc + 1), char); \
+    if (truncated) croak("set_" #member ": input string is larger than supported by URI::Fast"); \
   } \
   else { \
     URI_MEMBER(uri_obj, member)[0] = '\0'; \

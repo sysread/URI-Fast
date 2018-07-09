@@ -1,7 +1,7 @@
 0.38 2018-??-??
 -behavior: uri_t->path increased from 1024 bytes to 2048
--behavior: setters now croak when an input string would be truncated to fit within the uri_t struct
--bugfix: authority section ignored when no scheme present during construction
+-behavior: setters now croak when an input string is truncated to fit within the uri_t struct
+-bugfix: authority section ignored when no scheme present during construction (credit: martin)
 -optimization: fixed slowness in encode/decode
 
 0.37 2018-07-05
