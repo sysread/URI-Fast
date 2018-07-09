@@ -837,7 +837,8 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
 
   // Initialize the struct
   Newx(uri, 1, uri_t);
-  Zero(uri, 1, uri_t);
+  //Zero(uri, 1, uri_t);
+  memset(uri, '\0', sizeof(uri_t));
   uri->is_iri = is_iri;
 
   // Build the blessed instance
