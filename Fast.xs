@@ -136,7 +136,7 @@ int uri_scan_auth(pTHX_ uri_t* uri, const char* auth, const size_t len) {
 
       if (brk1 > 0 && brk1 != (len - idx)) {
         if (brk1 > URI_SIZE_host) truncated = 1;
-        set_str(uri->host, &auth[idx], brk1);
+        set_str(uri->host, &auth[idx], minnum(URI_SIZE_host, brk1));
         idx += brk1 + 1;
       }
     }
@@ -188,10 +188,10 @@ int uri_scan(pTHX_ uri_t *uri, const char *src, size_t len) {
   if (brk > 0 && src[idx + brk] == ':') {
     if (brk > URI_SIZE_scheme) truncated = 1;
     set_str(uri->scheme, &src[idx], minnum(URI_SIZE_scheme, brk));
-    idx += brk + 3;
+    idx += brk + 1;
 
     // Authority section following scheme must be separated by //
-    if (src[idx + brk] == '/' && src[idx + brk + 1] == '/') {
+    if (src[idx] == '/' && src[idx + 1] == '/') {
       idx += 2;
     }
   }
