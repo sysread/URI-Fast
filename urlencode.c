@@ -167,6 +167,11 @@ SV* encode(pTHX_ SV *in, SV *sv_allowed) {
   SV* out;
 
   SvGETMAGIC(in);
+
+  if (!SvOK(in)) {
+    return newSVpvn("", 0);
+  }
+
   const char *src = SvPV_nomg_const(in, ilen);
   char dest[(ilen * 3) + 1];
 
@@ -190,6 +195,10 @@ SV* decode(pTHX_ SV *in) {
   SV *out;
 
   SvGETMAGIC(in);
+
+  if (!SvOK(in)) {
+    return newSVpvn("", 0);
+  }
 
   if (DO_UTF8(in)) {
     in = sv_mortalcopy(in);

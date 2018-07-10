@@ -1,3 +1,6 @@
+0.39 2018-??-??
+-behavior: passing undef to encode/decode no longer issues a warning
+
 0.38 2018-07-09
 -behavior: uri_t->path increased from 1024 bytes to 2048
 -behavior: setters now croak when an input string is truncated to fit within the uri_t struct

@@ -21,6 +21,9 @@ subtest 'basics' => sub{
   is URI::Fast::decode(URI::Fast::encode($reserved)), $reserved, 'decode';
 
   is URI::Fast::encode(" &", "&"), "%20&", "encode: allowed chars";
+
+  is URI::Fast::encode(undef), "", "encode: undef";
+  is URI::Fast::decode(undef), "", "decode: undef";
 };
 
 subtest 'negative path' => sub {
