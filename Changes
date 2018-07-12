@@ -1,5 +1,7 @@
 0.39 2018-??-??
 -behavior: passing undef to encode/decode no longer issues a warning
+-bugfix: some setters emit a warning and do not clear member when passed undef
+-bugfix: some setters were not properly handling magic
 
 0.38 2018-07-09
 -behavior: uri_t->path increased from 1024 bytes to 2048

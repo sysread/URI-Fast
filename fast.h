@@ -52,6 +52,7 @@
 
 #define URI_SIMPLE_SETTER(member, allowed) \
 static void set_##member(pTHX_ SV *uri_obj, SV *sv_value) { \
+  SvGETMAGIC(sv_value); \
   if (SvOK(sv_value)) { \
     int truncated = 0; \
     size_t len_value, len_enc; \
@@ -63,7 +64,7 @@ static void set_##member(pTHX_ SV *uri_obj, SV *sv_value) { \
     if (truncated) croak("set_" #member ": input string is larger than supported by URI::Fast"); \
   } \
   else { \
-    URI_MEMBER(uri_obj, member)[0] = '\0'; \
+    Zero(URI_MEMBER(uri_obj, member), URI_SIZE(member), char); \
   } \
 }
 

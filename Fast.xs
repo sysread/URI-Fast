@@ -408,9 +408,7 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
   SV* value;
 
   // Read key to search
-  SvGETMAGIC(sv_key);
-
-  if (!SvOK(sv_key)) {
+  if (!SvTRUE(sv_key)) {
     croak("get_param: expected key to search");
   }
   else {
@@ -463,11 +461,18 @@ URI_SIMPLE_SETTER(pwd,    URI_CHARS_USER);
 URI_SIMPLE_SETTER(host,   URI_CHARS_HOST);
 
 static
-void set_port(pTHX_ SV* uri_obj, const char* value) {
-  size_t i, len = strlen(value);
-  int truncated = len > URI_SIZE_port ? 1 : 0;
+void set_port(pTHX_ SV *uri_obj, SV *sv_value) {
+  Zero(URI_MEMBER(uri_obj, port), URI_SIZE_port, char);
 
-  for (i = 0; i < minnum(URI_SIZE_port, len); ++i) {
+  if (!SvTRUE(sv_value)) {
+    return;
+  }
+
+  size_t vlen, i;
+  const char *value = SvPV_const(sv_value, vlen);
+  int truncated = vlen > URI_SIZE_port ? 1 : 0;
+
+  for (i = 0; i < minnum(URI_SIZE_port, vlen); ++i) {
     if (isdigit(value[i])) {
       URI_MEMBER(uri_obj, port)[i] = value[i];
     }
@@ -482,18 +487,23 @@ void set_port(pTHX_ SV* uri_obj, const char* value) {
 }
 
 static
-void set_auth(pTHX_ SV *uri_obj, const char *value) {
+void set_auth(pTHX_ SV *uri_obj, SV *sv_value) {
   Zero(URI_MEMBER(uri_obj, usr),  URI_SIZE_usr, char);
   Zero(URI_MEMBER(uri_obj, pwd),  URI_SIZE_pwd, char);
   Zero(URI_MEMBER(uri_obj, host), URI_SIZE_host, char);
   Zero(URI_MEMBER(uri_obj, port), URI_SIZE_port, char);
 
-  // auth isn't stored as an individual field, so encode to local array and rescan
-  char auth[URI_SIZE_auth];
-  size_t len = uri_encode(value, strlen(value), (char*) &auth, URI_CHARS_AUTH, URI_MEMBER(uri_obj, is_iri));
+  if (SvTRUE(sv_value)) {
+    size_t vlen;
+    const char *value = SvPV_const(sv_value, vlen);
 
-  if (uri_scan_auth(aTHX_ URI(uri_obj), auth, len)) {
-    croak("set_auth: one or more authority section inputs is larger than supported by URI::Fast");
+    // auth isn't stored as an individual field, so encode to local array and rescan
+    char auth[URI_SIZE_auth];
+    size_t len = uri_encode(value, vlen, (char*) &auth, URI_CHARS_AUTH, URI_MEMBER(uri_obj, is_iri));
+
+    if (uri_scan_auth(aTHX_ URI(uri_obj), auth, len)) {
+      croak("set_auth: one or more authority section inputs is larger than supported by URI::Fast");
+    }
   }
 }
 
@@ -504,6 +514,12 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
   size_t i, av_idx, seg_len, wrote, idx;
   const char *seg;
   char out[URI_SIZE_path];
+
+  Zero(URI_MEMBER(uri_obj, path), URI_SIZE_path, char);
+
+  if (!SvTRUE(sv_path)) {
+    return;
+  }
 
   // Inspect input array
   av_path = (AV*) SvRV(sv_path);
@@ -520,12 +536,10 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
     // Fetch next segment
     refval = av_fetch(av_path, (SSize_t) i, 0);
     if (refval == NULL) continue;
-    if (!SvOK(*refval)) continue;
+    if (!SvTRUE(*refval)) continue;
 
     // Copy value over
-    SvGETMAGIC(*refval);
-
-    if (SvOK(*refval)) {
+    if (SvTRUE(*refval)) {
       seg = SvPV_nomg_const(*refval, seg_len);
 
       // Convert octets to utf8 if necessary
@@ -548,7 +562,7 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
 }
 
 static
-void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
+void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, SV *sv_separator) {
   HE     *ent;
   HV     *keys, *enc_keys;
   I32    iterlen, i, klen;
@@ -559,10 +573,15 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
   int    is_iri = URI_MEMBER(uri, is_iri);
   size_t off = 0, qlen = strlen(query);
 
+  size_t slen;
+  const char *separator = SvTRUE(sv_separator) ? SvPV_const(sv_separator, slen) : "&";
+
   uri_query_scanner_t scanner;
   uri_query_token_t   token;
 
   // Validate reference parameters
+  SvGETMAGIC(sv_key_set);
+
   if (!SvROK(sv_key_set) || SvTYPE(SvRV(sv_key_set)) != SVt_PVHV) {
     croak("set_query_keys: expected hash ref");
   }
@@ -610,7 +629,8 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
 
     if (copy) {
       if (off > 0) {
-        dest[off++] = separator;
+        Copy(separator, &dest[off], slen, char);
+        off += slen;
       }
 
       set_str(&dest[off], token.key, token.key_length);
@@ -635,7 +655,8 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
     if (SvTRUE(val)) {
       // Add separator if the new query string is not empty
       if (off > 0) {
-        dest[off++] = separator;
+        Copy(separator, &dest[off], slen, char);
+        off += slen;
       }
 
       set_str(&dest[off], key, klen);
@@ -654,24 +675,32 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, char separator) {
 }
 
 static
-void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
-  int    is_iri = URI_MEMBER(uri, is_iri);
-  char   *key, *strval, *query = URI_MEMBER(uri, query);
-  size_t qlen = strlen(query), klen, vlen, slen, av_idx, i = 0, off = 0;
-  char   dest[URI_SIZE_query];
-  AV     *av_values;
-  SV     **refval;
+void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
+  int is_iri = URI_MEMBER(uri, is_iri);
+  char *strval, *query = URI_MEMBER(uri, query);
+  size_t qlen = strlen(query), vlen, reflen, av_idx, i = 0, off = 0;
+  char dest[URI_SIZE_query];
+  AV *av_values;
+  SV **refval;
   uri_query_scanner_t scanner;
   uri_query_token_t token;
 
+  size_t slen;
+  const char *separator = SvTRUE(sv_separator) ? SvPV_const(sv_separator, slen) : "&";
+
   // Build encoded key string
-  SvGETMAGIC(sv_key);
-  key = SvPV_nomg(sv_key, klen);
+  if (!SvTRUE(sv_key)) {
+    croak("set_param: expected key");
+  }
+
+  size_t klen;
+  const char *key = SvPV_const(sv_key, klen);
   char enc_key[(3 * klen) + 1];
   klen = uri_encode(key, strlen(key), enc_key, ":@?/", is_iri);
 
   // Get array of values to set
   SvGETMAGIC(sv_values);
+
   if (!SvROK(sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
     croak("set_param: expected array of values");
   }
@@ -691,7 +720,8 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
     if (strncmp(enc_key, token.key, maxnum(klen, token.key_length)) != 0) {
       // Add separator if this is not the first key being written
       if (off > 0) {
-        dest[off++] = separator;
+        Copy(separator, &dest[off], slen, char);
+        off += slen;
       }
 
       // Write the key to the buffer
@@ -718,13 +748,16 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
     // Fetch next value from the array
     refval = av_fetch(av_values, (SSize_t) i, 0);
     if (refval == NULL) break;
-    if (!SvOK(*refval)) break;
+    if (!SvTRUE(*refval)) break;
 
     // Break out after hitting the limit of the query slot
     if (off == URI_SIZE_query) break;
 
     // Add separator if needed to separate pairs
-    if (off > 0) dest[off++] = separator;
+    if (off > 0) {
+      Copy(separator, &dest[off], slen, char);
+      off += slen;
+    }
 
     // Break out early if this key would overflow the struct member
     if (off + klen + 1 > URI_SIZE_query) break;
@@ -737,9 +770,9 @@ void set_param(pTHX_ SV* uri, SV* sv_key, SV* sv_values, char separator) {
 
     // Copy value over
     SvGETMAGIC(*refval);
-    strval = SvPV_nomg(*refval, slen);
+    strval = SvPV_nomg(*refval, reflen);
 
-    vlen = uri_encode(strval, slen, &dest[off], ":@?/", is_iri);
+    vlen = uri_encode(strval, reflen, &dest[off], ":@?/", is_iri);
     off += vlen;
   }
 
@@ -837,8 +870,7 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
 
   // Initialize the struct
   Newx(uri, 1, uri_t);
-  //Zero(uri, 1, uri_t);
-  memset(uri, '\0', sizeof(uri_t));
+  Zero(uri, 1, uri_t);
   uri->is_iri = is_iri;
 
   // Build the blessed instance
@@ -848,9 +880,7 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
   SvREADONLY_on(obj);
 
   // Scan the input string to fill the struct
-  SvGETMAGIC(uri_str);
-
-  if (!SvOK(uri_str)) {
+  if (!SvTRUE(uri_str)) {
     src = "";
     len = 0;
   }
@@ -890,9 +920,7 @@ void uri_split(pTHX_ SV* uri) {
   size_t brk = 0;
   size_t len;
 
-  SvGETMAGIC(uri);
-
-  if (!SvOK(uri)) {
+  if (!SvTRUE(uri)) {
     src = "";
     len = 0;
   }
@@ -1182,7 +1210,7 @@ void set_scheme(uri_obj, value)
 
 void set_auth(uri_obj, value)
   SV *uri_obj
-  const char *value
+  SV *value
   CODE:
     set_auth(aTHX_ uri_obj, value);
 
@@ -1230,24 +1258,24 @@ void set_host(uri_obj, value)
 
 void set_port(uri_obj, value)
   SV *uri_obj
-  const char *value
+  SV *value
   CODE:
     set_port(aTHX_ uri_obj, value);
 
-void set_param(uri, sv_key, sv_values, separator)
-  SV* uri
-  SV* sv_key
-  SV* sv_values
-  char separator
+void set_param(uri, sv_key, sv_values, sv_separator)
+  SV *uri
+  SV *sv_key
+  SV *sv_values
+  SV *sv_separator
   CODE:
-    set_param(aTHX_ uri, sv_key, sv_values, separator);
+    set_param(aTHX_ uri, sv_key, sv_values, sv_separator);
 
-void update_query_keyset(uri, sv_key_set, separator)
-  SV* uri
-  SV* sv_key_set
-  char separator
+void update_query_keyset(uri, sv_key_set, sv_separator)
+  SV *uri
+  SV *sv_key_set
+  SV *sv_separator
   CODE:
-    update_query_keyset(aTHX_ uri, sv_key_set, separator);
+    update_query_keyset(aTHX_ uri, sv_key_set, sv_separator);
 
 #-------------------------------------------------------------------------------
 # Extras
