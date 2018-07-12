@@ -1,5 +1,5 @@
 0.39 2018-??-??
--behavior: passing undef to encode/decode no longer issues a warning
+-bugfix: encode and decode no longer emit a warning when passed undef
 -bugfix: some setters emit a warning and do not clear member when passed undef
 -bugfix: some setters were not properly handling magic
 
