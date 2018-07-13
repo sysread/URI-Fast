@@ -18,6 +18,7 @@ t/encoding.t
 t/ipv.t
 t/iri.t
 t/memory.t
+t/misc.t
 t/param.t
 t/parsing.t
 t/path.t
