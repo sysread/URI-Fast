@@ -69,7 +69,7 @@ static void set_##member(pTHX_ SV *uri_obj, SV *sv_value) { \
 }
 
 /*
- * Uses memcpy to copy n bytes from src to dest and null-terminates. The caller
+ * Uses Copy() to copy n bytes from src to dest and null-terminates. The caller
  * must ensure that dest is at least n + 1 bytes long and that src has at least
  * n bytes of data to copy.
  */

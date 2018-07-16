@@ -554,7 +554,7 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
   }
 
   out[idx++] = '\0';
-  Copy(out, URI_MEMBER(uri_obj, path), minnum(URI_SIZE_path, idx), char);
+  set_str(URI_MEMBER(uri_obj, path), out, minnum(URI_SIZE_path, idx));
 
   if (idx > URI_SIZE_path) {
     croak("set_path_array: input is larger than supported by URI::Fast");
@@ -629,7 +629,7 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, SV *sv_separator) {
 
     if (copy) {
       if (off > 0) {
-        Copy(separator, &dest[off], slen, char);
+        set_str(&dest[off], separator, slen);
         off += slen;
       }
 
@@ -655,7 +655,7 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, SV *sv_separator) {
     if (SvTRUE(val)) {
       // Add separator if the new query string is not empty
       if (off > 0) {
-        Copy(separator, &dest[off], slen, char);
+        set_str(&dest[off], separator, slen);
         off += slen;
       }
 
@@ -720,7 +720,7 @@ void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
     if (strncmp(enc_key, token.key, maxnum(klen, token.key_length)) != 0) {
       // Add separator if this is not the first key being written
       if (off > 0) {
-        Copy(separator, &dest[off], slen, char);
+        set_str(&dest[off], separator, slen);
         off += slen;
       }
 
@@ -755,7 +755,7 @@ void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
 
     // Add separator if needed to separate pairs
     if (off > 0) {
-      Copy(separator, &dest[off], slen, char);
+      set_str(&dest[off], separator, slen);
       off += slen;
     }
 
