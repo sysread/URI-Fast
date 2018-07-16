@@ -27,10 +27,10 @@
 #define URI_SIZE_scheme   32UL
 #define URI_SIZE_usr      32UL
 #define URI_SIZE_pwd      32UL
-#define URI_SIZE_host    128UL
+#define URI_SIZE_host     64UL
 #define URI_SIZE_port      8UL
-#define URI_SIZE_path    128UL
-#define URI_SIZE_query   128UL
+#define URI_SIZE_path     64UL
+#define URI_SIZE_query    64UL
 #define URI_SIZE_frag     32UL
 
 // enough to fit all pieces + 3 chars for separators (2 colons + @)

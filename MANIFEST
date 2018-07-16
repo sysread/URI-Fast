@@ -11,6 +11,7 @@ MANIFEST.SKIP
 ppport.h
 query.c
 README.pod
+str.c
 strnspn.c
 t/basics.t
 t/compare.t
