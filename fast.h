@@ -25,13 +25,13 @@
 
 // size constants
 #define URI_SIZE_scheme   32UL
-#define URI_SIZE_path   2048UL
-#define URI_SIZE_query  2048UL
-#define URI_SIZE_frag    128UL
-#define URI_SIZE_usr     128UL
-#define URI_SIZE_pwd     128UL
-#define URI_SIZE_host    512UL
+#define URI_SIZE_usr      32UL
+#define URI_SIZE_pwd      32UL
+#define URI_SIZE_host    128UL
 #define URI_SIZE_port      8UL
+#define URI_SIZE_path    128UL
+#define URI_SIZE_query   128UL
+#define URI_SIZE_frag     32UL
 
 // enough to fit all pieces + 3 chars for separators (2 colons + @)
 #define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
@@ -50,22 +50,27 @@
   )                                     \
 )
 
+#define URI_SIMPLE_CLEARER(member) \
+static void clear_##member(pTHX_ SV *uri_obj) { str_clear(URI_MEMBER(uri_obj, member)); }
+
 #define URI_SIMPLE_SETTER(member, allowed) \
 static void set_##member(pTHX_ SV *uri_obj, SV *sv_value) { \
   SvGETMAGIC(sv_value); \
   if (SvOK(sv_value)) { \
-    int truncated = 0; \
     size_t len_value, len_enc; \
     const char *value = SvPV_const(sv_value, len_value); \
     char enc[len_value * 3]; \
     len_enc = uri_encode(value, len_value, enc, allowed, URI_MEMBER(uri_obj, is_iri)); \
-    if (len_enc > URI_SIZE(member)) truncated = 1; \
-    Copy(enc, URI_MEMBER(uri_obj, member), minnum(URI_SIZE(member), len_enc + 1), char); \
-    if (truncated) croak("set_" #member ": input string is larger than supported by URI::Fast"); \
+    str_set(URI_MEMBER(uri_obj, member), enc, len_enc); \
   } \
   else { \
-    Zero(URI_MEMBER(uri_obj, member), URI_SIZE(member), char); \
+    str_clear(URI_MEMBER(uri_obj, member)); \
   } \
+}
+
+#define URI_SIMPLE_GETTER(member) \
+static SV* get_##member(pTHX_ SV *uri_obj) { \
+  return newSVpvn((URI_MEMBER(uri_obj, member)->length == 0 ? "" : URI_MEMBER(uri_obj, member)->string), URI_MEMBER(uri_obj, member)->length); \
 }
 
 /*

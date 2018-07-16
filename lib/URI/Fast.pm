@@ -263,12 +263,6 @@ the URI segment to be both retrieved and modified.
 Each attribute further has a matching clearer method (C<clear_*>) which unsets
 its value.
 
-Note that because URIs are parsed into a fixed size struct, any method
-(including the constructor) attempting to set a value larger than the max
-allowable size causes the value to be truncated before croaking. If this error
-is caught in an eval, the URI will remain nominally usable in its updated,
-albeit truncated, state.
-
 =head2 scheme
 
 Gets or sets the scheme portion of the URI (e.g. C<http>), excluding C<://>.

@@ -16,9 +16,9 @@ typedef struct {
 } uri_query_token_t;
 
 typedef struct {
-  size_t  length;
-  size_t  cursor;
-  const char   *source;
+  size_t length;
+  size_t cursor;
+  const char *source;
 } uri_query_scanner_t;
 
 void query_scanner_init(
