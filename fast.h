@@ -74,7 +74,7 @@ static void set_##member(pTHX_ SV *uri_obj, SV *sv_value) { \
  * n bytes of data to copy.
  */
 #define set_str(dest, src, n) \
-  memcpy((dest), (src), (n)); \
+  Copy((src), (dest), (n), char); \
   (dest)[n] = '\0';
 
 /*
