@@ -279,23 +279,23 @@ SV* get_auth(pTHX_ SV *uri_obj) {
 
   if (str_len(uri->usr) > 0) {
     if (str_len(uri->pwd) > 0) {
-      sv_catsv_nomg(out, sv_2mortal(get_usr(uri_obj)));
+      sv_catsv_nomg(out, sv_2mortal(get_usr(aTHX_ uri_obj)));
       sv_catpvn(out, ":", 1);
-      sv_catsv_nomg(out, sv_2mortal(get_pwd(uri_obj)));
+      sv_catsv_nomg(out, sv_2mortal(get_pwd(aTHX_ uri_obj)));
       sv_catpvn(out, "@", 1);
     } else {
-      sv_catsv_nomg(out, sv_2mortal(get_usr(uri_obj)));
+      sv_catsv_nomg(out, sv_2mortal(get_usr(aTHX_ uri_obj)));
       sv_catpvn(out, "@", 1);
     }
   }
 
   if (str_len(uri->host) > 0) {
     if (str_len(uri->port) > 0) {
-      sv_catsv_nomg(out, sv_2mortal(get_host(uri_obj)));
+      sv_catsv_nomg(out, sv_2mortal(get_host(aTHX_ uri_obj)));
       sv_catpvn(out, ":", 1);
-      sv_catsv_nomg(out, sv_2mortal(get_port(uri_obj)));
+      sv_catsv_nomg(out, sv_2mortal(get_port(aTHX_ uri_obj)));
     } else {
-      sv_catsv_nomg(out, sv_2mortal(get_host(uri_obj)));
+      sv_catsv_nomg(out, sv_2mortal(get_host(aTHX_ uri_obj)));
     }
   }
 
