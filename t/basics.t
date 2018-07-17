@@ -16,10 +16,10 @@ my @uris = (
 #subtest 'simple' => sub{
 {
   ok my $uri = uri($uris[1]), 'ctor';
+my $frg = $uri->frag;
 my $usr = $uri->usr;
 
   is $uri->scheme, 'http', 'scheme';
-  is $uri->auth, 'www.test.com', 'auth';
   is $uri->path, '', 'path';
   is [$uri->path], [], 'path';
   ok !$uri->query, 'query';
@@ -29,6 +29,8 @@ my $usr = $uri->usr;
   ok !$uri->pwd, 'pwd';
   is $uri->host, 'www.test.com', 'host';
   ok !$uri->port, 'port';
+
+  is $uri->auth, 'www.test.com', 'auth';
 
 #  subtest 'whitespace' => sub{
   {
