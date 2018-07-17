@@ -101,6 +101,9 @@ void str_free(pTHX_ uri_str_t *str) {
   Safefree(str);
 }
 
+/*
+ * Misc utilities
+ */
 // returns true for an ASCII whitespace char
 static inline
 bool my_isspace(const char c) {
