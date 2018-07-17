@@ -73,7 +73,6 @@ static SV* get_raw_##member(pTHX_ SV *uri) { \
 // Defines a getter method that returns the decoded value of the member slot.
 #define URI_SIMPLE_GETTER(member) \
 static SV* get_##member(pTHX_ SV *uri) { \
-warn("    get_" #member "[%lu/%lu] %s\n", URI_MEMBER(uri, member)->length, URI_MEMBER(uri, member)->allocated, URI_MEMBER(uri, member)->string); \
   if (URI_MEMBER(uri, member)->length == 0) return newSVpvn("", 0); \
   char decoded[ URI_MEMBER(uri, member)->length ]; \
   size_t len = uri_decode(URI_MEMBER(uri, member)->string, URI_MEMBER(uri, member)->length, decoded, ""); \
@@ -87,12 +86,9 @@ warn("    get_" #member "[%lu/%lu] %s\n", URI_MEMBER(uri, member)->length, URI_M
 // characters encoded.
 #define URI_COMPOUND_GETTER(member) \
 static SV* get_##member(pTHX_ SV *uri) { \
+  if (URI_MEMBER(uri, member)->length == 0) return newSVpvn("", 0); \
   char decoded[ URI_MEMBER(uri, member)->length ]; \
-  size_t len = uri_decode_utf8( \
-    URI_MEMBER(uri, member)->string, \
-    URI_MEMBER(uri, member)->length, \
-    decoded \
-  ); \
+  size_t len = uri_decode_utf8(URI_MEMBER(uri, member)->string, URI_MEMBER(uri, member)->length, decoded); \
   SV *out = newSVpvn(decoded, len); \
   sv_utf8_decode(out); \
   return out; \
