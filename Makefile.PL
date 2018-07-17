@@ -26,7 +26,6 @@ WriteMakefile(
   MIN_PERL_VERSION => '5.010',
   PREREQ_PRINT     => 1,
   OPTIMIZE         => $OPTIMIZE,
-  DEFINE           => '-D_FORTIFY_SOURCE=2',
 
   META_MERGE => {
     'meta-spec' => {
