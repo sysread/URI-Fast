@@ -21,16 +21,17 @@ typedef struct {
   char *string;
 } uri_str_t;
 
-inline
+static inline
 size_t str_len(uri_str_t *str) {
   return str->length;
 }
 
-inline
+static inline
 const char *str_get(uri_str_t *str) {
   return (const char*)str->string;
 }
 
+static
 void str_set(pTHX_ uri_str_t *str, const char *value, size_t len) {
   size_t allocate = str->chunk * (((len + 1) / str->chunk) + 1);
 
@@ -54,6 +55,7 @@ void str_set(pTHX_ uri_str_t *str, const char *value, size_t len) {
   }
 }
 
+static
 void str_append(pTHX_ uri_str_t *str, const char *value, size_t len) {
   if (str->string == NULL) {
     str_set(aTHX_ str, value, len);
@@ -74,11 +76,12 @@ void str_append(pTHX_ uri_str_t *str, const char *value, size_t len) {
   }
 }
 
-inline
+static inline
 void str_clear(pTHX_ uri_str_t *str) {
   str_set(aTHX_ str, NULL, 0);
 }
 
+static
 uri_str_t* str_new(pTHX_ size_t alloc_size) {
   uri_str_t *str;
   Newx(str, 1, uri_str_t);
@@ -89,7 +92,7 @@ uri_str_t* str_new(pTHX_ size_t alloc_size) {
   return str;
 }
 
-inline
+static inline
 void str_free(pTHX_ uri_str_t *str) {
   if (str->string != NULL) {
     Safefree(str->string);
