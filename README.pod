@@ -65,10 +65,9 @@ Each attribute further has a matching clearer method (C<clear_*>) which unsets
 its value.
 
 In general, accessors accept an I<unencoded> string and set their slot value to
-the I<encoded> value. They return the decoded value. Any syntactic characters
-in the field will remain encoded (for example, encoded slashes embedded in a
-path segment will remain encoded). There are some caveats to this. See
-L</ENCODING> for an in depth description of their behavior.
+the I<encoded> value. They return the decoded value. See L</ENCODING> for an in
+depth description of their behavior as well as an explanation of the more
+complex behavior of compound fields.
 
 =head2 scheme
 
