@@ -166,7 +166,7 @@ void uri_scan(pTHX_ uri_t *uri, const char *src, size_t len) {
     idx += brk + 1;
 
     // Authority section following scheme must be separated by //
-    if (src[idx] == '/' && src[idx + 1] == '/') {
+    if (idx + 1 < len && src[idx] == '/' && src[idx + 1] == '/') {
       idx += 2;
     }
   }
