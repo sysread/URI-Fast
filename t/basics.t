@@ -13,13 +13,11 @@ my @uris = (
   'https://user:pwd@192.168.0.1:8000/foo/bar?baz=bat&slack=fnord&asdf=the+quick%20brown+fox+%26+hound#foofrag',
 );
 
-#subtest 'simple' => sub{
-{
+subtest 'simple' => sub{
   ok my $uri = uri($uris[1]), 'ctor';
-my $frg = $uri->frag;
-my $usr = $uri->usr;
 
   is $uri->scheme, 'http', 'scheme';
+  is $uri->auth, 'www.test.com', 'auth';
   is $uri->path, '', 'path';
   is [$uri->path], [], 'path';
   ok !$uri->query, 'query';
@@ -30,10 +28,7 @@ my $usr = $uri->usr;
   is $uri->host, 'www.test.com', 'host';
   ok !$uri->port, 'port';
 
-  is $uri->auth, 'www.test.com', 'auth';
-
-#  subtest 'whitespace' => sub{
-  {
+  subtest 'whitespace' => sub{
     ok $uri = uri("   \r\n\t\f  $uris[1]   \r\n\t\f  "), 'ctor';
 
     is $uri->scheme, 'http', 'scheme';
