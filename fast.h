@@ -24,14 +24,14 @@
 #define URI_MEMBER(obj, member) (URI(obj)->member)
 
 // size constants
-#define URI_SIZE_scheme   32UL
-#define URI_SIZE_usr      32UL
-#define URI_SIZE_pwd      32UL
-#define URI_SIZE_host     64UL
-#define URI_SIZE_port      8UL
-#define URI_SIZE_path     64UL
-#define URI_SIZE_query    64UL
-#define URI_SIZE_frag     32UL
+#define URI_SIZE_scheme 32UL
+#define URI_SIZE_usr    32UL
+#define URI_SIZE_pwd    32UL
+#define URI_SIZE_host   64UL
+#define URI_SIZE_port    8UL
+#define URI_SIZE_path   64UL
+#define URI_SIZE_query  64UL
+#define URI_SIZE_frag   32UL
 
 // enough to fit all pieces + 3 chars for separators (2 colons + @)
 #define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
@@ -39,38 +39,66 @@
 // returns the size of the member in bytes
 #define URI_SIZE(member) (URI_SIZE_##member)
 
-// quick sugar for calling uri_encode
-#define URI_ENCODE_MEMBER(uri, mem, val, allow) (\
-  uri_encode(                           \
-    (val),                              \
-    minnum(strlen(val), URI_SIZE(mem)), \
-    URI_MEMBER((uri), mem),             \
-    (allow),                            \
-    URI_MEMBER((uri), is_iri)           \
-  )                                     \
-)
-
+// defines a clearer method
 #define URI_SIMPLE_CLEARER(member) \
-static void clear_##member(pTHX_ SV *uri_obj) { str_clear(URI_MEMBER(uri_obj, member)); }
+static void clear_##member(pTHX_ SV *uri) { \
+  str_clear(URI_MEMBER(uri, member)); \
+}
 
+// Defines a setter method that accepts an unencoded value, encodes it,
+// ignoring characters in string 'allowed', and copies the encoded value into
+// slot 'member'.
 #define URI_SIMPLE_SETTER(member, allowed) \
-static void set_##member(pTHX_ SV *uri_obj, SV *sv_value) { \
+static void set_##member(pTHX_ SV *uri, SV *sv_value) { \
   SvGETMAGIC(sv_value); \
   if (SvOK(sv_value)) { \
     size_t len_value, len_enc; \
     const char *value = SvPV_const(sv_value, len_value); \
     char enc[len_value * 3]; \
-    len_enc = uri_encode(value, len_value, enc, allowed, URI_MEMBER(uri_obj, is_iri)); \
-    str_set(URI_MEMBER(uri_obj, member), enc, len_enc); \
+    len_enc = uri_encode(value, len_value, enc, allowed, URI_MEMBER(uri, is_iri)); \
+    str_set(URI_MEMBER(uri, member), enc, len_enc); \
   } \
   else { \
-    str_clear(URI_MEMBER(uri_obj, member)); \
+    str_clear(URI_MEMBER(uri, member)); \
   } \
 }
 
+// Defines a getter method that returns the raw, encoded value of the member slot.
+#define URI_RAW_GETTER(member) \
+static SV* get_raw_##member(pTHX_ SV *uri) { \
+  uri_str_t *str = URI_MEMBER(uri, member); \
+  return newSVpvn(str->length == 0 ? "" : str->string, str->length); \
+}
+
+// Defines a getter method that returns the decoded value of the member slot.
 #define URI_SIMPLE_GETTER(member) \
-static SV* get_##member(pTHX_ SV *uri_obj) { \
-  return newSVpvn((URI_MEMBER(uri_obj, member)->length == 0 ? "" : URI_MEMBER(uri_obj, member)->string), URI_MEMBER(uri_obj, member)->length); \
+static SV* get_##member(pTHX_ SV *uri) { \
+  char decoded[ URI_MEMBER(uri, member)->length ]; \
+  size_t len = uri_decode( \
+    URI_MEMBER(uri, member)->string, \
+    URI_MEMBER(uri, member)->length, \
+    decoded, \
+    "" \
+  ); \
+  SV *out = newSVpvn(decoded, len); \
+  sv_utf8_decode(out); \
+  return out; \
+}
+
+// Defines a getter method for a structured field that returns the value of the
+// member slot with non-ASCII character decoded, while leaving reserved
+// characters encoded.
+#define URI_COMPOUND_GETTER(member) \
+static SV* get_##member(pTHX_ SV *uri) { \
+  char decoded[ URI_MEMBER(uri, member)->length ]; \
+  size_t len = uri_decode_utf8( \
+    URI_MEMBER(uri, member)->string, \
+    URI_MEMBER(uri, member)->length, \
+    decoded \
+  ); \
+  SV *out = newSVpvn(decoded, len); \
+  sv_utf8_decode(out); \
+  return out; \
 }
 
 /*

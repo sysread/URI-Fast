@@ -213,25 +213,19 @@ void uri_scan(pTHX_ uri_t *uri, const char *src, size_t len) {
 /*
  * Getters
  */
-URI_SIMPLE_GETTER(scheme);
-URI_SIMPLE_GETTER(query);
-URI_SIMPLE_GETTER(frag);
-URI_SIMPLE_GETTER(usr);
-URI_SIMPLE_GETTER(pwd);
-URI_SIMPLE_GETTER(host);
-URI_SIMPLE_GETTER(port);
+
+// Raw getters
+URI_RAW_GETTER(scheme);
+URI_RAW_GETTER(usr);
+URI_RAW_GETTER(pwd);
+URI_RAW_GETTER(host);
+URI_RAW_GETTER(port);
+URI_RAW_GETTER(path);
+URI_RAW_GETTER(query);
+URI_RAW_GETTER(frag);
 
 static
-SV* get_path(pTHX_ SV *uri_obj) {
-  char buf[str_len(URI_MEMBER(uri_obj, path)) + 1];
-  size_t len = uri_decode(str_get(URI_MEMBER(uri_obj, path)), str_len(URI_MEMBER(uri_obj, path)), buf, "/");
-  SV *out = newSVpvn(buf, len);
-  sv_utf8_decode(out);
-  return out;
-}
-
-static
-SV* get_auth(pTHX_ SV *uri_obj) {
+SV* get_raw_auth(pTHX_ SV *uri_obj) {
   uri_t *uri = URI(uri_obj);
   SV *out = newSVpvn("", 0);
 
@@ -258,6 +252,50 @@ SV* get_auth(pTHX_ SV *uri_obj) {
       sv_catpvn(out, str_get(uri->port), str_len(uri->port));
     } else {
       sv_catpvn(out, str_get(uri->host), str_len(uri->host));
+    }
+  }
+
+  return out;
+}
+
+// Decoding getters
+URI_SIMPLE_GETTER(scheme);
+URI_SIMPLE_GETTER(usr);
+URI_SIMPLE_GETTER(pwd);
+URI_SIMPLE_GETTER(host);
+URI_SIMPLE_GETTER(port);
+URI_SIMPLE_GETTER(frag);
+URI_COMPOUND_GETTER(path);
+URI_COMPOUND_GETTER(query);
+
+static
+SV* get_auth(pTHX_ SV *uri_obj) {
+  uri_t *uri = URI(uri_obj);
+  SV *out = newSVpvn("", 0);
+
+  if (uri->is_iri) {
+    SvUTF8_on(out);
+  }
+
+  if (str_len(uri->usr) > 0) {
+    if (str_len(uri->pwd) > 0) {
+      sv_catsv_nomg(out, sv_2mortal(get_usr(uri_obj)));
+      sv_catpvn(out, ":", 1);
+      sv_catsv_nomg(out, sv_2mortal(get_pwd(uri_obj)));
+      sv_catpvn(out, "@", 1);
+    } else {
+      sv_catsv_nomg(out, sv_2mortal(get_usr(uri_obj)));
+      sv_catpvn(out, "@", 1);
+    }
+  }
+
+  if (str_len(uri->host) > 0) {
+    if (str_len(uri->port) > 0) {
+      sv_catsv_nomg(out, sv_2mortal(get_host(uri_obj)));
+      sv_catpvn(out, ":", 1);
+      sv_catsv_nomg(out, sv_2mortal(get_port(uri_obj)));
+    } else {
+      sv_catsv_nomg(out, sv_2mortal(get_host(uri_obj)));
     }
   }
 
@@ -1047,9 +1085,74 @@ void clear_auth(uri_obj)
   CODE:
     clear_auth(aTHX_ uri_obj);
 
+#-------------------------------------------------------------------------------
+# Raw getters
+#-------------------------------------------------------------------------------
+SV* raw_scheme(uri_obj)
+  SV *uri_obj
+  CODE:
+    RETVAL = get_raw_scheme(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+SV* raw_auth(uri_obj)
+  SV *uri_obj
+  CODE:
+    RETVAL = get_raw_auth(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+SV* raw_path(uri_obj)
+  SV *uri_obj
+  CODE:
+    RETVAL = get_raw_path(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+SV* raw_query(uri_obj)
+  SV *uri_obj
+  CODE:
+    RETVAL = get_raw_query(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+SV* raw_frag(uri_obj)
+  SV *uri_obj
+  CODE:
+    RETVAL = get_raw_frag(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+SV* raw_usr(uri_obj)
+  SV *uri_obj
+  CODE:
+    RETVAL = get_raw_usr(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+SV* raw_pwd(uri_obj)
+  SV *uri_obj
+  CODE:
+    RETVAL = get_raw_pwd(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+SV* raw_host(uri_obj)
+  SV *uri_obj
+  CODE:
+    RETVAL = get_raw_host(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+SV* raw_port(uri_obj)
+  SV *uri_obj
+  CODE:
+    RETVAL = get_raw_port(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
 
 #-------------------------------------------------------------------------------
-# Simple getters
+# Decoding getters
 #-------------------------------------------------------------------------------
 SV* get_scheme(uri_obj)
   SV *uri_obj

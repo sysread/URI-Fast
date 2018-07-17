@@ -159,6 +159,37 @@ size_t uri_decode(const char *in, size_t len, char *out, const char *ignore) {
   return j;
 }
 
+static
+size_t uri_decode_utf8(const char *in, size_t len, char *out) {
+  size_t i = 0, j = 0;
+  char decoded;
+
+  while (i < len) {
+    decoded = '\0';
+
+    switch (in[i]) {
+      case '%':
+        if (i + 2 < len) {
+          decoded = unhex( &in[i + 1] );
+          if (decoded != '\0' && (U32)decoded > 127) {
+            i += 3;
+            break;
+          }
+        }
+      default:
+        decoded = in[i++];
+    }
+
+    if (decoded != '\0') {
+      out[j++] = decoded;
+    }
+  }
+
+  out[j] = '\0';
+
+  return j;
+}
+
 // EOT (end of theft)
 static
 SV* encode(pTHX_ SV *in, SV *sv_allowed) {
