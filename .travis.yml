@@ -13,30 +13,22 @@ env:
   SPLIT_BUILD=0
 
 perl:
-  - "5.10"
-  - "5.12"
-  - "5.14"
-  - "5.16"
-  - "5.18"
-  - "5.20"
-  - "5.22"
-  - "5.24"
-  - "5.26"
-  - "5.26-shrplib"
+#  - "5.10"
+#  - "5.12"
+#  - "5.14"
+#  - "5.16"
+#  - "5.18"
+#  - "5.20"
+#  - "5.22"
+#  - "5.24"
+#  - "5.26"
+#  - "5.26-shrplib"
 
 #before_install:
 #  - eval $(curl https://travis-perl.github.io/init) --auto --always-upgrade-modules
 
-before_install:
-  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
-  - source ~/travis-perl-helpers/init
-  - build-perl
-  - perl -V
-
-install:
-  - cpanm --notest --self-contained --installdeps .
-
 script:
   - perl Makefile.PL
+  - cpanm --notest --self-contained --installdeps .
   - make
   - prove -lmv -j1 t
