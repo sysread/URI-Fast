@@ -42,7 +42,7 @@
 // defines a clearer method
 #define URI_SIMPLE_CLEARER(member) \
 static void clear_##member(pTHX_ SV *uri) { \
-  str_clear(URI_MEMBER(uri, member)); \
+  str_clear(aTHX_ URI_MEMBER(uri, member)); \
 }
 
 // Defines a setter method that accepts an unencoded value, encodes it,
@@ -56,10 +56,10 @@ static void set_##member(pTHX_ SV *uri, SV *sv_value) { \
     const char *value = SvPV_const(sv_value, len_value); \
     char enc[len_value * 3]; \
     len_enc = uri_encode(value, len_value, enc, allowed, URI_MEMBER(uri, is_iri)); \
-    str_set(URI_MEMBER(uri, member), enc, len_enc); \
+    str_set(aTHX_ URI_MEMBER(uri, member), enc, len_enc); \
   } \
   else { \
-    str_clear(URI_MEMBER(uri, member)); \
+    str_clear(aTHX_ URI_MEMBER(uri, member)); \
   } \
 }
 
@@ -100,15 +100,6 @@ static SV* get_##member(pTHX_ SV *uri) { \
   sv_utf8_decode(out); \
   return out; \
 }
-
-/*
- * Uses Copy() to copy n bytes from src to dest and null-terminates. The caller
- * must ensure that dest is at least n + 1 bytes long and that src has at least
- * n bytes of data to copy.
- */
-#define set_str(dest, src, n) \
-  Copy((src), (dest), (n), char); \
-  (dest)[n] = '\0';
 
 /*
  * Allocate memory with Newx if it's

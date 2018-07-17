@@ -18,7 +18,7 @@ const char *str_get(uri_str_t *str) {
   return (const char*)str->string;
 }
 
-void str_set(uri_str_t *str, const char *value, size_t len) {
+void str_set(pTHX_ uri_str_t *str, const char *value, size_t len) {
   size_t allocate = str->chunk * (((len + 1) / str->chunk) + 1);
 
   if (str->string == NULL) {
@@ -41,9 +41,9 @@ void str_set(uri_str_t *str, const char *value, size_t len) {
   }
 }
 
-void str_append(uri_str_t *str, const char *value, size_t len) {
+void str_append(pTHX_ uri_str_t *str, const char *value, size_t len) {
   if (str->string == NULL) {
-    str_set(str, value, len);
+    str_set(aTHX_ str, value, len);
     return;
   }
 
@@ -62,11 +62,11 @@ void str_append(uri_str_t *str, const char *value, size_t len) {
 }
 
 inline
-void str_clear(uri_str_t *str) {
-  str_set(str, NULL, 0);
+void str_clear(pTHX_ uri_str_t *str) {
+  str_set(aTHX_ str, NULL, 0);
 }
 
-uri_str_t* str_new(size_t alloc_size) {
+uri_str_t* str_new(pTHX_ size_t alloc_size) {
   uri_str_t *str;
   Newx(str, 1, uri_str_t);
   str->chunk = alloc_size;
@@ -77,7 +77,7 @@ uri_str_t* str_new(size_t alloc_size) {
 }
 
 inline
-void str_free(uri_str_t *str) {
+void str_free(pTHX_ uri_str_t *str) {
   if (str->string != NULL) {
     Safefree(str->string);
   }
