@@ -1,5 +1,12 @@
 #ifndef URI
 
+#define PERL_NO_GET_CONTEXT
+
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+#include "ppport.h"
+
 // permitted characters
 #define URI_CHARS_NONE          ""
 #define URI_CHARS_AUTH          "!$&'()*+,;:=@"

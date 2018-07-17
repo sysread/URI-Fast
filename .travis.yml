@@ -9,6 +9,10 @@ cache:
   directories:
     - ~/perl5
 
+env:
+  SPLIT_BUILD = 0
+  TRAVIS_PERL_DEBUG = 1
+
 perl:
   - "5.10"
   - "5.12"
