@@ -11,7 +11,6 @@ cache:
 
 env:
   SPLIT_BUILD=0
-  TRAVIS_PERL_DEBUG=1
 
 perl:
   - "5.10"
@@ -40,4 +39,4 @@ install:
 script:
   - perl Makefile.PL
   - make
-  - make test TEST_VERBOSE=1
+  - prove -lmv -j1 t
