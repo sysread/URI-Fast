@@ -34,6 +34,7 @@ perl:
 #  - perl -V
 
 script:
+  - ulimit -a
   - perl -V
   - perl Makefile.PL
   - cpanm --notest --self-contained --installdeps .

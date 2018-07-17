@@ -16,6 +16,7 @@ my @uris = (
 #subtest 'simple' => sub{
 {
   ok my $uri = uri($uris[1]), 'ctor';
+$uri->usr;
 
   is $uri->scheme, 'http', 'scheme';
   is $uri->auth, 'www.test.com', 'auth';
@@ -24,15 +25,10 @@ my @uris = (
   ok !$uri->query, 'query';
   ok !$uri->frag, 'frag';
 
-warn 1;
   ok !$uri->usr, 'usr';
-warn 2;
   ok !$uri->pwd, 'pwd';
-warn 3;
   is $uri->host, 'www.test.com', 'host';
-warn 4;
   ok !$uri->port, 'port';
-warn 5;
 
 #  subtest 'whitespace' => sub{
   {
