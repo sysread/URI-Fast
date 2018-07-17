@@ -21,6 +21,3 @@ perl:
   - "5.26"
   - "5.26-shrplib"
   - "5.28"
-
-before_install:
-  - eval $(curl https://travis-perl.github.io/init) --auto
