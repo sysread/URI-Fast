@@ -1,4 +1,5 @@
 #include "fast.h"
+#include "ppport.h"
 
 static inline
 bool char_in_str(const char c, const char *set) {
