@@ -74,18 +74,11 @@ static SV* get_raw_##member(pTHX_ SV *uri) { \
 #define URI_SIMPLE_GETTER(member) \
 static SV* get_##member(pTHX_ SV *uri) { \
 warn("    get_" #member "[%lu/%lu] %s\n", URI_MEMBER(uri, member)->length, URI_MEMBER(uri, member)->allocated, URI_MEMBER(uri, member)->string); \
+  if (URI_MEMBER(uri, member)->length == 0) return newSVpvn("", 0); \
   char decoded[ URI_MEMBER(uri, member)->length ]; \
-  size_t len = uri_decode( \
-    URI_MEMBER(uri, member)->string, \
-    URI_MEMBER(uri, member)->length, \
-    decoded, \
-    "" \
-  ); \
-warn("        decoded [%lu]: %s\n", len, decoded); \
+  size_t len = uri_decode(URI_MEMBER(uri, member)->string, URI_MEMBER(uri, member)->length, decoded, ""); \
   SV *out = newSVpvn(decoded, len); \
-warn("            -newSVpvn\n"); \
   sv_utf8_decode(out); \
-warn("            -sv_utf8_decode\n"); \
   return out; \
 }
 
