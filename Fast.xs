@@ -861,7 +861,7 @@ SV* get_auth(pTHX_ SV *uri_obj) {
       sv_catsv(out, sv_2mortal(get_pwd(aTHX_ uri_obj)));
       sv_catpvn(out, "@", 1);
     } else {
-      sv_catsv_nomg(out, sv_2mortal(get_usr(aTHX_ uri_obj)));
+      sv_catsv(out, sv_2mortal(get_usr(aTHX_ uri_obj)));
       sv_catpvn(out, "@", 1);
     }
   }
