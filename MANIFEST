@@ -1,5 +1,4 @@
 Changes
-fast.h
 Fast.xs
 lib/URI/Fast.pm
 lib/URI/Fast/Benchmarks.pod
@@ -9,10 +8,7 @@ Makefile.PL
 MANIFEST
 MANIFEST.SKIP
 ppport.h
-query.c
 README.pod
-str.c
-strnspn.c
 t/basics.t
 t/compare.t
 t/encoding.t
@@ -26,4 +22,3 @@ t/path.t
 t/query_keyset.t
 t/test.t
 t/tied.t
-urlencode.c

@@ -1,8 +1,153 @@
-#include "fast.h"
-#include "strnspn.c"
-#include "query.c"
-#include "urlencode.c"
-#include "str.c"
+#define PERL_NO_GET_CONTEXT
+
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+#include "ppport.h"
+
+/*------------------------------------------------------------------------------
+ *
+ * Macros and definitions
+ *
+ -----------------------------------------------------------------------------*/
+
+// permitted characters
+#define URI_CHARS_AUTH          "!$&'()*+,;:=@"
+#define URI_CHARS_PATH          "!$&'()*+,;:=@/"
+#define URI_CHARS_PATH_SEGMENT  "!$&'()*+,;:=@"
+#define URI_CHARS_HOST          "!$&'()[]*+,.;=@/"
+#define URI_CHARS_QUERY         ":@?/&=;"
+#define URI_CHARS_FRAG          ":@?/"
+#define URI_CHARS_USER          "!$&'()*+,;="
+
+// return uri_t* from blessed pointer ref
+#define URI(obj) ((uri_t*) SvIV(SvRV( (obj) )))
+
+// expands to member reference
+#define URI_MEMBER(obj, member) (URI(obj)->member)
+
+// size constants
+#define URI_SIZE_scheme 32UL
+#define URI_SIZE_usr    32UL
+#define URI_SIZE_pwd    32UL
+#define URI_SIZE_host   64UL
+#define URI_SIZE_port    8UL
+#define URI_SIZE_path   64UL
+#define URI_SIZE_query  64UL
+#define URI_SIZE_frag   32UL
+
+// enough to fit all pieces + 3 chars for separators (2 colons + @)
+#define URI_SIZE_auth (3 + URI_SIZE_usr + URI_SIZE_pwd + URI_SIZE_host + URI_SIZE_port)
+
+// returns the size of the member in bytes
+#define URI_SIZE(member) (URI_SIZE_##member)
+
+// defines a clearer method
+#define URI_SIMPLE_CLEARER(member) \
+static void clear_##member(pTHX_ SV *uri) { \
+  str_clear(aTHX_ URI_MEMBER(uri, member)); \
+}
+
+// Defines a setter method that accepts an unencoded value, encodes it,
+// ignoring characters in string 'allowed', and copies the encoded value into
+// slot 'member'.
+#define URI_SIMPLE_SETTER(member, allowed) \
+static void set_##member(pTHX_ SV *uri, SV *sv_value) { \
+  SvGETMAGIC(sv_value); \
+  if (SvOK(sv_value)) { \
+    size_t len_value, len_enc; \
+    const char *value = SvPV_const(sv_value, len_value); \
+    char enc[len_value * 3]; \
+    len_enc = uri_encode(value, len_value, enc, allowed, URI_MEMBER(uri, is_iri)); \
+    str_set(aTHX_ URI_MEMBER(uri, member), enc, len_enc); \
+  } \
+  else { \
+    str_clear(aTHX_ URI_MEMBER(uri, member)); \
+  } \
+}
+
+// Defines a getter method that returns the raw, encoded value of the member slot.
+#define URI_RAW_GETTER(member) \
+static SV* get_raw_##member(pTHX_ SV *uri) { \
+  uri_str_t *str = URI_MEMBER(uri, member); \
+  return newSVpvn(str->length == 0 ? "" : str->string, str->length); \
+}
+
+// Defines a getter method that returns the decoded value of the member slot.
+#define URI_SIMPLE_GETTER(member) \
+static SV* get_##member(pTHX_ SV *uri) { \
+  if (URI_MEMBER(uri, member)->length == 0) return newSVpvn("", 0); \
+  char decoded[ URI_MEMBER(uri, member)->length ]; \
+  size_t len = uri_decode(URI_MEMBER(uri, member)->string, URI_MEMBER(uri, member)->length, decoded, ""); \
+  SV *out = newSVpvn(decoded, len); \
+  sv_utf8_decode(out); \
+  return out; \
+}
+
+// Defines a getter method for a structured field that returns the value of the
+// member slot with non-ASCII character decoded, while leaving reserved
+// characters encoded.
+#define URI_COMPOUND_GETTER(member) \
+static SV* get_##member(pTHX_ SV *uri) { \
+  if (URI_MEMBER(uri, member)->length == 0) return newSVpvn("", 0); \
+  char decoded[ URI_MEMBER(uri, member)->length ]; \
+  size_t len = uri_decode_utf8(URI_MEMBER(uri, member)->string, URI_MEMBER(uri, member)->length, decoded); \
+  SV *out = newSVpvn(decoded, len); \
+  sv_utf8_decode(out); \
+  return out; \
+}
+
+/*
+ * Allocate memory with Newx if it's
+ * available - if it's an older perl
+ * that doesn't have Newx then we
+ * resort to using New.
+ */
+#ifndef Newx
+#define Newx(v,n,t) New(0,v,n,t)
+#endif
+
+// av_top_index not available on Perls < 5.18
+#ifndef av_top_index
+#define av_top_index(av) av_len(av)
+#endif
+
+/*------------------------------------------------------------------------------
+ *
+ * Internal API
+ *
+ -----------------------------------------------------------------------------*/
+
+/*------------------------------------------------------------------------------
+ * Utilities
+ -----------------------------------------------------------------------------*/
+
+static
+size_t strnspn(const char *s, size_t s_len, const char *c)
+{
+  size_t res = strspn(s, c);
+  return s_len < res ? s_len : res;
+}
+
+static
+size_t strncspn(const char *s, size_t s_len, const char *c)
+{
+  size_t res = strcspn(s, c);
+  return s_len < res ? s_len : res;
+}
+
+static inline
+bool char_in_str(const char c, const char *set) {
+  size_t i;
+
+  for (i = 0; set[i] != '\0'; ++i) {
+    if (set[i] == c) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
 
 // returns true for an ASCII whitespace char
 static inline
@@ -29,21 +174,446 @@ size_t maxnum(size_t x, size_t y) {
   return x >= y ? x : y;
 }
 
-/*
- * Internal API
- */
-typedef char uri_scheme_t [URI_SIZE_scheme + 1];
-typedef char uri_path_t   [URI_SIZE_path + 1];
-typedef char uri_query_t  [URI_SIZE_query + 1];
-typedef char uri_frag_t   [URI_SIZE_frag + 1];
-typedef char uri_usr_t    [URI_SIZE_usr + 1];
-typedef char uri_pwd_t    [URI_SIZE_pwd + 1];
-typedef char uri_host_t   [URI_SIZE_host + 1];
-typedef char uri_port_t   [URI_SIZE_port + 1];
-typedef int  uri_is_iri_t;
+
+/*------------------------------------------------------------------------------
+ * Resizable strings
+ -----------------------------------------------------------------------------*/
+typedef struct {
+  size_t chunk;
+  size_t allocated;
+  size_t length;
+  char *string;
+} uri_str_t;
+
+static inline
+size_t str_len(uri_str_t *str) {
+  return str->length;
+}
+
+static inline
+const char *str_get(uri_str_t *str) {
+  return (const char*)str->string;
+}
+
+static
+void str_set(pTHX_ uri_str_t *str, const char *value, size_t len) {
+  size_t allocate = str->chunk * (((len + 1) / str->chunk) + 1);
+
+  if (str->string == NULL) {
+    Newx(str->string, allocate, char);
+    str->allocated = allocate;
+  }
+  else if (len > str->allocated) {
+    Renew(str->string, allocate, char);
+    str->allocated = allocate;
+  }
+
+  if (value == NULL) {
+    Zero(str->string, len + 1, char);
+    str->length = 0;
+  }
+  else {
+    Copy(value, str->string, len, char);
+    str->string[len] = '\0';
+    str->length = len;
+  }
+}
+
+static
+void str_append(pTHX_ uri_str_t *str, const char *value, size_t len) {
+  if (str->string == NULL) {
+    str_set(aTHX_ str, value, len);
+    return;
+  }
+
+  if (value != NULL) {
+    size_t allocate = str->chunk * (((str->length + len + 1) / str->chunk) + 1);
+
+    if (allocate != str->allocated) {
+      Renew(str->string, allocate, char);
+      str->allocated = allocate;
+    }
+
+    Copy(value, &str->string[str->length], len, char);
+    str->string[str->length + len] = '\0';
+    str->length += len;
+  }
+}
+
+static
+void str_clear(pTHX_ uri_str_t *str) {
+  str_set(aTHX_ str, NULL, 0);
+}
+
+static
+uri_str_t* str_new(pTHX_ size_t alloc_size) {
+  uri_str_t *str;
+  Newx(str, 1, uri_str_t);
+  str->chunk = alloc_size;
+  str->allocated = 0;
+  str->length = 0;
+  str->string = NULL;
+  return str;
+}
+
+static
+void str_free(pTHX_ uri_str_t *str) {
+  if (str->string != NULL) {
+    Safefree(str->string);
+  }
+
+  Safefree(str);
+}
+
+
+/*-------------------------------------------------------------------------------
+ * Percent encoding
+ -----------------------------------------------------------------------------*/
+
+// Taken with respect from URI::Escape::XS. Adapted to accept a configurable
+// string of permissible characters.
+#define _______ "\0\0\0\0"
+static const char uri_encode_tbl[ sizeof(U32) * 0x100 ] = {
+/*  0       1       2       3       4       5       6       7       8       9       a       b       c       d       e       f                        */
+    "%00\0" "%01\0" "%02\0" "%03\0" "%04\0" "%05\0" "%06\0" "%07\0" "%08\0" "%09\0" "%0A\0" "%0B\0" "%0C\0" "%0D\0" "%0E\0" "%0F\0"  /* 0:   0 ~  15 */
+    "%10\0" "%11\0" "%12\0" "%13\0" "%14\0" "%15\0" "%16\0" "%17\0" "%18\0" "%19\0" "%1A\0" "%1B\0" "%1C\0" "%1D\0" "%1E\0" "%1F\0"  /* 1:  16 ~  31 */
+    "%20\0" "%21\0" "%22\0" "%23\0" "%24\0" "%25\0" "%26\0" "%27\0" "%28\0" "%29\0" "%2A\0" "%2B\0" "%2C\0" _______ _______ "%2F\0"  /* 2:  32 ~  47 */
+    _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ "%3A\0" "%3B\0" "%3C\0" "%3D\0" "%3E\0" "%3F\0"  /* 3:  48 ~  63 */
+    "%40\0" _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______  /* 4:  64 ~  79 */
+    _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ "%5B\0" "%5C\0" "%5D\0" "%5E\0" _______  /* 5:  80 ~  95 */
+    "%60\0" _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______  /* 6:  96 ~ 111 */
+    _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ _______ "%7B\0" "%7C\0" "%7D\0" _______ "%7F\0"  /* 7: 112 ~ 127 */
+    "%80\0" "%81\0" "%82\0" "%83\0" "%84\0" "%85\0" "%86\0" "%87\0" "%88\0" "%89\0" "%8A\0" "%8B\0" "%8C\0" "%8D\0" "%8E\0" "%8F\0"  /* 8: 128 ~ 143 */
+    "%90\0" "%91\0" "%92\0" "%93\0" "%94\0" "%95\0" "%96\0" "%97\0" "%98\0" "%99\0" "%9A\0" "%9B\0" "%9C\0" "%9D\0" "%9E\0" "%9F\0"  /* 9: 144 ~ 159 */
+    "%A0\0" "%A1\0" "%A2\0" "%A3\0" "%A4\0" "%A5\0" "%A6\0" "%A7\0" "%A8\0" "%A9\0" "%AA\0" "%AB\0" "%AC\0" "%AD\0" "%AE\0" "%AF\0"  /* A: 160 ~ 175 */
+    "%B0\0" "%B1\0" "%B2\0" "%B3\0" "%B4\0" "%B5\0" "%B6\0" "%B7\0" "%B8\0" "%B9\0" "%BA\0" "%BB\0" "%BC\0" "%BD\0" "%BE\0" "%BF\0"  /* B: 176 ~ 191 */
+    "%C0\0" "%C1\0" "%C2\0" "%C3\0" "%C4\0" "%C5\0" "%C6\0" "%C7\0" "%C8\0" "%C9\0" "%CA\0" "%CB\0" "%CC\0" "%CD\0" "%CE\0" "%CF\0"  /* C: 192 ~ 207 */
+    "%D0\0" "%D1\0" "%D2\0" "%D3\0" "%D4\0" "%D5\0" "%D6\0" "%D7\0" "%D8\0" "%D9\0" "%DA\0" "%DB\0" "%DC\0" "%DD\0" "%DE\0" "%DF\0"  /* D: 208 ~ 223 */
+    "%E0\0" "%E1\0" "%E2\0" "%E3\0" "%E4\0" "%E5\0" "%E6\0" "%E7\0" "%E8\0" "%E9\0" "%EA\0" "%EB\0" "%EC\0" "%ED\0" "%EE\0" "%EF\0"  /* E: 224 ~ 239 */
+    "%F0\0" "%F1\0" "%F2\0" "%F3\0" "%F4\0" "%F5\0" "%F6\0" "%F7\0" "%F8\0" "%F9\0" "%FA\0" "%FB\0" "%FC\0" "%FD\0" "%FE\0" "%FF"    /* F: 240 ~ 255 */
+};
+#undef _______
+
+static
+size_t uri_encode(const char* in, size_t len, char* out, const char* allow, int allow_utf8) {
+  size_t i = 0;
+  size_t j = 0;
+  size_t k, skip;
+  U8 octet;
+  U32 code;
+
+  while (i < len) {
+    octet = in[i];
+
+    if (allow_utf8 && octet & 0xc0) {
+      skip = UTF8SKIP(&in[i]);
+
+      if (skip > 0) {
+        for (k = 0; k < skip; ++k) {
+          out[j++] = in[i++];
+        }
+
+        continue;
+      }
+    }
+
+    if (char_in_str(octet, allow)) {
+      out[j++] = octet;
+      ++i;
+    }
+    else {
+      code = ((U32*) uri_encode_tbl)[(unsigned char) octet];
+
+      if (code) {
+        *((U32*) &out[j]) = code;
+        j += 3;
+      }
+      else {
+        out[j++] = octet;
+      }
+
+      ++i;
+    }
+  }
+
+  out[j] = '\0';
+
+  return j;
+}
+
+/*-------------------------------------------------------------------------------
+ * Percent decoding
+ -----------------------------------------------------------------------------*/
+
+#define __ 0xFF
+static const unsigned char hex[0x100] = {
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 00-0F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 10-1F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 20-2F */
+   0, 1, 2, 3, 4, 5, 6, 7, 8, 9,__,__,__,__,__,__, /* 30-3F */
+  __,10,11,12,13,14,15,__,__,__,__,__,__,__,__,__, /* 40-4F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 50-5F */
+  __,10,11,12,13,14,15,__,__,__,__,__,__,__,__,__, /* 60-6F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 70-7F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 80-8F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* 90-9F */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* A0-AF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* B0-BF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* C0-CF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* D0-DF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* E0-EF */
+  __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__, /* F0-FF */
+};
+#undef __
+
+static inline
+char unhex(const char *in) {
+  unsigned char v1 = hex[ (unsigned char) in[0] ];
+  unsigned char v2 = hex[ (unsigned char) in[1] ];
+
+  /* skip invalid hex sequences */
+  if ((v1 | v2) != 0xFF) {
+    return (v1 << 4) | v2;
+  }
+
+  return '\0';
+}
+
+static
+size_t uri_decode(const char *in, size_t len, char *out, const char *ignore) {
+  size_t i = 0, j = 0;
+  char decoded;
+
+  while (i < len) {
+    decoded = '\0';
+
+    switch (in[i]) {
+      case '+':
+        decoded = ' ';
+        if (!char_in_str(decoded, ignore)) {
+          ++i;
+          break;
+        }
+      case '%':
+        if (i + 2 < len) {
+          decoded = unhex( &in[i + 1] );
+          if (decoded != '\0' && !char_in_str(decoded, ignore)) {
+            i += 3;
+            break;
+          }
+        }
+      default:
+        decoded = in[i++];
+    }
+
+    if (decoded != '\0') {
+      out[j++] = decoded;
+    }
+  }
+
+  out[j] = '\0';
+
+  return j;
+}
+
+static
+size_t uri_decode_utf8(const char *in, size_t len, char *out) {
+  size_t i = 0, j = 0;
+  char decoded;
+
+  while (i < len) {
+    decoded = '\0';
+
+    switch (in[i]) {
+      case '%':
+        if (i + 2 < len) {
+          decoded = unhex( &in[i + 1] );
+          if (decoded != '\0' && (U32)decoded > 127) {
+            i += 3;
+            break;
+          }
+        }
+      default:
+        decoded = in[i++];
+    }
+
+    if (decoded != '\0') {
+      out[j++] = decoded;
+    }
+  }
+
+  out[j] = '\0';
+
+  return j;
+}
+
+// EOT (end of theft)
+
+static
+SV* encode(pTHX_ SV *in, SV *sv_allowed) {
+  size_t ilen, olen, alen;
+  const char *allowed;
+  SV* out;
+
+  SvGETMAGIC(in);
+
+  if (!SvOK(in)) {
+    return newSVpvn("", 0);
+  }
+
+  const char *src = SvPV_nomg_const(in, ilen);
+  char dest[(ilen * 3) + 1];
+
+  if (sv_allowed == NULL) {
+    allowed = "";
+  } else {
+    allowed = SvPV_nomg_const(sv_allowed, alen);
+  }
+
+  olen = uri_encode(src, ilen, dest, allowed, 0);
+  out  = newSVpvn(dest, olen);
+  sv_utf8_downgrade(out, FALSE);
+
+  return out;
+}
+
+static
+SV* decode(pTHX_ SV *in) {
+  size_t ilen, olen;
+  const char *src;
+  SV *out;
+
+  SvGETMAGIC(in);
+
+  if (!SvOK(in)) {
+    return newSVpvn("", 0);
+  }
+
+  if (DO_UTF8(in)) {
+    in = sv_mortalcopy(in);
+    SvUTF8_on(in);
+
+    if (!sv_utf8_downgrade(in, TRUE)) {
+      croak("decode: wide character in input octet string");
+    }
+
+    src = SvPV_nomg_const(in, ilen);
+  }
+  else {
+    src = SvPV_nomg_const(in, ilen);
+  }
+
+  char dest[ilen + 1];
+  olen = uri_decode(src, ilen, dest, "");
+  out = newSVpvn(dest, olen);
+  sv_utf8_decode(out);
+
+  return out;
+}
+
+
+/*------------------------------------------------------------------------------
+ * Query string parsing
+ -----------------------------------------------------------------------------*/
+
+typedef enum {
+  KEY   = 1,
+  PARAM = 2,
+  DONE  = 3,
+} uri_query_token_type_t;
 
 typedef struct {
-  uri_is_iri_t is_iri;
+  uri_query_token_type_t type;
+  const char *key;   size_t key_length;
+  const char *value; size_t value_length; // only present when type=PARAM
+} uri_query_token_t;
+
+typedef struct {
+  size_t length;
+  size_t cursor;
+  const char *source;
+} uri_query_scanner_t;
+
+void query_scanner_init(
+    uri_query_scanner_t *scanner,
+    const char *source,
+    size_t length
+  )
+{
+  scanner->source = source;
+  scanner->length = length;
+  scanner->cursor = 0;
+}
+
+static
+int query_scanner_done(uri_query_scanner_t *scanner) {
+  return scanner->cursor >= scanner->length;
+}
+
+/*
+ * Fills the token struct with the next token information. Does not decode
+ * any values.
+ */
+static
+void query_scanner_next(uri_query_scanner_t *scanner, uri_query_token_t *token) {
+  size_t brk;
+  const char sep[4] = {'&', ';', '=', '\0'};
+
+SCAN_KEY:
+  if (scanner->cursor >= scanner->length) {
+    token->key   = NULL; token->key_length   = 0;
+    token->value = NULL; token->value_length = 0;
+    token->type  = DONE;
+    return;
+  }
+
+  // Scan to end of token
+  brk = strncspn(&scanner->source[ scanner->cursor ], scanner->length - scanner->cursor, sep);
+
+  // Set key members in token struct
+  token->key = &scanner->source[ scanner->cursor ];
+  token->key_length = brk;
+
+  // Move cursor to end of token
+  scanner->cursor += brk;
+
+  // If there is an associate value, add it to the token
+  if (scanner->source[ scanner->cursor ] == '=') {
+    // Advance past '='
+    ++scanner->cursor;
+
+    // Find the end of the value
+    brk = strncspn(&scanner->source[ scanner->cursor ], scanner->length - scanner->cursor, sep);
+
+    // Set the value and token type
+    token->value = &scanner->source[ scanner->cursor ];
+    token->value_length = brk;
+    token->type = PARAM;
+
+    // Move cursor to the end of the value, eating the separator terminating it
+    scanner->cursor += brk + 1;
+  }
+  // No value assigned to this key
+  else {
+    token->type = KEY;
+    ++scanner->cursor; // advance past terminating separator
+  }
+
+  // No key was found; try again
+  if (token->key_length == 0) {
+    goto SCAN_KEY;
+  }
+
+  return;
+}
+
+
+/*------------------------------------------------------------------------------
+ * URI parsing
+ -----------------------------------------------------------------------------*/
+
+typedef struct {
+  U8         is_iri;
   uri_str_t *scheme;
   uri_str_t *query;
   uri_str_t *path;
@@ -53,26 +623,6 @@ typedef struct {
   uri_str_t *usr;
   uri_str_t *pwd;
 } uri_t;
-
-/*
- * Clearers
- */
-URI_SIMPLE_CLEARER(scheme);
-URI_SIMPLE_CLEARER(path);
-URI_SIMPLE_CLEARER(query);
-URI_SIMPLE_CLEARER(frag);
-URI_SIMPLE_CLEARER(usr);
-URI_SIMPLE_CLEARER(pwd);
-URI_SIMPLE_CLEARER(host);
-URI_SIMPLE_CLEARER(port);
-
-static
-void clear_auth(pTHX_ SV *uri_obj) {
-  clear_usr(aTHX_ uri_obj);
-  clear_pwd(aTHX_ uri_obj);
-  clear_host(aTHX_ uri_obj);
-  clear_port(aTHX_ uri_obj);
-}
 
 /*
  * Scans the authorization portion of the URI string
@@ -206,13 +756,36 @@ void uri_scan(pTHX_ uri_t *uri, const char *src, size_t len) {
   }
 }
 
-/*
+/*------------------------------------------------------------------------------
+ *
  * Perl API
- */
+ *
+ -----------------------------------------------------------------------------*/
 
-/*
- * Getters
- */
+/*------------------------------------------------------------------------------
+ * Clearers
+ -----------------------------------------------------------------------------*/
+
+URI_SIMPLE_CLEARER(scheme);
+URI_SIMPLE_CLEARER(path);
+URI_SIMPLE_CLEARER(query);
+URI_SIMPLE_CLEARER(frag);
+URI_SIMPLE_CLEARER(usr);
+URI_SIMPLE_CLEARER(pwd);
+URI_SIMPLE_CLEARER(host);
+URI_SIMPLE_CLEARER(port);
+
+static
+void clear_auth(pTHX_ SV *uri_obj) {
+  clear_usr(aTHX_ uri_obj);
+  clear_pwd(aTHX_ uri_obj);
+  clear_host(aTHX_ uri_obj);
+  clear_port(aTHX_ uri_obj);
+}
+
+/*------------------------------------------------------------------------------
+ * Raw getters
+ -----------------------------------------------------------------------------*/
 
 // Raw getters
 URI_RAW_GETTER(scheme);
@@ -258,13 +831,17 @@ SV* get_raw_auth(pTHX_ SV *uri_obj) {
   return out;
 }
 
-// Decoding getters
+/*------------------------------------------------------------------------------
+ * Decoding getters
+ -----------------------------------------------------------------------------*/
+
 URI_SIMPLE_GETTER(scheme);
 URI_SIMPLE_GETTER(usr);
 URI_SIMPLE_GETTER(pwd);
 URI_SIMPLE_GETTER(host);
 URI_SIMPLE_GETTER(port);
 URI_SIMPLE_GETTER(frag);
+
 URI_COMPOUND_GETTER(path);
 URI_COMPOUND_GETTER(query);
 
@@ -279,9 +856,9 @@ SV* get_auth(pTHX_ SV *uri_obj) {
 
   if (str_len(uri->usr) > 0) {
     if (str_len(uri->pwd) > 0) {
-      sv_catsv_nomg(out, sv_2mortal(get_usr(aTHX_ uri_obj)));
+      sv_catsv(out, sv_2mortal(get_usr(aTHX_ uri_obj)));
       sv_catpvn(out, ":", 1);
-      sv_catsv_nomg(out, sv_2mortal(get_pwd(aTHX_ uri_obj)));
+      sv_catsv(out, sv_2mortal(get_pwd(aTHX_ uri_obj)));
       sv_catpvn(out, "@", 1);
     } else {
       sv_catsv_nomg(out, sv_2mortal(get_usr(aTHX_ uri_obj)));
@@ -291,11 +868,11 @@ SV* get_auth(pTHX_ SV *uri_obj) {
 
   if (str_len(uri->host) > 0) {
     if (str_len(uri->port) > 0) {
-      sv_catsv_nomg(out, sv_2mortal(get_host(aTHX_ uri_obj)));
+      sv_catsv(out, sv_2mortal(get_host(aTHX_ uri_obj)));
       sv_catpvn(out, ":", 1);
-      sv_catsv_nomg(out, sv_2mortal(get_port(aTHX_ uri_obj)));
+      sv_catsv(out, sv_2mortal(get_port(aTHX_ uri_obj)));
     } else {
-      sv_catsv_nomg(out, sv_2mortal(get_host(aTHX_ uri_obj)));
+      sv_catsv(out, sv_2mortal(get_host(aTHX_ uri_obj)));
     }
   }
 
@@ -455,9 +1032,10 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
   return newRV_noinc((SV*) out);
 }
 
-/*
+/*------------------------------------------------------------------------------
  * Setters
- */
+ -----------------------------------------------------------------------------*/
+
 URI_SIMPLE_SETTER(scheme, "");
 URI_SIMPLE_SETTER(path,   URI_CHARS_PATH);
 URI_SIMPLE_SETTER(query,  URI_CHARS_QUERY);
@@ -756,9 +1334,9 @@ void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
   URI_MEMBER(uri, query) = dest;
 }
 
-/*
+/*------------------------------------------------------------------------------
  * Other stuff
- */
+ -----------------------------------------------------------------------------*/
 
 static
 SV* to_string(pTHX_ SV* uri_obj) {
