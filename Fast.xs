@@ -192,7 +192,11 @@ size_t str_len(uri_str_t *str) {
 
 static inline
 const char *str_get(uri_str_t *str) {
-  return (const char*)str->string;
+  if (str->length == 0) {
+    return "";
+  } else {
+    return (const char*)str->string;
+  }
 }
 
 static
