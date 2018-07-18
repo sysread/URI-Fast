@@ -179,25 +179,14 @@ size_t maxnum(size_t x, size_t y) {
  * Resizable strings
  -----------------------------------------------------------------------------*/
 typedef struct {
-  size_t chunk;
-  size_t allocated;
-  size_t length;
-  char *string;
+  size_t chunk;     // bytes to allocate at a time
+  size_t allocated; // number of currently allocated bytes
+  size_t length;    // length of the string within the allocated buffer
+  char *string;     // pointer to the allocated string
 } uri_str_t;
 
-static inline
-size_t str_len(uri_str_t *str) {
-  return str->length;
-}
-
-static inline
-const char *str_get(uri_str_t *str) {
-  if (str->length == 0) {
-    return "";
-  } else {
-    return (const char*)str->string;
-  }
-}
+#define str_len(str) ((str)->length)
+#define str_get(str) (str_len(str) == 0 ? "" : (const char*)str->string)
 
 static
 void str_set(pTHX_ uri_str_t *str, const char *value, size_t len) {
