@@ -57,7 +57,7 @@ static void set_##member(pTHX_ SV *uri, SV *sv_value) { \
   if (SvOK(sv_value)) { \
     size_t len_value, len_enc; \
     const char *value = SvPV_const(sv_value, len_value); \
-    char enc[len_value * 3]; \
+    char enc[len_value * 3 + 1]; \
     len_enc = uri_encode(value, len_value, enc, allowed, URI_MEMBER(uri, is_iri)); \
     str_set(aTHX_ URI_MEMBER(uri, member), enc, len_enc); \
   } \
@@ -78,7 +78,7 @@ static SV* get_raw_##member(pTHX_ SV *uri) { \
 static SV* get_##member(pTHX_ SV *uri) { \
   uri_str_t *str = URI_MEMBER(uri, member); \
   if (str->length == 0) return newSVpvn("", 0); \
-  char decoded[ str->length ]; \
+  char decoded[ str->length + 1 ]; \
   size_t len = uri_decode(str->string, str->length, decoded, ""); \
   SV *out = newSVpvn(decoded, len); \
   sv_utf8_decode(out); \
@@ -92,7 +92,7 @@ static SV* get_##member(pTHX_ SV *uri) { \
 static SV* get_##member(pTHX_ SV *uri) { \
   uri_str_t *str = URI_MEMBER(uri, member); \
   if (str->length == 0) return newSVpvn("", 0); \
-  char decoded[ str->length ]; \
+  char decoded[ str->length + 1 ]; \
   size_t len = uri_decode_utf8(str->string, str->length, decoded); \
   SV *out = newSVpvn(decoded, len); \
   sv_utf8_decode(out); \
