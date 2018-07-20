@@ -561,7 +561,11 @@ SCAN_KEY:
   }
 
   // Scan to end of token
-  brk = strncspn(&scanner->source[ scanner->cursor ], scanner->length - scanner->cursor, sep);
+  brk = strncspn(
+    &scanner->source[ scanner->cursor ],
+    scanner->length - scanner->cursor,
+    sep
+  );
 
   // Set key members in token struct
   token->key = &scanner->source[ scanner->cursor ];
@@ -1227,7 +1231,7 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, SV *sv_separator) {
 static
 void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
   int is_iri = URI_MEMBER(uri, is_iri);
-  char *strval;
+  const char *strval;
   size_t vlen, reflen, av_idx, i = 0, off = 0;
   AV *av_values;
   SV **refval;
@@ -1315,7 +1319,7 @@ void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
 
     // Copy value over
     SvGETMAGIC(*refval);
-    strval = SvPV_nomg(*refval, reflen);
+    strval = SvPV_const(*refval, reflen);
 
     char tmp[reflen * 3];
     vlen = uri_encode(strval, reflen, tmp, ":@?/", is_iri);
