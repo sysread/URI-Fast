@@ -552,7 +552,8 @@ int query_scanner_done(uri_query_scanner_t *scanner) {
 static
 void query_scanner_next(uri_query_scanner_t *scanner, uri_query_token_t *token) {
   size_t brk;
-  const char sep[4] = {'&', ';', '=', '\0'};
+  const char key_sep[4] = {'&', ';', '=', '\0'};
+  const char val_sep[4] = {'&', ';', '\0'};
 
 SCAN_KEY:
   if (scanner->cursor >= scanner->length) {
@@ -566,7 +567,7 @@ SCAN_KEY:
   brk = strncspn(
     &scanner->source[ scanner->cursor ],
     scanner->length - scanner->cursor,
-    sep
+    key_sep
   );
 
   // Set key members in token struct
@@ -582,7 +583,7 @@ SCAN_KEY:
     ++scanner->cursor;
 
     // Find the end of the value
-    brk = strncspn(&scanner->source[ scanner->cursor ], scanner->length - scanner->cursor, sep);
+    brk = strncspn(&scanner->source[ scanner->cursor ], scanner->length - scanner->cursor, val_sep);
 
     // Set the value and token type
     token->value = &scanner->source[ scanner->cursor ];

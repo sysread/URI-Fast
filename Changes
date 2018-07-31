@@ -1,3 +1,6 @@
+0.40 2018-??-??
+-bugfix: gracefully handle incorrectly encoded query strings with unencoded '=' not following a key
+
 0.39 2018-07-22
 -behavior: no size limit on member string sizes
 -bugfix: encode and decode no longer emit a warning when passed undef
