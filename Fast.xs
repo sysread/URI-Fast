@@ -53,8 +53,7 @@ static void clear_##member(pTHX_ SV *uri) { \
 // slot 'member'.
 #define URI_SIMPLE_SETTER(member, allowed) \
 static void set_##member(pTHX_ SV *uri, SV *sv_value) { \
-  SvGETMAGIC(sv_value); \
-  if (SvOK(sv_value)) { \
+  if (is_defined(aTHX_ sv_value)) { \
     size_t len_value, len_enc; \
     const char *value = SvPV_const(sv_value, len_value); \
     char enc[len_value * 3 + 1]; \
@@ -123,6 +122,20 @@ static SV* get_##member(pTHX_ SV *uri) { \
 /*------------------------------------------------------------------------------
  * Utilities
  -----------------------------------------------------------------------------*/
+
+// Returns true if the SV is defined. Gets magic before evaluating the
+// definedness of the SV.
+static
+bool is_defined(pTHX_ SV *sv) {
+  SvGETMAGIC(sv);
+  return SvOK(sv) ? true : false;
+}
+
+static
+bool is_defined_ref(pTHX_ SV *sv) {
+  SvGETMAGIC(sv);
+  return SvROK(sv) ? true : false;
+}
 
 static
 size_t strnspn(const char *s, size_t s_len, const char *c)
@@ -450,9 +463,7 @@ SV* encode(pTHX_ SV *in, SV *sv_allowed) {
   const char *allowed;
   SV* out;
 
-  SvGETMAGIC(in);
-
-  if (!SvOK(in)) {
+  if (!is_defined(aTHX_ in)) {
     return newSVpvn("", 0);
   }
 
@@ -478,9 +489,7 @@ SV* decode(pTHX_ SV *in) {
   const char *src;
   SV *out;
 
-  SvGETMAGIC(in);
-
-  if (!SvOK(in)) {
+  if (!is_defined(aTHX_ in)) {
     return newSVpvn("", 0);
   }
 
@@ -991,7 +1000,7 @@ SV* get_param(pTHX_ SV* uri, SV* sv_key) {
   SV* value;
 
   // Read key to search
-  if (!SvTRUE(sv_key)) {
+  if (!is_defined(aTHX_ sv_key)) {
     croak("get_param: expected key to search");
   }
   else {
@@ -1046,7 +1055,7 @@ URI_SIMPLE_SETTER(host,   URI_CHARS_HOST);
 
 static
 void set_port(pTHX_ SV *uri_obj, SV *sv_value) {
-  if (!SvTRUE(sv_value)) {
+  if (!is_defined(aTHX_ sv_value)) {
     str_clear(aTHX_ URI_MEMBER(uri_obj, port));
     return;
   }
@@ -1063,7 +1072,7 @@ void set_auth(pTHX_ SV *uri_obj, SV *sv_value) {
   str_clear(aTHX_ URI_MEMBER(uri_obj, host));
   str_clear(aTHX_ URI_MEMBER(uri_obj, port));
 
-  if (SvTRUE(sv_value)) {
+  if (is_defined(aTHX_ sv_value)) {
     size_t vlen;
     const char *value = SvPV_const(sv_value, vlen);
 
@@ -1085,7 +1094,7 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
 
   str_clear(aTHX_ path);
 
-  if (!SvTRUE(sv_path)) {
+  if (!is_defined(aTHX_ sv_path)) {
     return;
   }
 
@@ -1102,10 +1111,10 @@ void set_path_array(pTHX_ SV *uri_obj, SV *sv_path) {
     // Fetch next segment
     refval = av_fetch(av_path, (SSize_t) i, 0);
     if (refval == NULL) continue;
-    if (!SvTRUE(*refval)) continue;
+    if (!is_defined(aTHX_ *refval)) continue;
 
     // Copy value over
-    if (SvTRUE(*refval)) {
+    if (is_defined(aTHX_ *refval)) {
       seg = SvPV_nomg_const(*refval, seg_len);
 
       // Convert octets to utf8 if necessary
@@ -1137,15 +1146,13 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, SV *sv_separator) {
   uri_str_t *dest  = str_new(aTHX_ URI_SIZE_query);
 
   size_t slen = 1;
-  const char *separator = SvTRUE(sv_separator) ? SvPV_const(sv_separator, slen) : "&";
+  const char *separator = is_defined(aTHX_ sv_separator) ? SvPV_const(sv_separator, slen) : "&";
 
   uri_query_scanner_t scanner;
   uri_query_token_t   token;
 
   // Validate reference parameters
-  SvGETMAGIC(sv_key_set);
-
-  if (!SvROK(sv_key_set) || SvTYPE(SvRV(sv_key_set)) != SVt_PVHV) {
+  if (!is_defined_ref(aTHX_ sv_key_set) || SvTYPE(SvRV(sv_key_set)) != SVt_PVHV) {
     croak("set_query_keys: expected hash ref");
   }
 
@@ -1179,7 +1186,7 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, SV *sv_separator) {
     query_scanner_next(&scanner, &token);
     if (token.type == DONE) continue;
 
-    // Use the encrypted keys hash to decide whether to copy this key (and
+    // Use the encoded keys hash to decide whether to copy this key (and
     // value if present) over to dest. If the key exists, skip. It will be
     // added to the filtered query string last.
     copy = 1;
@@ -1244,10 +1251,10 @@ void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
   uri_query_token_t token;
 
   size_t slen = 1;
-  const char *separator = SvTRUE(sv_separator) ? SvPV_const(sv_separator, slen) : "&";
+  const char *separator = is_defined(aTHX_ sv_separator) ? SvPV_const(sv_separator, slen) : "&";
 
   // Build encoded key string
-  if (!SvTRUE(sv_key)) {
+  if (!is_defined(aTHX_ sv_key)) {
     croak("set_param: expected key");
   }
 
@@ -1257,9 +1264,7 @@ void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
   klen = uri_encode(key, strlen(key), enc_key, ":@?/", is_iri);
 
   // Get array of values to set
-  SvGETMAGIC(sv_values);
-
-  if (!SvROK(sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
+  if (!is_defined_ref(aTHX_ sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
     croak("set_param: expected array of values");
   }
 
@@ -1306,7 +1311,7 @@ void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
     // Fetch next value from the array
     refval = av_fetch(av_values, (SSize_t) i, 0);
     if (refval == NULL) break;
-    if (!SvTRUE(*refval)) break;
+    if (!is_defined(aTHX_ *refval)) break;
 
     // Add separator if needed to separate pairs
     if (off > 0) {

@@ -171,8 +171,13 @@ parameter to C<undef> deletes the parameter from the URI.
   my @value_list   = $uri->param('foo');   # foo appears twice
   my $value_scalar = $uri->param('foo');   # croaks; expected single value but foo has multiple
 
-  # Delete 'foo'
-  $uri->param('foo', undef);
+  # Delete parameter
+  $uri->param('foo', undef); # deletes foo
+
+  # Ambiguous cases
+  $uri->param('foo', '');  # foo=
+  $uri->param('foo', '0'); # foo=0
+  $uri->param('foo', ' '); # foo=%20
 
 Both '&' and ';' are treated as separators for key/value parameters when
 parsing the query string. An optional third parameter explicitly selects the
