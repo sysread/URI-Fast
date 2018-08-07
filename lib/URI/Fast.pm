@@ -201,6 +201,57 @@ sub compare {
   return 1;
 }
 
+sub _remove_dot_segments {
+}
+
+sub _merge_paths {
+}
+
+sub abs {
+  my ($class, $rel_str, $base_str) = @_;
+  my ($rel_scheme, $rel_auth, $rel_path, $rel_query) = uri_split("$rel_str");
+  my $base   = uri "$base_str";
+  my $target = uri;
+
+  if ($rel_scheme) {
+    $target->scheme($rel_scheme);
+    $target->auth($rel_auth);
+    $target->path(_remove_dot_segments($rel_path));
+    $target->query($rel_query);
+  }
+  else {
+    if ($rel_auth) {
+      $target->auth($rel_auth);
+      $target->path(_remove_dot_segments($rel_path));
+      $target->query($rel_query);
+    }
+    else {
+      if (!$rel_path) {
+        $target->path($base->path);
+        $target->query($rel_query || $base->query);
+      }
+      else {
+        if ($rel_path =~ /^\//) {
+          $target->path(_remove_dot_segments($rel_path));
+        }
+        else {
+          my $base_path = $base->path;
+          $target->path(_remove_dot_segments(_merge_paths($base_path, $rel_path)));
+        }
+        $target->query($rel_query);
+      }
+
+      $target->auth($base->auth);
+    }
+
+    $target->scheme($base->scheme);
+  }
+
+  $target->frag($base->frag);
+
+  return $target;
+}
+
 =encoding UTF8
 
 =head1 NAME
