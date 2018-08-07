@@ -266,7 +266,7 @@ sub uri_abs {
   my $target = uri;
 
   # Split the base URI
-  my ($base_scheme, $base_auth, $base_path, $base_query, $base_frag) = uri_split($base);
+  my ($base_scheme, $base_auth, $base_path, $base_query, $base_frag) = uri_split("$base");
 
   # Split the relative URI
   my ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag);
@@ -277,11 +277,11 @@ sub uri_abs {
     # come after a scheme, which is required, separated by //). This workaround
     # helps the parser along by identifying the authority section as such.
     $rel = 'fnord:' . $rel;
-    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split($rel);
+    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split("$rel");
     undef $rel_scheme;
   }
   else {
-    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split($rel);
+    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split("$rel");
   }
 
   if ($rel_scheme) {
