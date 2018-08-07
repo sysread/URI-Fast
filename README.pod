@@ -277,6 +277,13 @@ non-ASCII characters are decoded but reserved characters are not. When
 returning a list or reference of the deconstructed field, individual values are
 decoded of both reserved and non-ASCII characters.
 
+=head2 '+' vs '%20'
+
+Although no longer part of the standard, C<+> is commonly used as the encoded
+space character (rather than C<%20>); it I<is> still official to the
+C<application/x-www-form-urlencoded> type, and is treated as a space by
+L</decode>.
+
 =head2 encode
 
 Percent-encodes a string for use in a URI. By default, both reserved and UTF-8
