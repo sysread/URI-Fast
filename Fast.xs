@@ -1661,7 +1661,7 @@ SV* remove_dot_segments(pTHX_ SV *sv_path) {
   }
 
   result = newSVpvn(out->string, out->length);
-  str_free(out);
+  str_free(aTHX_ out);
 
   return result;
 }
