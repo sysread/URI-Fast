@@ -201,17 +201,85 @@ sub compare {
   return 1;
 }
 
+my $PATH_UNRESERVED = q/[-_~!$&'()*+,;=:@a-zA-Z0-9]/;
+
 sub _remove_dot_segments {
+  my $in  = shift || '';
+  my $out = '';
+
+  while ($in ne '') {
+    # $in begins with "./" or "../"
+    if ($in =~ m|^\.(?:\.)?/|) {
+      $in =~ s|^\.(?:\.)?/||; # remove prefix completely
+    }
+    # $in begins with /./
+    elsif ($in =~ m|^/\./|) {
+      $in =~ s|^/\./|/|; # replace with /
+    }
+    # $in begins with /. and . is a complete $in segment
+    elsif ($in =~ m|^/\.(?=$PATH_UNRESERVED)| || $in eq '/.') {
+      $in =~ s|^/\.|/|; # replace with /
+    }
+    # $in begins with /../
+    elsif ($in =~ m|^/\.\./|) {
+      $in  =~ s|^/\.\./|/|;  # replace with /
+      $out =~ s|/[^/]+$||; # remove final segment
+    }
+    # $in begins with /.. and .. is a complete $in segment
+    elsif ($in =~ m|^/\.\.(?=$PATH_UNRESERVED)| || $in eq '/..') {
+      $in  =~ s|^/\.\.|/|; # replace with /
+      $out =~ s|/[^/]+$||; # remove final segment
+    }
+    # $in is "." or ".."
+    elsif ($in =~ m|^\.{1,2}$|) {
+      $in = '';
+    }
+    else {
+      my ($segment, $rest) = $in =~ m|^((?:/)?[^/]*)(/.*)?$|;
+      $out .= $segment || '';
+      $in = $rest || '';
+    }
+  }
+
+  return $out;
 }
 
 sub _merge_paths {
+  my ($rel, $base) = @_;
+
+  if ($base =~ m|/|) {
+    # truncate base path at right-most /, inclusive
+    $base =~ s|/[^/]*$||;
+  } else {
+    # if there is no / in the base path, truncate it completely
+    $base = '';
+  }
+
+  return $base . '/' . $rel;
 }
 
 sub abs {
-  my ($class, $rel_str, $base_str) = @_;
-  my ($rel_scheme, $rel_auth, $rel_path, $rel_query) = uri_split("$rel_str");
-  my $base   = uri "$base_str";
+  my ($rel, $base) = @_;
   my $target = uri;
+
+  # Split the base URI
+  my ($base_scheme, $base_auth, $base_path, $base_query, $base_frag) = uri_split($base);
+
+  # Split the relative URI
+  my ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag);
+
+  if ($rel =~ m|^//|) {
+    # Relative URIs may begin with // to indicate an authority section without
+    # a scheme, which is illegal in standard URI syntax (authority may only
+    # come after a scheme, which is required, separated by //). This workaround
+    # helps the parser along by identifying the authority section as such.
+    $rel = 'fnord:' . $rel;
+    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split($rel);
+    undef $rel_scheme;
+  }
+  else {
+    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split($rel);
+  }
 
   if ($rel_scheme) {
     $target->scheme($rel_scheme);
@@ -227,27 +295,31 @@ sub abs {
     }
     else {
       if (!$rel_path) {
-        $target->path($base->path);
-        $target->query($rel_query || $base->query);
+        $target->path($base_path);
+        $target->query($rel_query || $base_query);
       }
       else {
         if ($rel_path =~ /^\//) {
           $target->path(_remove_dot_segments($rel_path));
         }
         else {
-          my $base_path = $base->path;
-          $target->path(_remove_dot_segments(_merge_paths($base_path, $rel_path)));
+          my $merged = $base_scheme && !$base_path
+            ? '/' . $rel_path
+            : _merge_paths($rel_path, $base_path);
+
+          $target->path(_remove_dot_segments($merged));
         }
+
         $target->query($rel_query);
       }
 
-      $target->auth($base->auth);
+      $target->auth($base_auth);
     }
 
-    $target->scheme($base->scheme);
+    $target->scheme($base_scheme);
   }
 
-  $target->frag($base->frag);
+  $target->frag($rel_frag);
 
   return $target;
 }

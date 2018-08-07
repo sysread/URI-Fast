@@ -727,15 +727,15 @@ void uri_scan(pTHX_ uri_t *uri, const char *src, size_t len) {
     // Authority section following scheme must be separated by //
     if (idx + 1 < len && src[idx] == '/' && src[idx + 1] == '/') {
       idx += 2;
+
+      // Authority
+      brk = strncspn(&src[idx], len - idx, "/?#");
+      uri_scan_auth(aTHX_ uri, &src[idx], brk);
+
+      if (brk > 0) {
+        idx += brk;
+      }
     }
-  }
-
-  // Authority
-  brk = strncspn(&src[idx], len - idx, "/?#");
-  uri_scan_auth(aTHX_ uri, &src[idx], brk);
-
-  if (brk > 0) {
-    idx += brk;
   }
 
   // path
@@ -1509,17 +1509,25 @@ void uri_split(pTHX_ SV* uri) {
 
   // Scheme
   brk = strcspn(&src[idx], ":/@?#");
-  if (brk > 0 && strncmp(&src[idx + brk], "://", 3) == 0) {
-    XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
-    idx += brk + 3;
 
-    // Authority
-    brk = strcspn(&src[idx], "/?#");
-    if (brk > 0) {
-      XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
-      idx += brk;
-    } else {
-      XPUSHs(sv_2mortal(newSVpvn("",0)));
+  if (brk > 0 && src[idx + brk] == ':') {
+    XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
+    idx += brk + 1;
+
+    // Authority section following scheme must be separated by //
+    if (idx + 1 < len && src[idx] == '/' && src[idx + 1] == '/') {
+      idx += 2;
+
+      // Authority
+      brk = strcspn(&src[idx], "/?#");
+
+      if (brk > 0) {
+        XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
+        idx += brk;
+      } 
+      else {
+        XPUSHs(sv_2mortal(newSVpvn("", 0)));
+      }
     }
   }
   else {
@@ -1544,7 +1552,7 @@ void uri_split(pTHX_ SV* uri) {
       XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
       idx += brk;
     } else {
-      XPUSHs(&PL_sv_undef);
+      XPUSHs(sv_2mortal(newSVpvn("", 0)));
     }
   } else {
     XPUSHs(&PL_sv_undef);
@@ -1557,7 +1565,7 @@ void uri_split(pTHX_ SV* uri) {
     if (brk > 0) {
       XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
     } else {
-      XPUSHs(&PL_sv_undef);
+      XPUSHs(sv_2mortal(newSVpvn("", 0)));
     }
   } else {
     XPUSHs(&PL_sv_undef);
