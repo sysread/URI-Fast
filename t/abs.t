@@ -1,8 +1,7 @@
 use utf8;
 use ExtUtils::testlib;
 use Test2::V0;
-use Data::Dumper;
-use URI::Fast qw(uri uri_split);
+use URI::Fast qw(uri_abs);
 
 my $base = 'http://a/b/c/d;p?q';
 
@@ -33,7 +32,7 @@ my @tests = (
 
 foreach my $test (@tests) {
   my ($rel, $exp) = @$test;
-  my $abs = URI::Fast::abs($rel, $base);
+  my $abs = uri_abs($rel, $base);
   is $abs, $exp, "$rel -> $exp";
 }
 

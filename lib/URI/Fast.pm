@@ -17,7 +17,7 @@ XSLoader::load('URI::Fast', $XS_VERSION);
 use Exporter 'import';
 
 our @EXPORT_OK = qw(
-  uri iri uri_split
+  uri iri uri_split uri_abs
   encode uri_encode url_encode
   decode uri_decode url_decode
 );
@@ -201,6 +201,9 @@ sub compare {
   return 1;
 }
 
+#-------------------------------------------------------------------------------
+# Absolution
+#-------------------------------------------------------------------------------
 my $PATH_UNRESERVED = q/[-_~!$&'()*+,;=:@a-zA-Z0-9]/;
 
 sub _remove_dot_segments {
@@ -258,7 +261,7 @@ sub _merge_paths {
   return $base . '/' . $rel;
 }
 
-sub abs {
+sub uri_abs {
   my ($rel, $base) = @_;
   my $target = uri;
 
@@ -378,6 +381,16 @@ be percent-encoded when modified.
 =head2 uri_split
 
 Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
+
+=head2 uri_abs
+
+Builds an absolute URI from a relative URI string and a base URI string.
+Adheres as strictly as possible to the rules for resolving a target URI in
+L<RFC3986|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a L<URI::Fast>
+object.
+
+  my $uri = uri_abs 'some/path', 'http://www.example.com/fnord';
+  $uri->to_string; # http://www.example.com/fnord/some/path
 
 =head2 encode/decode/uri_encode/uri_decode
 
