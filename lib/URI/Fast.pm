@@ -203,70 +203,15 @@ sub compare {
 
 #-------------------------------------------------------------------------------
 # Absolution
+#
+# As defined in https://www.rfc-editor.org/rfc/rfc3986.txt section 5.2
 #-------------------------------------------------------------------------------
-my $PATH_UNRESERVED = q/[-_~!$&'()*+,;=:@a-zA-Z0-9]/;
-
-sub _remove_dot_segments {
-  my $in  = shift || '';
-  my $out = '';
-
-  while ($in ne '') {
-    # $in begins with "./" or "../"
-    if ($in =~ m|^\.(?:\.)?/|) {
-      $in =~ s|^\.(?:\.)?/||; # remove prefix completely
-    }
-    # $in begins with /./
-    elsif ($in =~ m|^/\./|) {
-      $in =~ s|^/\./|/|; # replace with /
-    }
-    # $in begins with /. and . is a complete $in segment
-    elsif ($in =~ m|^/\.(?=$PATH_UNRESERVED)| || $in eq '/.') {
-      $in =~ s|^/\.|/|; # replace with /
-    }
-    # $in begins with /../
-    elsif ($in =~ m|^/\.\./|) {
-      $in  =~ s|^/\.\./|/|;  # replace with /
-      $out =~ s|/[^/]+$||; # remove final segment
-    }
-    # $in begins with /.. and .. is a complete $in segment
-    elsif ($in =~ m|^/\.\.(?=$PATH_UNRESERVED)| || $in eq '/..') {
-      $in  =~ s|^/\.\.|/|; # replace with /
-      $out =~ s|/[^/]+$||; # remove final segment
-    }
-    # $in is "." or ".."
-    elsif ($in =~ m|^\.{1,2}$|) {
-      $in = '';
-    }
-    else {
-      my ($segment, $rest) = $in =~ m|^((?:/)?[^/]*)(/.*)?$|;
-      $out .= $segment || '';
-      $in = $rest || '';
-    }
-  }
-
-  return $out;
-}
-
-sub _merge_paths {
-  my ($rel, $base) = @_;
-
-  if ($base =~ m|/|) {
-    # truncate base path at right-most /, inclusive
-    $base =~ s|/[^/]*$||;
-  } else {
-    # if there is no / in the base path, truncate it completely
-    $base = '';
-  }
-
-  return $base . '/' . $rel;
-}
-
 sub uri_abs {
   my ($rel, $base) = @_;
   my $target = uri;
 
   # Split the base URI
-  my ($base_scheme, $base_auth, $base_path, $base_query, $base_frag) = uri_split("$base");
+  my ($base_scheme, $base_auth, $base_path, $base_query) = uri_split("$base");
 
   # Split the relative URI
   my ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag);
@@ -276,8 +221,7 @@ sub uri_abs {
     # a scheme, which is illegal in standard URI syntax (authority may only
     # come after a scheme, which is required, separated by //). This workaround
     # helps the parser along by identifying the authority section as such.
-    $rel = 'fnord:' . $rel;
-    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split("$rel");
+    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split("fnord:$rel");
     undef $rel_scheme;
   }
   else {
@@ -287,13 +231,13 @@ sub uri_abs {
   if ($rel_scheme) {
     $target->scheme($rel_scheme);
     $target->auth($rel_auth);
-    $target->path(_remove_dot_segments($rel_path));
+    $target->path(remove_dot_segments($rel_path));
     $target->query($rel_query);
   }
   else {
     if ($rel_auth) {
       $target->auth($rel_auth);
-      $target->path(_remove_dot_segments($rel_path));
+      $target->path(remove_dot_segments($rel_path));
       $target->query($rel_query);
     }
     else {
@@ -303,14 +247,27 @@ sub uri_abs {
       }
       else {
         if ($rel_path =~ /^\//) {
-          $target->path(_remove_dot_segments($rel_path));
+          $target->path(remove_dot_segments($rel_path));
         }
         else {
-          my $merged = $base_scheme && !$base_path
-            ? '/' . $rel_path
-            : _merge_paths($rel_path, $base_path);
+          my $merged;
 
-          $target->path(_remove_dot_segments($merged));
+          if ($base_scheme && !$base_path) {
+            $merged = '/' . $rel_path;
+          }
+          else {
+            if ($base_path =~ m|/|) {
+              # truncate base path at right-most /, inclusive
+              $base_path =~ s|/[^/]*$||;
+            } else {
+              # if there is no / in the base path, truncate it completely
+              $base_path = '';
+            }
+
+            $merged = $base_path . '/' . $rel_path;
+          }
+
+          $target->path(remove_dot_segments($merged));
         }
 
         $target->query($rel_query);
@@ -386,8 +343,8 @@ Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
 
 Builds an absolute URI from a relative URI string and a base URI string.
 Adheres as strictly as possible to the rules for resolving a target URI in
-L<RFC3986|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a L<URI::Fast>
-object.
+L<RFC3986 section 5.2|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a new
+L<URI::Fast> object representing the absolute, merged URI.
 
   my $uri = uri_abs 'some/path', 'http://www.example.com/fnord';
   $uri->to_string; # http://www.example.com/fnord/some/path

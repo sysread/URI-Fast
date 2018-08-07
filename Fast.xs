@@ -204,6 +204,18 @@ typedef struct {
 #define str_get(str) (str_len(str) == 0 ? "" : (const char*)str->string)
 
 static
+void str_trim(pTHX_ uri_str_t *str, const char r_char) {
+  size_t i;
+  for (i = str->length; i > 0; --i) {
+    if (str->string[i - 1] == r_char) {
+      str->string[i - 1] = '\0';
+      str->length = i - 1;
+      break;
+    }
+  }
+}
+
+static
 void str_set(pTHX_ uri_str_t *str, const char *value, size_t len) {
   size_t allocate = str->chunk * (((len + 1) / str->chunk) + 1);
 
@@ -254,13 +266,18 @@ void str_clear(pTHX_ uri_str_t *str) {
 }
 
 static
-uri_str_t* str_new(pTHX_ size_t alloc_size) {
-  uri_str_t *str;
-  Newx(str, 1, uri_str_t);
+void str_init(pTHX_ uri_str_t *str, size_t alloc_size) {
   str->chunk = alloc_size;
   str->allocated = 0;
   str->length = 0;
   str->string = NULL;
+}
+
+static
+uri_str_t* str_new(pTHX_ size_t alloc_size) {
+  uri_str_t *str;
+  Newx(str, 1, uri_str_t);
+  str_init(aTHX_ str, alloc_size);
   return str;
 }
 
@@ -1524,7 +1541,7 @@ void uri_split(pTHX_ SV* uri) {
       if (brk > 0) {
         XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
         idx += brk;
-      } 
+      }
       else {
         XPUSHs(sv_2mortal(newSVpvn("", 0)));
       }
@@ -1574,12 +1591,94 @@ void uri_split(pTHX_ SV* uri) {
   PUTBACK;
 }
 
+SV* remove_dot_segments(pTHX_ SV *sv_path) {
+  if (!is_defined(aTHX_ sv_path)) {
+    return newSVpvn("", 0);
+  }
+
+  SV *result;
+  size_t len, brk, idx = 0;
+  char *in = SvPV(sv_path, len);
+  uri_str_t *out = str_new(aTHX_ len);
+
+  while (idx < len) {
+    // in begins with "./" or "../": ignore prefix completely
+    if (strncmp(&in[idx], "./", 2) == 0) {
+      idx += 2;
+    }
+    else if (strncmp(&in[idx], "../", 3) == 0) {
+      idx += 3;
+    }
+
+    // in begins with /./: replace with /
+    else if (strncmp(&in[idx], "/./", 3) == 0) {
+      str_append(aTHX_ out, "/", 1);
+      idx += 3;
+    }
+
+    // in begins with /. and . is a complete segment: replace with /
+    else if (strncmp(&in[idx], "/.", 2) == 0
+         && (idx + 2 == len
+          || strncspn(&in[idx + 2], len - idx - 2, "./") > 0)) {
+      idx += 1;
+      in[idx] = '/';
+    }
+
+    // in begins with /../: replace with /, remove final segment from out
+    else if (strncmp(&in[idx], "/../", 4) == 0) {
+      idx += 3;
+      in[idx] = '/';
+      str_trim(aTHX_ out, '/');
+    }
+
+    // in begins with /.. and .. is a complete $in segment: replace with /, remove final segment from out
+    else if (strncmp(&in[idx], "/..", 3) == 0
+         && (idx + 3 == len
+          || strncspn(&in[idx + 3], len - idx - 2, "./") > 0)) {
+      idx += 2;
+      in[idx] = '/';
+      str_trim(aTHX_ out, '/');
+    }
+
+    // in is "." or "..": done
+    else if ((in[idx] == '.' && idx + 1 == len)
+          || (in[idx] == '.' && in[idx + 1] == '.' && idx + 2 == len)) {
+      break;
+    }
+
+    // else copy everything up to but not including the next '/' from in to out
+    else {
+      if (in[idx] == '/') {
+        brk = 1 + strncspn(&in[idx + 1], len - idx, "/");
+      }
+      else {
+        brk = strncspn(&in[idx], len - idx, "/");
+      }
+
+      str_append(aTHX_ out, &in[idx], brk);
+      idx += brk;
+    }
+  }
+
+  result = newSVpvn(out->string, out->length);
+  str_free(out);
+
+  return result;
+}
+
 
 MODULE = URI::Fast  PACKAGE = URI::Fast
 
 PROTOTYPES: DISABLE
 
 VERSIONCHECK: ENABLE
+
+SV* remove_dot_segments(sv_path)
+  SV *sv_path
+  CODE:
+    RETVAL = remove_dot_segments(aTHX_ sv_path);
+  OUTPUT:
+    RETVAL
 
 #-------------------------------------------------------------------------------
 # URL-encoding
