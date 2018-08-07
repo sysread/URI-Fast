@@ -128,13 +128,13 @@ static SV* get_##member(pTHX_ SV *uri) { \
 static
 bool is_defined(pTHX_ SV *sv) {
   SvGETMAGIC(sv);
-  return SvOK(sv) ? true : false;
+  return SvOK(sv) ? 1 : 0;
 }
 
 static
 bool is_defined_ref(pTHX_ SV *sv) {
   SvGETMAGIC(sv);
-  return SvROK(sv) ? true : false;
+  return SvROK(sv) ? 1 : 0;
 }
 
 static
