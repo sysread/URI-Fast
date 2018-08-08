@@ -77,17 +77,6 @@ sub test {
   print "\n";
 }
 
-test 'rel', 100_000, {
-  'URI' => sub{ my $uri = URI->new('http://www.example.com/foo')->rel('http://www.example.com/foo/bar/') },
-  'URI::Fast' => sub{ my $uri = uri('http://www.example.com/foo')->relative('http://www.example.com/foo/bar/') },
-};
-
-test 'abs', 500_000, {
-  'URI' => sub{ my $uri = URI->new('some/path')->abs('http://www.example.com/fnord') },
-  'URI::Fast' => sub{ my $uri = uri('some/path')->absolute('http://www.example.com/fnord') },
-};
-
-=cut
 test 'Constructor', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]) },
   'URI::Fast' => sub{ my $uri = uri $urls[3] },
@@ -158,6 +147,16 @@ test 'Stringification', 500_000, {
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $str = "$uri" },
 };
 
+test 'Build relative path', 100_000, {
+  'URI' => sub{ my $uri = URI->new('http://www.example.com/foo')->rel('http://www.example.com/foo/bar/') },
+  'URI::Fast' => sub{ my $uri = uri('http://www.example.com/foo')->relative('http://www.example.com/foo/bar/') },
+};
+
+test 'Build absolute path', 500_000, {
+  'URI' => sub{ my $uri = URI->new('some/path')->abs('http://www.example.com/fnord') },
+  'URI::Fast' => sub{ my $uri = uri('some/path')->absolute('http://www.example.com/fnord') },
+};
+
 test 'uri_split', 500_000, {
   'URI::Split' => sub{ my @uri = URI::Split::uri_split($urls[3]) },
   'URI::Split' => sub{ my @uri = URI::Split::uri_split($urls[3]) },
@@ -202,6 +201,5 @@ if ($ENV{BENCH_ALL} || $ENV{UPDATEBENCH}) {
 else {
   print "Skipping time consuming benchmarks because BENCH_ALL nor UPDATEBENCH were specified.\n";
 }
-=cut
 
 close $POD;

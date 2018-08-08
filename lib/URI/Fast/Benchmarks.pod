@@ -113,6 +113,18 @@ increased significantly over Perl compiled for MacOS.
         URI::Fast       335570/s           302%             --
 
 
+=head2 Build relative path
+                            Rate            URI      URI::Fast
+              URI        19531/s             --           -84%
+        URI::Fast       120482/s           517%             --
+
+
+=head2 Build absolute path
+                            Rate            URI      URI::Fast
+              URI        28986/s             --           -90%
+        URI::Fast       289017/s           897%             --
+
+
 =head2 uri_split
 
                             Rate     URI::Split      URI::Fast
