@@ -1,7 +1,7 @@
 use utf8;
 use ExtUtils::testlib;
 use Test2::V0;
-use URI::Fast qw(uri uri_rel);
+use URI::Fast qw(uri);
 
 my $uri1 = 'http://www.example.com/foo/bar/';
 my $uri2 = 'http://www.example.com/foo/bar';
@@ -17,7 +17,7 @@ my @tests = (
 
 foreach my $test (@tests) {
   my ($uri, $base, $exp) = @$test;
-  my $rel = uri_rel $uri, $base;
+  my $rel = uri($uri)->relative($base);
   is $rel, $exp, "uri='$uri' base='$base' rel='$exp'"
     or do{
       diag "uri:      '$uri'";

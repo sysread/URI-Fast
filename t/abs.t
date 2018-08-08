@@ -1,7 +1,7 @@
 use utf8;
 use ExtUtils::testlib;
 use Test2::V0;
-use URI::Fast qw(uri_abs);
+use URI::Fast qw(uri);
 
 my $base = 'http://a/b/c/d;p?q';
 
@@ -32,8 +32,8 @@ my @tests = (
 
 foreach my $test (@tests) {
   my ($rel, $exp) = @$test;
-  my $abs = uri_abs($rel, $base);
-  is $abs, $exp, "$rel -> $exp"
+  my $abs = uri($rel)->absolute(uri($base));
+  is $abs, $exp, "abs: $rel -> $exp"
     or do{
       diag "rel:    '$rel'";
       diag "base:   '$base'";

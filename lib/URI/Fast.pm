@@ -18,9 +18,14 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
   uri iri uri_split
+<<<<<<< HEAD
   uri_abs uri_rel
   encode uri_encode url_encode
   decode uri_decode url_decode
+=======
+  encode url_encode
+  decode url_decode
+>>>>>>> Complete XS implementation of absolute
 );
 
 require URI::Fast::IRI;
@@ -39,8 +44,6 @@ sub uri_encode { goto \&encode    }
 sub url_encode { goto \&encode    }
 sub uri_decode { goto \&decode    }
 sub url_decode { goto \&decode    }
-sub abs        { goto \&uri_abs   }
-sub rel        { goto \&uri_rel   }
 
 # Build a simple accessor for basic attributes
 foreach my $attr (qw(scheme usr pwd host port frag)) {
@@ -207,26 +210,25 @@ sub compare {
 #-------------------------------------------------------------------------------
 # Relativism
 #-------------------------------------------------------------------------------
-sub uri_rel ($$) {
-  my ($rel, $base) = @_;
-  $rel  = uri($rel);
-  $base = uri($base);
+sub relative {
+  my ($self, $base) = @_;
+  my $rel = uri("$self");
 
-  my $rpath = $rel->path;
-  my $bpath = $base->path;
+  my $rpath = $self->path;
+  my $bpath;
+  ($_, $_, $bpath) = uri_split("$base");
 
   if ($bpath =~ m|/$| && $rpath eq $bpath) {
     $rel->path('./');
   }
   else {
-
     # Ensure both paths begin with '/'
     $rpath = "/$rpath" unless $rpath =~ m|^/|;
     $bpath = "/$bpath" unless $bpath =~ m|^/|;
 
     # Remove common leading path segments
-    my $idx = 1;
-    my $brk = 0;
+    my ($idx, $brk) = (1, 0);
+
     while (1) {
       $brk = index($rpath, '/', $idx);
 
@@ -256,90 +258,6 @@ sub uri_rel ($$) {
   $rel->clear_auth;
 
   return $rel;
-}
-
-#-------------------------------------------------------------------------------
-# Absolution
-#
-# As defined in https://www.rfc-editor.org/rfc/rfc3986.txt section 5.2
-#-------------------------------------------------------------------------------
-
-sub uri_abs ($$) {
-  my ($rel, $base) = @_;
-  my $target = uri;
-
-  # Split the base URI
-  my ($base_scheme, $base_auth, $base_path, $base_query) = uri_split("$base");
-
-  # Split the relative URI
-  my ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag);
-
-  if ($rel =~ m|^//|) {
-    # Relative URIs may begin with // to indicate an authority section without
-    # a scheme, which is illegal in standard URI syntax (authority may only
-    # come after a scheme, which is required, separated by //). This workaround
-    # helps the parser along by identifying the authority section as such.
-    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split("fnord:$rel");
-    undef $rel_scheme;
-  }
-  else {
-    ($rel_scheme, $rel_auth, $rel_path, $rel_query, $rel_frag) = uri_split("$rel");
-  }
-
-  if ($rel_scheme) {
-    $target->scheme($rel_scheme);
-    $target->auth($rel_auth);
-    $target->path(remove_dot_segments($rel_path));
-    $target->query($rel_query);
-  }
-  else {
-    if ($rel_auth) {
-      $target->auth($rel_auth);
-      $target->path(remove_dot_segments($rel_path));
-      $target->query($rel_query);
-    }
-    else {
-      if (!$rel_path) {
-        $target->path($base_path);
-        $target->query($rel_query || $base_query);
-      }
-      else {
-        if ($rel_path =~ /^\//) {
-          $target->path(remove_dot_segments($rel_path));
-        }
-        else {
-          my $merged;
-
-          if ($base_scheme && !$base_path) {
-            $merged = '/' . $rel_path;
-          }
-          else {
-            if ($base_path =~ m|/|) {
-              # truncate base path at right-most /, inclusive
-              $base_path =~ s|/[^/]*$||;
-            } else {
-              # if there is no / in the base path, truncate it completely
-              $base_path = '';
-            }
-
-            $merged = $base_path . '/' . $rel_path;
-          }
-
-          $target->path(remove_dot_segments($merged));
-        }
-
-        $target->query($rel_query);
-      }
-
-      $target->auth($base_auth);
-    }
-
-    $target->scheme($base_scheme);
-  }
-
-  $target->frag($rel_frag);
-
-  return $target;
 }
 
 =encoding UTF8
@@ -397,6 +315,7 @@ be percent-encoded when modified.
 
 Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
 
+<<<<<<< HEAD
 =head2 uri_abs
 
 Builds an absolute URI from a relative URI string and a base URI string.
@@ -408,6 +327,9 @@ L<URI::Fast> object representing the absolute, merged URI.
   $uri->to_string; # http://www.example.com/fnord/some/path
 
 =head2 encode/decode/uri_encode/uri_decode
+=======
+=head2 encode/decode/url_encode/url_decode
+>>>>>>> Complete XS implementation of absolute
 
 See L</ENCODING>.
 
@@ -610,12 +532,28 @@ overloaded.
 Compares the URI to another, returning true if the URIs are equivalent.
 Overloads the C<eq> operator.
 
+<<<<<<< HEAD
 =head2 clone
 
 Sugar for:
 
   my $uri = uri '...';
   my $clone = uri $uri;
+=======
+=head2 absolute
+
+Builds an absolute URI from a relative URI and a base URI string.
+Adheres as strictly as possible to the rules for resolving a target URI in
+L<RFC3986 section 5.2|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a new
+L<URI::Fast> object representing the absolute, merged URI.
+
+  my $uri = uri('some/path')->absolute('http://www.example.com/fnord');
+  $uri->to_string; # http://www.example.com/fnord/some/path
+
+=head2 relative
+
+Stuff.
+>>>>>>> Complete XS implementation of absolute
 
 =head1 ENCODING
 

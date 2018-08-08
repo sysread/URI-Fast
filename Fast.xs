@@ -1,5 +1,3 @@
-#define PERL_NO_GET_CONTEXT
-
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -48,6 +46,9 @@ static void clear_##member(pTHX_ SV *uri) { \
   str_clear(aTHX_ URI_MEMBER(uri, member)); \
 }
 
+// Returns a (non-mortal) SV from a uri_str_t
+#define URI_STR_2SV(str) (newSVpvn((str)->length == 0 ? "" : (str)->string, (str)->length))
+
 // Defines a setter method that accepts an unencoded value, encodes it,
 // ignoring characters in string 'allowed', and copies the encoded value into
 // slot 'member'.
@@ -69,7 +70,7 @@ static void set_##member(pTHX_ SV *uri, SV *sv_value) { \
 #define URI_RAW_GETTER(member) \
 static SV* get_raw_##member(pTHX_ SV *uri) { \
   uri_str_t *str = URI_MEMBER(uri, member); \
-  return newSVpvn(str->length == 0 ? "" : str->string, str->length); \
+  return URI_STR_2SV(str); \
 }
 
 // Defines a getter method that returns the decoded value of the member slot.
@@ -97,6 +98,17 @@ static SV* get_##member(pTHX_ SV *uri) { \
   sv_utf8_decode(out); \
   return out; \
 }
+
+// Warns out info about a uri_str_t
+#define URI_STR_DEBUG(str) \
+  (warn( \
+    "STRING< chunk=%lu, allocated=%lu, length=%lu, string='%.*s' >\n", \
+    str->chunk, \
+    str->allocated, \
+    str->length, \
+    str->length, \
+    str->string \
+  )); \
 
 /*
  * Allocate memory with Newx if it's
@@ -204,7 +216,32 @@ typedef struct {
 #define str_get(str) (str_len(str) == 0 ? "" : (const char*)str->string)
 
 static
-void str_trim(pTHX_ uri_str_t *str, const char r_char) {
+size_t str_index(pTHX_ uri_str_t *str, const char *find, size_t len) {
+  size_t i, j;
+  bool found = 0;
+
+  for (i = 0; i < str->length; ++i) {
+    for (j = 0; j < len; ++j) {
+      if (str->string[i + j] != find[j]) {
+        goto STRCHR;
+      }
+    }
+
+    found = 1;
+
+    STRCHR:
+    ;
+  }
+
+  if (found) {
+    return i;
+  } else {
+    return -1;
+  }
+}
+
+static
+void str_rtrim(pTHX_ uri_str_t *str, const char r_char) {
   size_t i;
   for (i = str->length; i > 0; --i) {
     if (str->string[i - 1] == r_char) {
@@ -263,6 +300,11 @@ void str_append(pTHX_ uri_str_t *str, const char *value, size_t len) {
 static
 void str_clear(pTHX_ uri_str_t *str) {
   str_set(aTHX_ str, NULL, 0);
+}
+
+static
+void str_copy(pTHX_ uri_str_t *from, uri_str_t *to) {
+  str_set(aTHX_ to, from->string, from->length);
 }
 
 static
@@ -1361,10 +1403,10 @@ void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
  -----------------------------------------------------------------------------*/
 
 static
-SV* to_string(pTHX_ SV* uri_obj) {
+SV* to_string(pTHX_ SV *uri_obj) {
   uri_t *uri = URI(uri_obj);
   SV *out = newSVpvn("", 0);
-  SV *auth = get_auth(aTHX_ uri_obj);
+  SV *auth = sv_2mortal(get_auth(aTHX_ uri_obj));
 
   if (uri->is_iri) {
     SvUTF8_on(out);
@@ -1382,7 +1424,7 @@ SV* to_string(pTHX_ SV* uri_obj) {
   }
 
   if (SvTRUE(auth)) {
-    sv_catsv(out, sv_2mortal(auth));
+    sv_catsv(out, auth);
 
     // When the authority section is present, any path must be separated from
     // the authority section by a forward slash
@@ -1501,105 +1543,115 @@ void DESTROY(pTHX_ SV *uri_obj) {
  * Extras
  */
 static
-void uri_split(pTHX_ SV* uri) {
-  const char* src;
-  size_t idx = 0;
-  size_t brk = 0;
-  size_t len;
-
-  if (!SvTRUE(uri)) {
-    src = "";
-    len = 0;
-  }
-  else {
-    src = SvPV_nomg_const(uri, len);
-
-    if (!DO_UTF8(uri)) {
-      uri = sv_2mortal(newSVpvn(src, len));
-      sv_utf8_encode(uri);
-      src = SvPV_const(uri, len);
-    }
-  }
-
+void uri_split(pTHX_ SV *uri) {
   dXSARGS;
   sp = mark;
 
-  // Scheme
-  brk = strcspn(&src[idx], ":/@?#");
-
-  if (brk > 0 && src[idx + brk] == ':') {
-    XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
-    idx += brk + 1;
-
-    // Authority section following scheme must be separated by //
-    if (idx + 1 < len && src[idx] == '/' && src[idx + 1] == '/') {
-      idx += 2;
-
-      // Authority
-      brk = strcspn(&src[idx], "/?#");
-
-      if (brk > 0) {
-        XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
-        idx += brk;
-      }
-      else {
-        XPUSHs(sv_2mortal(newSVpvn("", 0)));
-      }
-    }
+  // If the object has already been parsed, there is no need to reparse it.
+  if (sv_isobject(uri) && sv_derived_from(uri, "URI::Fast")) {
+    XPUSHs(sv_2mortal(get_scheme(aTHX_ uri)));
+    XPUSHs(sv_2mortal(get_auth(aTHX_ uri)));
+    XPUSHs(sv_2mortal(get_path(aTHX_ uri)));
+    XPUSHs(sv_2mortal(get_query(aTHX_ uri)));
+    XPUSHs(sv_2mortal(get_frag(aTHX_ uri)));
   }
   else {
-    XPUSHs(&PL_sv_undef);
-    XPUSHs(&PL_sv_undef);
-  }
+    const char *src;
+    size_t idx = 0;
+    size_t brk = 0;
+    size_t len;
 
-  // path
-  brk = strcspn(&src[idx], "?#");
-  if (brk > 0) {
-    XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
-    idx += brk;
-  } else {
-    XPUSHs(sv_2mortal(newSVpvn("", 0)));
-  }
+    if (!SvTRUE(uri)) {
+      src = "";
+      len = 0;
+    }
+    else {
+      src = SvPV_nomg_const(uri, len);
 
-  // query
-  if (src[idx] == '?') {
-    ++idx; // skip past ?
-    brk = strcspn(&src[idx], "#");
+      if (!DO_UTF8(uri)) {
+        uri = sv_2mortal(newSVpvn(src, len));
+        sv_utf8_encode(uri);
+        src = SvPV_const(uri, len);
+      }
+    }
+
+    // Scheme
+    brk = strcspn(&src[idx], ":/@?#");
+
+    if (brk > 0 && src[idx + brk] == ':') {
+      XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
+      idx += brk + 1;
+
+      // Authority section following scheme must be separated by //
+      if (idx + 1 < len && src[idx] == '/' && src[idx + 1] == '/') {
+        idx += 2;
+
+        // Authority
+        brk = strcspn(&src[idx], "/?#");
+
+        if (brk > 0) {
+          XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
+          idx += brk;
+        }
+        else {
+          XPUSHs(sv_2mortal(newSVpvn("", 0)));
+        }
+      }
+    }
+    else {
+      XPUSHs(&PL_sv_undef);
+      XPUSHs(&PL_sv_undef);
+    }
+
+    // path
+    brk = strcspn(&src[idx], "?#");
     if (brk > 0) {
       XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
       idx += brk;
     } else {
       XPUSHs(sv_2mortal(newSVpvn("", 0)));
     }
-  } else {
-    XPUSHs(&PL_sv_undef);
-  }
 
-  // fragment
-  if (src[idx] == '#') {
-    ++idx; // skip past #
-    brk = len - idx;
-    if (brk > 0) {
-      XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
+    // query
+    if (src[idx] == '?') {
+      ++idx; // skip past ?
+      brk = strcspn(&src[idx], "#");
+      if (brk > 0) {
+        XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
+        idx += brk;
+      } else {
+        XPUSHs(sv_2mortal(newSVpvn("", 0)));
+      }
     } else {
-      XPUSHs(sv_2mortal(newSVpvn("", 0)));
+      XPUSHs(&PL_sv_undef);
     }
-  } else {
-    XPUSHs(&PL_sv_undef);
+
+    // fragment
+    if (src[idx] == '#') {
+      ++idx; // skip past #
+      brk = len - idx;
+      if (brk > 0) {
+        XPUSHs(sv_2mortal(newSVpvn(&src[idx], brk)));
+      } else {
+        XPUSHs(sv_2mortal(newSVpvn("", 0)));
+      }
+    } else {
+      XPUSHs(&PL_sv_undef);
+    }
   }
 
   PUTBACK;
 }
 
-SV* remove_dot_segments(pTHX_ SV *sv_path) {
-  if (!is_defined(aTHX_ sv_path)) {
-    return newSVpvn("", 0);
+static
+void remove_dot_segments(pTHX_ uri_str_t *out, const char *path, size_t len) {
+  if (len == 0) {
+    return;
   }
 
-  SV *result;
-  size_t len, brk, idx = 0;
-  char *in = SvPV(sv_path, len);
-  uri_str_t *out = str_new(aTHX_ len);
+  size_t brk, idx = 0;
+  char in[len];
+  Copy(path, in, len, char);
 
   while (idx < len) {
     // in begins with "./" or "../": ignore prefix completely
@@ -1628,7 +1680,7 @@ SV* remove_dot_segments(pTHX_ SV *sv_path) {
     else if (strncmp(&in[idx], "/../", 4) == 0) {
       idx += 3;
       in[idx] = '/';
-      str_trim(aTHX_ out, '/');
+      str_rtrim(aTHX_ out, '/');
     }
 
     // in begins with /.. and .. is a complete $in segment: replace with /, remove final segment from out
@@ -1637,7 +1689,7 @@ SV* remove_dot_segments(pTHX_ SV *sv_path) {
           || strncspn(&in[idx + 3], len - idx - 2, "./") > 0)) {
       idx += 2;
       in[idx] = '/';
-      str_trim(aTHX_ out, '/');
+      str_rtrim(aTHX_ out, '/');
     }
 
     // in is "." or "..": done
@@ -1649,7 +1701,7 @@ SV* remove_dot_segments(pTHX_ SV *sv_path) {
     // else copy everything up to but not including the next '/' from in to out
     else {
       if (in[idx] == '/') {
-        brk = 1 + strncspn(&in[idx + 1], len - idx, "/");
+        brk = minnum(len - idx, 1 + strncspn(&in[idx + 1], len - idx, "/"));
       }
       else {
         brk = strncspn(&in[idx], len - idx, "/");
@@ -1659,13 +1711,107 @@ SV* remove_dot_segments(pTHX_ SV *sv_path) {
       idx += brk;
     }
   }
-
-  result = newSVpvn(out->string, out->length);
-  str_free(aTHX_ out);
-
-  return result;
 }
 
+/*------------------------------------------------------------------------------
+ * Absolution
+ *
+ * As defined in https://www.rfc-editor.org/rfc/rfc3986.txt section 5.2
+ *----------------------------------------------------------------------------*/
+static
+void absolute(pTHX_ SV *sv_target, SV *sv_uri, SV *sv_base) {
+  uri_t *rel    = URI(sv_uri);
+  uri_t *base   = URI(sv_base);
+  uri_t *target = URI(sv_target);
+
+  // Relative URIs may begin with // to indicate an authority section without a
+  // scheme, which is illegal in standard URI syntax (authority may only come
+  // after a scheme, which is required, separated by //). This workaround helps
+  // the parser along by identifying the authority section as such.
+  if (rel->scheme->length == 0
+   && rel->host->length == 0
+   && rel->path->length >= 2
+   && strncmp(rel->path->string, "//", 2) == 0)
+  {
+    SV *fixed = newSVpvn("x:", 2);
+    sv_catsv(fixed, sv_2mortal(to_string(sv_uri)));
+
+    SV *sv_tmp = sv_2mortal(new(aTHX_ "URI::Fast", sv_2mortal(fixed), 0));
+    rel = URI(sv_tmp);
+
+    str_clear(rel->scheme);
+  }
+
+  if (rel->scheme->length != 0) {
+    remove_dot_segments(aTHX_ target->path, rel->path->string, rel->path->length);
+    str_copy(rel->scheme, target->scheme);
+    str_copy(rel->usr,    target->usr);
+    str_copy(rel->pwd,    target->pwd);
+    str_copy(rel->host,   target->host);
+    str_copy(rel->port,   target->port);
+    str_copy(rel->query,  target->query);
+  }
+  else {
+    if (rel->usr->length > 0 || rel->host->length > 0) {
+      remove_dot_segments(aTHX_ target->path, rel->path->string, rel->path->length);
+      str_copy(rel->usr,    target->usr);
+      str_copy(rel->pwd,    target->pwd);
+      str_copy(rel->host,   target->host);
+      str_copy(rel->port,   target->port);
+      str_copy(rel->query,  target->query);
+    }
+    else {
+      if (rel->path->length == 0) {
+        str_copy(base->path, target->path);
+
+        if (rel->query->length != 0) {
+          str_copy(rel->query, target->query);
+        } else {
+          str_copy(base->query, target->query);
+        }
+      }
+      else {
+        if (rel->path->string[0] == '/') {
+          remove_dot_segments(aTHX_ target->path, rel->path->string, rel->path->length);
+        }
+        else {
+          uri_str_t *merged = str_new(rel->path->length + base->path->length);
+
+          if (base->scheme->length > 0 && base->path->length == 0) {
+            str_append(merged, "/", 1);
+            str_append(merged, rel->path->string, rel->path->length);
+          }
+          else {
+            if (str_index(base->path, "/", 1) >= 0) {
+              // truncate base path at right-most /, inclusive
+              str_append(merged, base->path->string, base->path->length);
+              str_rtrim(merged, '/');
+            } else {
+              // if there is no / in the base path, truncate it completely
+            }
+
+            str_append(merged, "/", 1);
+            str_append(merged, rel->path->string, rel->path->length);
+          }
+
+          remove_dot_segments(aTHX_ target->path, merged->string, merged->length);
+          str_free(merged);
+        }
+
+        str_copy(rel->query, target->query);
+      }
+
+      str_copy(base->usr,  target->usr);
+      str_copy(base->pwd,  target->pwd);
+      str_copy(base->host, target->host);
+      str_copy(base->port, target->port);
+    }
+
+    str_copy(base->scheme, target->scheme);
+  }
+
+  str_copy(rel->frag, target->frag);
+}
 
 MODULE = URI::Fast  PACKAGE = URI::Fast
 
@@ -1675,8 +1821,20 @@ VERSIONCHECK: ENABLE
 
 SV* remove_dot_segments(sv_path)
   SV *sv_path
+  PREINIT:
+    size_t len;
+    const char *path = SvPV(sv_path, len);
+    uri_str_t *nodots = str_new(len);
   CODE:
-    RETVAL = remove_dot_segments(aTHX_ sv_path);
+    remove_dot_segments(aTHX_ nodots, path, len);
+
+    if (nodots->length == 0) {
+      RETVAL = newSVpvn("", 0);
+    }
+    else {
+      RETVAL = newSVpvn(nodots->string, nodots->length);
+      str_free(nodots);
+    }
   OUTPUT:
     RETVAL
 
@@ -2026,6 +2184,24 @@ SV* to_string(uri_obj)
   SV* uri_obj
   CODE:
     RETVAL = to_string(aTHX_ uri_obj);
+  OUTPUT:
+    RETVAL
+
+SV *absolute(uri, base)
+  SV *uri
+  SV *base
+  PREINIT:
+    SV *sv_target;
+  CODE:
+    sv_target = new(aTHX_ "URI::Fast", sv_2mortal(newSVpvn("", 0)), 0);
+
+    if (!sv_isobject(base) || !sv_derived_from(base, "URI::Fast")) {
+      absolute(aTHX_ sv_target, uri, sv_2mortal(new(aTHX_ "URI::Fast", base, 0)));
+    } else {
+      absolute(aTHX_ sv_target, uri, base);
+    }
+
+    RETVAL = sv_target;
   OUTPUT:
     RETVAL
 

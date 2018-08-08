@@ -273,6 +273,20 @@ Sugar for:
   my $uri = uri '...';
   my $clone = uri $uri;
 
+=head2 absolute
+
+Builds an absolute URI from a relative URI and a base URI string.
+Adheres as strictly as possible to the rules for resolving a target URI in
+L<RFC3986 section 5.2|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a new
+L<URI::Fast> object representing the absolute, merged URI.
+
+  my $uri = uri('some/path')->absolute('http://www.example.com/fnord');
+  $uri->to_string; # http://www.example.com/fnord/some/path
+
+=head2 relative
+
+Stuff.
+
 =head1 ENCODING
 
 C<URI::Fast> tries to do the right thing in most cases with regard to reserved

@@ -9,7 +9,7 @@ BEGIN{
 
 use utf8;
 use Benchmark qw(:all);
-use URI::Fast qw(uri uri_split uri_abs iri);
+use URI::Fast qw(uri uri_split iri);
 use URI::Encode::XS qw();
 use URI::Escape qw();
 use URL::Encode qw();
@@ -77,9 +77,14 @@ sub test {
   print "\n";
 }
 
-test 'uri_abs', 100_000, {
+test 'rel', 100_000, {
+  'URI' => sub{ my $uri = URI->new('http://www.example.com/foo')->rel('http://www.example.com/foo/bar/') },
+  'URI::Fast' => sub{ my $uri = uri('http://www.example.com/foo')->relative('http://www.example.com/foo/bar/') },
+};
+
+test 'abs', 100_000, {
   'URI' => sub{ my $uri = URI->new('some/path')->abs('http://www.example.com/fnord') },
-  'URI::Fast' => sub{ my $uri = uri_abs('some/path', 'http://www.example.com/fnord') },
+  'URI::Fast' => sub{ my $uri = uri('some/path')->absolute('http://www.example.com/fnord') },
 };
 
 =cut
