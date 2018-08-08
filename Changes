@@ -1,6 +1,6 @@
 0.40 2018-08-08
 -bugfix: gracefully handle incorrectly encoded query strings with unencoded '=' not following a key
--bugfix: param and query incorrectly unset single parameters when passed a falsey value
+-bugfix: param and query incorrectly unset single parameters when passed a falsey value (credit: vroom)
 -documentation: clarify handling of '+' in decode
 
 0.39 2018-07-22

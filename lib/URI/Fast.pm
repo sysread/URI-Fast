@@ -584,6 +584,8 @@ fun of me for naming certain methods too generically.
 
 =item Sara Siegal (SSIEGAL)
 
+=item Tim Vroom (VROOM)
+
 =back
 
 =head1 AUTHOR
