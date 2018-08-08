@@ -82,7 +82,7 @@ test 'rel', 100_000, {
   'URI::Fast' => sub{ my $uri = uri('http://www.example.com/foo')->relative('http://www.example.com/foo/bar/') },
 };
 
-test 'abs', 100_000, {
+test 'abs', 500_000, {
   'URI' => sub{ my $uri = URI->new('some/path')->abs('http://www.example.com/fnord') },
   'URI::Fast' => sub{ my $uri = uri('some/path')->absolute('http://www.example.com/fnord') },
 };

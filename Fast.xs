@@ -1651,7 +1651,7 @@ void remove_dot_segments(pTHX_ uri_str_t *out, const char *path, size_t len) {
 
   size_t brk, idx = 0;
   char in[len];
-  Copy(path, in, len, char);
+  Copy(path, in, len + 1, char);
 
   while (idx < len) {
     // in begins with "./" or "../": ignore prefix completely
@@ -1664,29 +1664,23 @@ void remove_dot_segments(pTHX_ uri_str_t *out, const char *path, size_t len) {
 
     // in begins with /./: replace with /
     else if (strncmp(&in[idx], "/./", 3) == 0) {
-      str_append(aTHX_ out, "/", 1);
-      idx += 3;
+      idx += 2; // inc to the final / in /./ instead of editing the buffer
     }
 
     // in begins with /. and . is a complete segment: replace with /
-    else if (strncmp(&in[idx], "/.", 2) == 0
-         && (idx + 2 == len
-          || strncspn(&in[idx + 2], len - idx - 2, "./") > 0)) {
+    else if (strncmp(&in[idx], "/.", 2) == 0 && idx + 2 == len) {
       idx += 1;
       in[idx] = '/';
     }
 
     // in begins with /../: replace with /, remove final segment from out
     else if (strncmp(&in[idx], "/../", 4) == 0) {
-      idx += 3;
-      in[idx] = '/';
+      idx += 3; // inc to the final / in /./ instead of editing the buffer
       str_rtrim(aTHX_ out, '/');
     }
 
     // in begins with /.. and .. is a complete $in segment: replace with /, remove final segment from out
-    else if (strncmp(&in[idx], "/..", 3) == 0
-         && (idx + 3 == len
-          || strncspn(&in[idx + 3], len - idx - 2, "./") > 0)) {
+    else if (strncmp(&in[idx], "/..", 3) == 0 && idx + 3 == len) {
       idx += 2;
       in[idx] = '/';
       str_rtrim(aTHX_ out, '/');
