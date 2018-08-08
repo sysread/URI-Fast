@@ -33,7 +33,13 @@ my @tests = (
 foreach my $test (@tests) {
   my ($rel, $exp) = @$test;
   my $abs = uri_abs($rel, $base);
-  is $abs, $exp, "$rel -> $exp";
+  is $abs, $exp, "$rel -> $exp"
+    or do{
+      diag "rel:    '$rel'";
+      diag "base:   '$base'";
+      diag "exp:    '$exp'";
+      diag "actual: '$abs'";
+    };
 }
 
 done_testing;

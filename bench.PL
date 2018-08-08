@@ -9,7 +9,7 @@ BEGIN{
 
 use utf8;
 use Benchmark qw(:all);
-use URI::Fast qw(uri uri_split iri);
+use URI::Fast qw(uri uri_split uri_abs iri);
 use URI::Encode::XS qw();
 use URI::Escape qw();
 use URL::Encode qw();
@@ -77,6 +77,12 @@ sub test {
   print "\n";
 }
 
+test 'uri_abs', 100_000, {
+  'URI' => sub{ my $uri = URI->new('some/path')->abs('http://www.example.com/fnord') },
+  'URI::Fast' => sub{ my $uri = uri_abs('some/path', 'http://www.example.com/fnord') },
+};
+
+=cut
 test 'Constructor', 500_000, {
   'URI' => sub{ my $uri = URI->new($urls[3]) },
   'URI::Fast' => sub{ my $uri = uri $urls[3] },
@@ -191,5 +197,6 @@ if ($ENV{BENCH_ALL} || $ENV{UPDATEBENCH}) {
 else {
   print "Skipping time consuming benchmarks because BENCH_ALL nor UPDATEBENCH were specified.\n";
 }
+=cut
 
 close $POD;

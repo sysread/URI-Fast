@@ -17,7 +17,8 @@ XSLoader::load('URI::Fast', $XS_VERSION);
 use Exporter 'import';
 
 our @EXPORT_OK = qw(
-  uri iri uri_split uri_abs
+  uri iri uri_split
+  uri_abs uri_rel
   encode uri_encode url_encode
   decode uri_decode url_decode
 );
@@ -38,6 +39,8 @@ sub uri_encode { goto \&encode    }
 sub url_encode { goto \&encode    }
 sub uri_decode { goto \&decode    }
 sub url_decode { goto \&decode    }
+sub abs        { goto \&uri_abs   }
+sub rel        { goto \&uri_rel   }
 
 # Build a simple accessor for basic attributes
 foreach my $attr (qw(scheme usr pwd host port frag)) {
@@ -202,11 +205,66 @@ sub compare {
 }
 
 #-------------------------------------------------------------------------------
+# Relativism
+#-------------------------------------------------------------------------------
+sub uri_rel ($$) {
+  my ($rel, $base) = @_;
+  $rel  = uri($rel);
+  $base = uri($base);
+
+  my $rpath = $rel->path;
+  my $bpath = $base->path;
+
+  if ($bpath =~ m|/$| && $rpath eq $bpath) {
+    $rel->path('./');
+  }
+  else {
+
+    # Ensure both paths begin with '/'
+    $rpath = "/$rpath" unless $rpath =~ m|^/|;
+    $bpath = "/$bpath" unless $bpath =~ m|^/|;
+
+    # Remove common leading path segments
+    my $idx = 1;
+    my $brk = 0;
+    while (1) {
+      $brk = index($rpath, '/', $idx);
+
+      last if $brk < 0;
+      last if $brk != index($bpath, '/', $idx);
+      last if substr($rpath, $idx, $brk - $idx)
+           ne substr($bpath, $idx, $brk - $idx);
+
+      $idx = $brk + 1;
+    }
+
+    substr($rpath, 0, $idx) = '';
+    substr($bpath, 0, $idx) = '';
+
+    # Add ../ for each remaining base path segment
+    while ($bpath =~ m|/|gc) {
+      $rpath = "../$rpath";
+    }
+
+    # An empty path becomes ./
+    $rpath ||= './';
+
+    $rel->path($rpath);
+  }
+
+  $rel->clear_scheme;
+  $rel->clear_auth;
+
+  return $rel;
+}
+
+#-------------------------------------------------------------------------------
 # Absolution
 #
 # As defined in https://www.rfc-editor.org/rfc/rfc3986.txt section 5.2
 #-------------------------------------------------------------------------------
-sub uri_abs {
+
+sub uri_abs ($$) {
   my ($rel, $base) = @_;
   my $target = uri;
 
