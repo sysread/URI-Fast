@@ -1880,7 +1880,7 @@ SV* remove_dot_segments(sv_path)
   PREINIT:
     size_t len;
     const char *path = SvPV(sv_path, len);
-    uri_str_t *nodots = str_new(len);
+    uri_str_t *nodots = str_new(aTHX_ len);
   CODE:
     remove_dot_segments(aTHX_ nodots, path, len);
 
@@ -1889,7 +1889,7 @@ SV* remove_dot_segments(sv_path)
     }
     else {
       RETVAL = newSVpvn(nodots->string, nodots->length);
-      str_free(nodots);
+      str_free(aTHX_ nodots);
     }
   OUTPUT:
     RETVAL
