@@ -1739,40 +1739,40 @@ void absolute(pTHX_ SV *sv_target, SV *sv_uri, SV *sv_base) {
    && strncmp(rel->path->string, "//", 2) == 0)
   {
     SV *fixed = newSVpvn("x:", 2);
-    sv_catsv(fixed, sv_2mortal(to_string(sv_uri)));
+    sv_catsv(fixed, sv_2mortal(to_string(aTHX_ sv_uri)));
 
     SV *sv_tmp = sv_2mortal(new(aTHX_ "URI::Fast", sv_2mortal(fixed), 0));
     rel = URI(sv_tmp);
 
-    str_clear(rel->scheme);
+    str_clear(aTHX_ rel->scheme);
   }
 
   if (rel->scheme->length != 0) {
     remove_dot_segments(aTHX_ target->path, rel->path->string, rel->path->length);
-    str_copy(rel->scheme, target->scheme);
-    str_copy(rel->usr,    target->usr);
-    str_copy(rel->pwd,    target->pwd);
-    str_copy(rel->host,   target->host);
-    str_copy(rel->port,   target->port);
-    str_copy(rel->query,  target->query);
+    str_copy(aTHX_ rel->scheme, target->scheme);
+    str_copy(aTHX_ rel->usr,    target->usr);
+    str_copy(aTHX_ rel->pwd,    target->pwd);
+    str_copy(aTHX_ rel->host,   target->host);
+    str_copy(aTHX_ rel->port,   target->port);
+    str_copy(aTHX_ rel->query,  target->query);
   }
   else {
     if (rel->usr->length > 0 || rel->host->length > 0) {
       remove_dot_segments(aTHX_ target->path, rel->path->string, rel->path->length);
-      str_copy(rel->usr,    target->usr);
-      str_copy(rel->pwd,    target->pwd);
-      str_copy(rel->host,   target->host);
-      str_copy(rel->port,   target->port);
-      str_copy(rel->query,  target->query);
+      str_copy(aTHX_ rel->usr,    target->usr);
+      str_copy(aTHX_ rel->pwd,    target->pwd);
+      str_copy(aTHX_ rel->host,   target->host);
+      str_copy(aTHX_ rel->port,   target->port);
+      str_copy(aTHX_ rel->query,  target->query);
     }
     else {
       if (rel->path->length == 0) {
-        str_copy(base->path, target->path);
+        str_copy(aTHX_ base->path, target->path);
 
         if (rel->query->length != 0) {
-          str_copy(rel->query, target->query);
+          str_copy(aTHX_ rel->query, target->query);
         } else {
-          str_copy(base->query, target->query);
+          str_copy(aTHX_ base->query, target->query);
         }
       }
       else {
@@ -1780,42 +1780,42 @@ void absolute(pTHX_ SV *sv_target, SV *sv_uri, SV *sv_base) {
           remove_dot_segments(aTHX_ target->path, rel->path->string, rel->path->length);
         }
         else {
-          uri_str_t *merged = str_new(rel->path->length + base->path->length);
+          uri_str_t *merged = str_new(aTHX_ rel->path->length + base->path->length);
 
           if (base->scheme->length > 0 && base->path->length == 0) {
-            str_append(merged, "/", 1);
-            str_append(merged, rel->path->string, rel->path->length);
+            str_append(aTHX_ merged, "/", 1);
+            str_append(aTHX_ merged, rel->path->string, rel->path->length);
           }
           else {
-            if (str_index(base->path, "/", 1) >= 0) {
+            if (str_index(aTHX_ base->path, "/", 1) >= 0) {
               // truncate base path at right-most /, inclusive
-              str_append(merged, base->path->string, base->path->length);
-              str_rtrim(merged, '/');
+              str_append(aTHX_ merged, base->path->string, base->path->length);
+              str_rtrim(aTHX_ merged, '/');
             } else {
               // if there is no / in the base path, truncate it completely
             }
 
-            str_append(merged, "/", 1);
-            str_append(merged, rel->path->string, rel->path->length);
+            str_append(aTHX_ merged, "/", 1);
+            str_append(aTHX_ merged, rel->path->string, rel->path->length);
           }
 
           remove_dot_segments(aTHX_ target->path, merged->string, merged->length);
-          str_free(merged);
+          str_free(aTHX_ merged);
         }
 
-        str_copy(rel->query, target->query);
+        str_copy(aTHX_ rel->query, target->query);
       }
 
-      str_copy(base->usr,  target->usr);
-      str_copy(base->pwd,  target->pwd);
-      str_copy(base->host, target->host);
-      str_copy(base->port, target->port);
+      str_copy(aTHX_ base->usr,  target->usr);
+      str_copy(aTHX_ base->pwd,  target->pwd);
+      str_copy(aTHX_ base->host, target->host);
+      str_copy(aTHX_ base->port, target->port);
     }
 
-    str_copy(base->scheme, target->scheme);
+    str_copy(aTHX_ base->scheme, target->scheme);
   }
 
-  str_copy(rel->frag, target->frag);
+  str_copy(aTHX_ rel->frag, target->frag);
 }
 
 /*
