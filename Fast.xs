@@ -1900,23 +1900,23 @@ void normalize(pTHX_ SV *uri_obj) {
   uri_t *uri = URI(uri_obj);
   size_t i;
 
-  // lower case scheme
+  // (6.2.2.1) lower case scheme
   for (i = 0; i < uri->scheme->length; ++i) {
     uri->scheme->string[i] = toLOWER(uri->scheme->string[i]);
   }
 
-  // lower case hostname
+  // (6.2.2.1) lower case hostname
   for (i = 0; i < uri->host->length; ++i) {
     uri->host->string[i] = toLOWER(uri->host->string[i]);
   }
 
-  // remove dot segments from path
+  // (6.2.2) remove dot segments from path
   uri_str_t *tmp = str_new(aTHX_ uri->path->length);
   remove_dot_segments(aTHX_ tmp, uri->path->string, uri->path->length);
   str_free(uri->path);
   uri->path = tmp;
 
-  // upper case hex codes in each section of the uri
+  // (6.2.2.1) upper case hex codes in each section of the uri
   uc_hex(aTHX_ uri->scheme);
   uc_hex(aTHX_ uri->query);
   uc_hex(aTHX_ uri->path);
@@ -1925,6 +1925,9 @@ void normalize(pTHX_ SV *uri_obj) {
   uc_hex(aTHX_ uri->frag);
   uc_hex(aTHX_ uri->usr);
   uc_hex(aTHX_ uri->pwd);
+
+  // TODO (6.2.2.2) decode any percent-encoded sequences decoding to unreserved
+  // characters.
 }
 
 
