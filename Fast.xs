@@ -1553,6 +1553,11 @@ void DESTROY(pTHX_ SV *uri_obj) {
 /*
  * Extras
  */
+
+/*
+ * Splits a uri string into its component sections: scheme, authority, path,
+ * query, fragment. Pushes those values directly onto the results stack.
+ */
 static
 void uri_split(pTHX_ SV *uri) {
   dXSARGS;
@@ -1654,6 +1659,10 @@ void uri_split(pTHX_ SV *uri) {
   PUTBACK;
 }
 
+/*
+ * Collapses dotted segments in a path string based on the rules defined in RFC
+ * 3986 section 5.2.
+ */
 static
 void remove_dot_segments(pTHX_ uri_str_t *out, const char *path, size_t len) {
   if (len == 0) {
@@ -1831,6 +1840,9 @@ bool uc_hex_3ch(pTHX_ char *buf) {
   return 1;
 }
 
+/*
+ * Uppercases 3-character hex codes over an entire uri_str_t.
+ */
 static
 void uc_hex(pTHX_ uri_str_t *str) {
   size_t i = 0;
@@ -1843,6 +1855,10 @@ void uc_hex(pTHX_ uri_str_t *str) {
   }
 }
 
+/*
+ * Performs minimal normalization. Scheme and hostname are lower cased. All
+ * members are scanned for lower case percent-encoded sequences.
+ */
 static
 void normalize(pTHX_ SV *uri_obj) {
   uri_t *uri = URI(uri_obj);
@@ -1858,7 +1874,8 @@ void normalize(pTHX_ SV *uri_obj) {
     uri->host->string[i] = toLOWER(uri->host->string[i]);
   }
 
-  // TODO this must be done for all struct members
+  // upper case hex codes in each section of the uri
+  uc_hex(aTHX_ uri->scheme);
   uc_hex(aTHX_ uri->query);
   uc_hex(aTHX_ uri->path);
   uc_hex(aTHX_ uri->host);
