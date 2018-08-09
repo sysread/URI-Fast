@@ -18,14 +18,8 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
   uri iri uri_split
-<<<<<<< HEAD
-  uri_abs uri_rel
   encode uri_encode url_encode
   decode uri_decode url_decode
-=======
-  encode url_encode
-  decode url_decode
->>>>>>> Complete XS implementation of absolute
 );
 
 require URI::Fast::IRI;
@@ -315,21 +309,7 @@ be percent-encoded when modified.
 
 Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
 
-<<<<<<< HEAD
-=head2 uri_abs
-
-Builds an absolute URI from a relative URI string and a base URI string.
-Adheres as strictly as possible to the rules for resolving a target URI in
-L<RFC3986 section 5.2|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a new
-L<URI::Fast> object representing the absolute, merged URI.
-
-  my $uri = uri_abs 'some/path', 'http://www.example.com/fnord';
-  $uri->to_string; # http://www.example.com/fnord/some/path
-
 =head2 encode/decode/uri_encode/uri_decode
-=======
-=head2 encode/decode/url_encode/url_decode
->>>>>>> Complete XS implementation of absolute
 
 See L</ENCODING>.
 
@@ -532,14 +512,13 @@ overloaded.
 Compares the URI to another, returning true if the URIs are equivalent.
 Overloads the C<eq> operator.
 
-<<<<<<< HEAD
 =head2 clone
 
 Sugar for:
 
   my $uri = uri '...';
   my $clone = uri $uri;
-=======
+
 =head2 absolute
 
 Builds an absolute URI from a relative URI and a base URI string.
@@ -548,12 +527,20 @@ L<RFC3986 section 5.2|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a new
 L<URI::Fast> object representing the absolute, merged URI.
 
   my $uri = uri('some/path')->absolute('http://www.example.com/fnord');
-  $uri->to_string; # http://www.example.com/fnord/some/path
+  $uri->to_string; # "http://www.example.com/fnord/some/path"
 
 =head2 relative
 
-Stuff.
->>>>>>> Complete XS implementation of absolute
+Builds a relative URI using a second URI (either a C<URI::Fast> object or a
+string) as a base. Unlike L<URI/rel>, ignores differences in domain and scheme
+assumes the caller wishes to adopt the base URL's instead. Aside from that difference,
+it's behavior should mimic L<URI/rel>'s.
+
+  my $uri = uri('http://example.com/foo/bar')->relative('http://example.com/foo');
+  $uri->to_string; # "foo/bar"
+
+  my $uri = uri('http://example.com/foo/bar/')->relative('http://example.com/foo');
+  $uri->to_string; # "foo/bar/"
 
 =head1 ENCODING
 
