@@ -1171,7 +1171,7 @@ void set_auth(pTHX_ SV *sv_uri, SV *sv_value) {
   uri_t *uri = URI(sv_uri);
 
   str_clear(aTHX_ uri->usr);
-  str_clear(aTHX_ uri->pwd); 
+  str_clear(aTHX_ uri->pwd);
   str_clear(aTHX_ uri->host);
   str_clear(aTHX_ uri->port);
 
@@ -1909,6 +1909,12 @@ void normalize(pTHX_ SV *uri_obj) {
   for (i = 0; i < uri->host->length; ++i) {
     uri->host->string[i] = toLOWER(uri->host->string[i]);
   }
+
+  // remove dot segments from path
+  uri_str_t *tmp = str_new(aTHX_ uri->path->length);
+  remove_dot_segments(aTHX_ tmp, uri->path->string, uri->path->length);
+  str_free(uri->path);
+  uri->path = tmp;
 
   // upper case hex codes in each section of the uri
   uc_hex(aTHX_ uri->scheme);

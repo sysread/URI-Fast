@@ -6,8 +6,9 @@ use URI::Fast qw(uri);
 my $E = '%3F';
 my $e = '%3f';
 
-is uri('HTTP://example.com')->normalize, 'http://example.com', 'scheme';
-is uri('http://EXAMPLE.com')->normalize, 'http://example.com', 'host';
+is uri('HTTP://example.com')->normalize, 'http://example.com', 'lc scheme';
+is uri('http://EXAMPLE.com')->normalize, 'http://example.com', 'lc host';
+is uri('/foo/../bar')->normalize, '/bar', 'path: remove dot segments';
 
 subtest 'uc encoded chars' => sub{
   is uri("?foo=$e")->normalize, "?foo=$E", 'query';

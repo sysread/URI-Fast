@@ -558,8 +558,8 @@ it's behavior should mimic L<URI/rel>'s.
 Similar to L<URI/canonical>, performs a minimal normalization on the URI. Only
 generic normalization described in the rfc is performed; no scheme-specific
 normalization is done. Specifically, the scheme and host members are converted
-to lower case and any percent-encoded characters in the URI are converted to
-upper case.
+to lower case, dot segments are collapsed in the path, and any percent-encoded
+characters in the URI are converted to upper case.
 
 =head1 ENCODING
 
