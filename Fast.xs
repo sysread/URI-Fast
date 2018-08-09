@@ -66,11 +66,22 @@ static void set_##member(pTHX_ SV *uri, SV *sv_value) { \
   } \
 }
 
-// Defines a getter method that returns the raw, encoded value of the member slot.
+// Defines a getter method that returns the raw, encoded value of the member
+// slot. If the object is an IRI, decodes utf8 characters from hex sequences if
+// present.
 #define URI_RAW_GETTER(member) \
 static SV* get_raw_##member(pTHX_ SV *uri) { \
   uri_str_t *str = URI_MEMBER(uri, member); \
-  return URI_STR_2SV(str); \
+  if (URI_MEMBER(uri, is_iri)) { \
+    if (str->length == 0) return newSVpvn("", 0); \
+    char decoded[ str->length + 1 ]; \
+    size_t len = uri_decode_utf8(str->string, str->length, decoded); \
+    SV *out = newSVpvn(decoded, len); \
+    sv_utf8_decode(out); \
+    return out; \
+  } else { \
+    return URI_STR_2SV(str); \
+  } \
 }
 
 // Defines a getter method that returns the decoded value of the member slot.
@@ -1406,7 +1417,7 @@ static
 SV* to_string(pTHX_ SV *uri_obj) {
   uri_t *uri = URI(uri_obj);
   SV *out = newSVpvn("", 0);
-  SV *auth = sv_2mortal(get_auth(aTHX_ uri_obj));
+  SV *auth = sv_2mortal(get_raw_auth(aTHX_ uri_obj));
 
   if (uri->is_iri) {
     SvUTF8_on(out);
@@ -1807,6 +1818,57 @@ void absolute(pTHX_ SV *sv_target, SV *sv_uri, SV *sv_base) {
   str_copy(rel->frag, target->frag);
 }
 
+/*
+ * Uppercases a 3-digit hex sequence, if present, in the first 3 indices of
+ * *buf. It is the caller's responsibility to ensure that *buf is at least 3
+ * chars in length.
+ */
+static inline
+bool uc_hex_3ch(pTHX_ char *buf) {
+  if (buf[0] != '%') return 0;
+  buf[1] = toUPPER(buf[1]);
+  buf[2] = toUPPER(buf[2]);
+  return 1;
+}
+
+static
+void uc_hex(pTHX_ uri_str_t *str) {
+  size_t i = 0;
+  while (i < str->length) {
+    if (i + 2 < str->length && uc_hex_3ch(aTHX_ &str->string[i]) == 1) {
+      i += 3;
+    } else {
+      ++i;
+    }
+  }
+}
+
+static
+void normalize(pTHX_ SV *uri_obj) {
+  uri_t *uri = URI(uri_obj);
+  size_t i;
+
+  // lower case scheme
+  for (i = 0; i < uri->scheme->length; ++i) {
+    uri->scheme->string[i] = toLOWER(uri->scheme->string[i]);
+  }
+
+  // lower case hostname
+  for (i = 0; i < uri->host->length; ++i) {
+    uri->host->string[i] = toLOWER(uri->host->string[i]);
+  }
+
+  // TODO this must be done for all struct members
+  uc_hex(aTHX_ uri->query);
+  uc_hex(aTHX_ uri->path);
+  uc_hex(aTHX_ uri->host);
+  uc_hex(aTHX_ uri->port);
+  uc_hex(aTHX_ uri->frag);
+  uc_hex(aTHX_ uri->usr);
+  uc_hex(aTHX_ uri->pwd);
+}
+
+
 MODULE = URI::Fast  PACKAGE = URI::Fast
 
 PROTOTYPES: DISABLE
@@ -2181,7 +2243,12 @@ SV* to_string(uri_obj)
   OUTPUT:
     RETVAL
 
-SV *absolute(uri, base)
+void normalize_uri(uri)
+  SV *uri
+  CODE:
+    normalize(aTHX_ uri);
+
+SV* absolute(uri, base)
   SV *uri
   SV *base
   PREINIT:

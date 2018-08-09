@@ -5,9 +5,7 @@ use URI::Fast qw(uri);
 
 my $base = 'http://a/b/c/d;p?q';
 
-{
-  diag 'normal cases - https://www.rfc-editor.org/rfc/rfc3986.txt 5.4.1';
-
+subtest 'normal cases - https://www.rfc-editor.org/rfc/rfc3986.txt 5.4.1' => sub{
   my @cases = (
     ["g"       , "http://a/b/c/g"],
     ["./g"     , "http://a/b/c/g"],
@@ -46,9 +44,7 @@ my $base = 'http://a/b/c/d;p?q';
   }
 };
 
-{
-  diag 'edge cases - https://www.rfc-editor.org/rfc/rfc3986.txt 5.4.2';
-
+subtest 'edge cases - https://www.rfc-editor.org/rfc/rfc3986.txt 5.4.2' => sub{
   my @cases = (
     ["../../../g",    "http://a/g"],
     ["../../../../g", "http://a/g"],

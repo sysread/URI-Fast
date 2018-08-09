@@ -125,6 +125,12 @@ increased significantly over Perl compiled for MacOS.
         URI::Fast       289017/s           897%             --
 
 
+=head2 Normalize
+                            Rate            URI      URI::Fast
+              URI        20894/s             --           -97%
+        URI::Fast       657895/s          3049%             --
+
+
 =head2 uri_split
 
                             Rate     URI::Split      URI::Fast
