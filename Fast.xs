@@ -546,6 +546,9 @@ size_t uri_decode_utf8(const char *in, size_t len, char *out) {
 
 // EOT (end of theft)
 
+/*
+ * External API for encode/decode.
+ */
 static
 SV* encode(pTHX_ SV *in, SV *sv_allowed) {
   size_t ilen, olen, alen;
@@ -627,6 +630,9 @@ typedef struct {
   const char *source;
 } uri_query_scanner_t;
 
+// Initializes a uri_query_scanner_t with input string *source of at least
+// length characters. It is the caller's responsibility to ensure the lifetime
+// of source matches the lifetime of the scanner.
 void query_scanner_init(
     uri_query_scanner_t *scanner,
     const char *source,
@@ -638,6 +644,7 @@ void query_scanner_init(
   scanner->cursor = 0;
 }
 
+// Returns true if the scanner has reached the end of the input string.
 static
 int query_scanner_done(uri_query_scanner_t *scanner) {
   return scanner->cursor >= scanner->length;
