@@ -1606,7 +1606,8 @@ void uri_split(pTHX_ SV *uri) {
     XPUSHs(sv_2mortal(get_query(aTHX_ uri)));
     XPUSHs(sv_2mortal(get_frag(aTHX_ uri)));
   }
-  else {
+  // The object is defined and not a reference
+  else if (SvOK(uri) && !SvROK(uri)) {
     const char *src;
     size_t idx = 0;
     size_t brk = 0;
