@@ -154,12 +154,14 @@ bool is_defined(pTHX_ SV *sv) {
   return SvOK(sv) ? 1 : 0;
 }
 
+// Returns true if the SV is an RV. Gets magic before evaluating.
 static
-bool is_defined_ref(pTHX_ SV *sv) {
+bool is_ref(pTHX_ SV *sv) {
   SvGETMAGIC(sv);
   return SvROK(sv) ? 1 : 0;
 }
 
+// Replacement for strspn that is length-aware
 static
 size_t strnspn(const char *s, size_t s_len, const char *c)
 {
@@ -167,6 +169,7 @@ size_t strnspn(const char *s, size_t s_len, const char *c)
   return s_len < res ? s_len : res;
 }
 
+// Replacement for strcspn that is length-aware
 static
 size_t strncspn(const char *s, size_t s_len, const char *c)
 {
@@ -174,6 +177,8 @@ size_t strncspn(const char *s, size_t s_len, const char *c)
   return s_len < res ? s_len : res;
 }
 
+// Returns true if char c is in char* set. It is up to the caller to ensure
+// that *set is nul-terminated.
 static inline
 bool char_in_str(const char c, const char *set) {
   size_t i;
@@ -226,6 +231,8 @@ typedef struct {
 #define str_len(str) ((str)->length)
 #define str_get(str) (str_len(str) == 0 ? "" : (const char*)str->string)
 
+// Searchs str for occurences of string *find. It is up to the caller to ensure
+// that *find is at least len chars long. Returns -1 if not found.
 static
 size_t str_index(pTHX_ uri_str_t *str, const char *find, size_t len) {
   size_t i, j;
@@ -251,6 +258,8 @@ size_t str_index(pTHX_ uri_str_t *str, const char *find, size_t len) {
   }
 }
 
+// Truncates the string from the right-most occurence of r_char by setting that
+// index to nul. Does not zero out the rest of the string.
 static
 void str_rtrim(pTHX_ uri_str_t *str, const char r_char) {
   size_t i;
@@ -263,6 +272,8 @@ void str_rtrim(pTHX_ uri_str_t *str, const char r_char) {
   }
 }
 
+// Sets str to the first len chars of value. Reallocates another block of
+// memory to fit it if necessary.
 static
 void str_set(pTHX_ uri_str_t *str, const char *value, size_t len) {
   size_t allocate = str->chunk * (((len + 1) / str->chunk) + 1);
@@ -287,6 +298,8 @@ void str_set(pTHX_ uri_str_t *str, const char *value, size_t len) {
   }
 }
 
+// Appends the first len chars of value to str, allocating more memory if
+// necessary.
 static
 void str_append(pTHX_ uri_str_t *str, const char *value, size_t len) {
   if (str->string == NULL) {
@@ -308,16 +321,20 @@ void str_append(pTHX_ uri_str_t *str, const char *value, size_t len) {
   }
 }
 
+// Zeroes out the contents of str. Does not release memory.
 static
 void str_clear(pTHX_ uri_str_t *str) {
   str_set(aTHX_ str, NULL, 0);
 }
 
+// Copies the contents of from into to. Does not clear to first, but will set
+// the terminating nul and length.
 static
 void str_copy(pTHX_ uri_str_t *from, uri_str_t *to) {
   str_set(aTHX_ to, from->string, from->length);
 }
 
+// Initializes a uri_str_t.
 static
 void str_init(pTHX_ uri_str_t *str, size_t alloc_size) {
   str->chunk = alloc_size;
@@ -326,6 +343,7 @@ void str_init(pTHX_ uri_str_t *str, size_t alloc_size) {
   str->string = NULL;
 }
 
+// Allocates and initializes a new uri_str_t.
 static
 uri_str_t* str_new(pTHX_ size_t alloc_size) {
   uri_str_t *str;
@@ -334,6 +352,7 @@ uri_str_t* str_new(pTHX_ size_t alloc_size) {
   return str;
 }
 
+// Release an allocated uri_str_t and free's its contents.
 static
 void str_free(pTHX_ uri_str_t *str) {
   if (str->string != NULL) {
@@ -1222,7 +1241,7 @@ void update_query_keyset(pTHX_ SV *uri, SV *sv_key_set, SV *sv_separator) {
   uri_query_token_t   token;
 
   // Validate reference parameters
-  if (!is_defined_ref(aTHX_ sv_key_set) || SvTYPE(SvRV(sv_key_set)) != SVt_PVHV) {
+  if (!is_ref(aTHX_ sv_key_set) || SvTYPE(SvRV(sv_key_set)) != SVt_PVHV) {
     croak("set_query_keys: expected hash ref");
   }
 
@@ -1334,7 +1353,7 @@ void set_param(pTHX_ SV *uri, SV *sv_key, SV *sv_values, SV *sv_separator) {
   klen = uri_encode(key, strlen(key), enc_key, ":@?/", is_iri);
 
   // Get array of values to set
-  if (!is_defined_ref(aTHX_ sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
+  if (!is_ref(aTHX_ sv_values) || SvTYPE(SvRV(sv_values)) != SVt_PVAV) {
     croak("set_param: expected array of values");
   }
 
