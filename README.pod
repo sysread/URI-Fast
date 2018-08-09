@@ -440,6 +440,8 @@ fun of me for naming certain methods too generically.
 
 =item James Messrie
 
+=item Martin Locklear
+
 =item Randal Schwartz (MERLYN)
 
 =item Sara Siegal (SSIEGAL)

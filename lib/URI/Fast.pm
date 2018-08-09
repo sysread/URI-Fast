@@ -224,17 +224,21 @@ sub relative {
     # Remove common leading path segments
     my ($idx, $brk) = (1, 0);
 
+    # Scan for matching segments
     while (1) {
+      # Locate the next delimiter
       $brk = index($rpath, '/', $idx);
 
-      last if $brk < 0;
-      last if $brk != index($bpath, '/', $idx);
-      last if substr($rpath, $idx, $brk - $idx)
+      last if $brk < 0;                           # not found
+      last if $brk != index($bpath, '/', $idx);   # no match: different segment lengths
+      last if substr($rpath, $idx, $brk - $idx)   # no match: segments have different string values
            ne substr($bpath, $idx, $brk - $idx);
 
-      $idx = $brk + 1;
+      $idx = $brk + 1;                            # move past delimiter
     }
 
+    # $idx now matches the slash after the common prefix; remove path contents
+    # up to that point.
     substr($rpath, 0, $idx) = '';
     substr($bpath, 0, $idx) = '';
 
@@ -692,6 +696,8 @@ fun of me for naming certain methods too generically.
 =item Dave Hubbard (DAVEH)
 
 =item James Messrie
+
+=item Martin Locklear
 
 =item Randal Schwartz (MERLYN)
 
