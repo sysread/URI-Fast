@@ -238,6 +238,10 @@ Subroutines are exported on demand.
 
 Accepts a URI string, minimally parses it, and returns a C<URI::Fast> object.
 
+Note: passing a C<URI::Fast> instance to this routine will cause the object to
+be interpolated into a string (via L</to_string>), effectively creating a clone
+of the original C<URI::Fast> object.
+
 =head2 iri
 
 Similar to L</uri>, but returns a C<URI::Fast::IRI> object. A C<URI::Fast::IRI>
@@ -515,6 +519,11 @@ Decodes a percent-encoded string.
 These are aliases of L</encode> and L</decode>, respectively. They were added
 to make L<BLUEFEET|https://metacpan.org/author/BLUEFEET> happy after he made
 fun of me for naming L</encode> and L</decode> too generically.
+
+=head1 CLONING
+
+  my $orig = uri 'http://example.com';
+  my $copy = uri $orig;
 
 =head1 SPEED
 
