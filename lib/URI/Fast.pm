@@ -210,8 +210,7 @@ sub relative {
   my $rel = uri("$self");
 
   my $rpath = $self->path;
-  my $bpath;
-  ($_, $_, $bpath) = uri_split("$base");
+  ($_, $_, my $bpath) = uri_split("$base");
 
   if ($bpath =~ m|/$| && $rpath eq $bpath) {
     $rel->path('./');
