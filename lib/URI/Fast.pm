@@ -31,6 +31,7 @@ sub uri { URI::Fast->new($_[0]) }
 sub iri { URI::Fast::IRI->new_iri($_[0]) }
 
 # Aliases
+sub clone      { goto \&uri       }
 sub as_string  { goto \&to_string }
 sub canonical  { goto \&canonical }
 sub uri_encode { goto \&encode    }
@@ -458,6 +459,13 @@ overloaded.
 Compares the URI to another, returning true if the URIs are equivalent.
 Overloads the C<eq> operator.
 
+=head2 clone
+
+Sugar for:
+
+  my $uri = uri '...';
+  my $clone = uri $uri;
+
 =head1 ENCODING
 
 C<URI::Fast> tries to do the right thing in most cases with regard to reserved
@@ -527,11 +535,6 @@ In fact, these were originally aliased as C<url_encode> and C<url_decode>, but
 due to some pedantic whining on the part of
 L<BGRIMM|https://metacpan.org/author/BGRIMM>, they have been renamed to
 C<uri_encode> and C<uri_decode>.
-
-=head1 CLONING
-
-  my $orig = uri 'http://example.com';
-  my $copy = uri $orig;
 
 =head1 SPEED
 
