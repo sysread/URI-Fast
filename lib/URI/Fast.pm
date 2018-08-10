@@ -18,8 +18,8 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
   uri iri uri_split
-  encode url_encode
-  decode url_decode
+  encode uri_encode url_encode
+  decode uri_decode url_decode
 );
 
 require URI::Fast::IRI;
@@ -32,7 +32,10 @@ sub iri { URI::Fast::IRI->new_iri($_[0]) }
 
 # Aliases
 sub as_string  { goto \&to_string }
+sub canonical  { goto \&canonical }
+sub uri_encode { goto \&encode    }
 sub url_encode { goto \&encode    }
+sub uri_decode { goto \&decode    }
 sub url_decode { goto \&decode    }
 
 # Build a simple accessor for basic attributes
@@ -252,7 +255,7 @@ be percent-encoded when modified.
 
 Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
 
-=head2 encode/decode/url_encode/url_decode
+=head2 encode/decode/uri_encode/uri_decode
 
 See L</ENCODING>.
 
@@ -512,13 +515,18 @@ Decodes a percent-encoded string.
 
   my $decoded = URI::Fast::decode($some_string);
 
-=head2 url_encode
+=head2 uri_encode
 
-=head2 url_decode
+=head2 uri_decode
 
 These are aliases of L</encode> and L</decode>, respectively. They were added
 to make L<BLUEFEET|https://metacpan.org/author/BLUEFEET> happy after he made
 fun of me for naming L</encode> and L</decode> too generically.
+
+In fact, these were originally aliased as C<url_encode> and C<url_decode>, but
+due to some pedantic whining on the part of
+L<BGRIMM|https://metacpan.org/author/BGRIMM>, they have been renamed to
+C<uri_encode> and C<uri_decode>.
 
 =head1 CLONING
 
@@ -584,6 +592,8 @@ fun of me for naming certain methods too generically.
 =item Andy Ruder
 
 =item Aran Deltac (BLUEFEET)
+
+=item Ben Grimm (BGRIMM)
 
 =item Dave Hubbard (DAVEH)
 
