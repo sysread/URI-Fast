@@ -53,16 +53,6 @@ be percent-encoded when modified.
 
 Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
 
-=head2 uri_abs
-
-Builds an absolute URI from a relative URI string and a base URI string.
-Adheres as strictly as possible to the rules for resolving a target URI in
-L<RFC3986 section 5.2|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a new
-L<URI::Fast> object representing the absolute, merged URI.
-
-  my $uri = uri_abs 'some/path', 'http://www.example.com/fnord';
-  $uri->to_string; # http://www.example.com/fnord/some/path
-
 =head2 encode/decode/uri_encode/uri_decode
 
 See L</ENCODING>.
