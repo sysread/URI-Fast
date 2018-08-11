@@ -33,12 +33,11 @@ sub iri { URI::Fast::IRI->new_iri($_[0]) }
 # Aliases
 sub clone      { goto \&uri       }
 sub as_string  { goto \&to_string }
-sub canonical  { goto \&canonical }
+sub canonical  { goto \&normalize }
 sub uri_encode { goto \&encode    }
 sub url_encode { goto \&encode    }
 sub uri_decode { goto \&decode    }
 sub url_decode { goto \&decode    }
-sub canonical  { goto \&canonical }
 
 # Build a simple accessor for basic attributes
 foreach my $attr (qw(scheme usr pwd host port frag)) {
