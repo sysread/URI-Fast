@@ -263,6 +263,37 @@ Sugar for:
   my $uri = uri '...';
   my $clone = uri $uri;
 
+=head2 absolute
+
+Builds an absolute URI from a relative URI and a base URI string.
+Adheres as strictly as possible to the rules for resolving a target URI in
+L<RFC3986 section 5.2|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a new
+L<URI::Fast> object representing the absolute, merged URI.
+
+  my $uri = uri('some/path')->absolute('http://www.example.com/fnord');
+  $uri->to_string; # "http://www.example.com/fnord/some/path"
+
+=head2 relative
+
+Builds a relative URI using a second URI (either a C<URI::Fast> object or a
+string) as a base. Unlike L<URI/rel>, ignores differences in domain and scheme
+assumes the caller wishes to adopt the base URL's instead. Aside from that difference,
+it's behavior should mimic L<URI/rel>'s.
+
+  my $uri = uri('http://example.com/foo/bar')->relative('http://example.com/foo');
+  $uri->to_string; # "foo/bar"
+
+  my $uri = uri('http://example.com/foo/bar/')->relative('http://example.com/foo');
+  $uri->to_string; # "foo/bar/"
+
+=head2 normalize
+
+Similar to L<URI/canonical>, performs a minimal normalization on the URI. Only
+generic normalization described in the rfc is performed; no scheme-specific
+normalization is done. Specifically, the scheme and host members are converted
+to lower case, dot segments are collapsed in the path, and any percent-encoded
+characters in the URI are converted to upper case.
+
 =head1 ENCODING
 
 C<URI::Fast> tries to do the right thing in most cases with regard to reserved
@@ -339,15 +370,9 @@ See L<URI::Fast::Benchmarks>.
 
 =head1 FUTURE PLANS
 
+Some thoughts on future development for this module.
+
 =over
-
-=item Zero-copy strategy for parsing and updating query string
-
-L</uri> does a single, fast pass over the input string and copies portions into
-the struct members. Some compound fields, such as the query and path, are only
-parsed as needed. Switching to a zero-copy strategy could make the initial pass
-faster, reduce time spent zeroing out the struct, and make better use of the
-cache.
 
 =item Support for arbitrary binary data in query string
 
@@ -369,9 +394,9 @@ possible and croaks loudly otherwise.
 
 The de facto standard.
 
-=item L<Panda::URI>
+=item L<RFC 3986|https://www.rfc-editor.org/rfc/rfc3986.txt>
 
-Written in C++ and purportedly very fast, but appears to only support Linux.
+The official standard.
 
 =back
 
@@ -398,6 +423,8 @@ fun of me for naming certain methods too generically.
 =item Dave Hubbard (DAVEH)
 
 =item James Messrie
+
+=item Martin Locklear
 
 =item Randal Schwartz (MERLYN)
 

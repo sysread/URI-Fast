@@ -24,6 +24,8 @@ subtest 'basics' => sub{
 
   is URI::Fast::encode(undef), "", "encode: undef";
   is URI::Fast::decode(undef), "", "decode: undef";
+
+  is URI::Fast::decode('%3f'), '?', 'decode: lower cased hex values';
 };
 
 subtest 'negative path' => sub {
@@ -45,6 +47,8 @@ subtest 'utf8' => sub{
   ok !utf8::is_utf8(URI::Fast::encode($u)), 'encode: result is not flagged utf8';
 
   is URI::Fast::decode($a), $u, 'decode';
+
+  is URI::Fast::decode(lc $a), $u, 'decode lower case';
 
   ok my $uri = uri($url), 'ctor';
 

@@ -147,6 +147,21 @@ test 'Stringification', 500_000, {
   'URI::Fast' => sub{ my $uri = uri $urls[3]; my $str = "$uri" },
 };
 
+test 'Build relative path', 100_000, {
+  'URI' => sub{ my $uri = URI->new('http://www.example.com/foo')->rel('http://www.example.com/foo/bar/') },
+  'URI::Fast' => sub{ my $uri = uri('http://www.example.com/foo')->relative('http://www.example.com/foo/bar/') },
+};
+
+test 'Build absolute path', 500_000, {
+  'URI' => sub{ my $uri = URI->new('some/path')->abs('http://www.example.com/fnord') },
+  'URI::Fast' => sub{ my $uri = uri('some/path')->absolute('http://www.example.com/fnord') },
+};
+
+test 'Normalize (canonical)', 500_000, {
+  'URI' => sub{ my $uri = URI->new('HTTP://EXAMPLE.com?%21%40%23%24%3D%3D%3Dhow%20now%20brown%20bureaucrat%3D%3D%3D%21%40%23%24')->canonical },
+  'URI::Fast' => sub{ my $uri = uri('HTTP://EXAMPLE.com?%21%40%23%24%3D%3D%3Dhow%20now%20brown%20bureaucrat%3D%3D%3D%21%40%23%24')->normalize },
+};
+
 test 'uri_split', 500_000, {
   'URI::Split' => sub{ my @uri = URI::Split::uri_split($urls[3]) },
   'URI::Split' => sub{ my @uri = URI::Split::uri_split($urls[3]) },

@@ -1,3 +1,10 @@
+0.41 2018-??-??
+-new method: absolute($base)
+-new method: relative($base)
+-new method: normalize (like URI->canonical)
+-bugfix: small memory leak in to_string when there is no authority section present
+-bugfix: to_string did not properly encode authority section in some cases
+
 0.40 2018-08-08
 -bugfix: gracefully handle incorrectly encoded query strings with unencoded '=' not following a key
 -bugfix: param and query incorrectly unset single parameters when passed a falsey value (credit: vroom)

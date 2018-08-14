@@ -1,6 +1,6 @@
 package URI::Fast;
 
-our $XS_VERSION = our $VERSION = '0.40';
+our $XS_VERSION = our $VERSION = '0.40_01';
 $VERSION =~ tr/_//;
 
 use utf8;
@@ -33,7 +33,7 @@ sub iri { URI::Fast::IRI->new_iri($_[0]) }
 # Aliases
 sub clone      { goto \&uri       }
 sub as_string  { goto \&to_string }
-sub canonical  { goto \&canonical }
+sub canonical  { goto \&normalize }
 sub uri_encode { goto \&encode    }
 sub url_encode { goto \&encode    }
 sub uri_decode { goto \&decode    }
@@ -199,6 +199,68 @@ sub compare {
   }
 
   return 1;
+}
+
+#-------------------------------------------------------------------------------
+# Relativism
+#-------------------------------------------------------------------------------
+sub relative {
+  my ($self, $base) = @_;
+  my $rel = uri("$self");
+
+  my $rpath = $self->path;
+  ($_, $_, my $bpath) = uri_split("$base");
+
+  if ($bpath =~ m|/$| && $rpath eq $bpath) {
+    $rel->path('./');
+  }
+  else {
+    # Ensure both paths begin with '/'
+    $rpath = "/$rpath" unless $rpath =~ m|^/|;
+    $bpath = "/$bpath" unless $bpath =~ m|^/|;
+
+    # Remove common leading path segments
+    my ($idx, $brk) = (1, 0);
+
+    # Scan for matching segments
+    while (1) {
+      # Locate the next delimiter
+      $brk = index($rpath, '/', $idx);
+
+      last if $brk < 0;                           # not found
+      last if $brk != index($bpath, '/', $idx);   # no match: different segment lengths
+      last if substr($rpath, $idx, $brk - $idx)   # no match: segments have different string values
+           ne substr($bpath, $idx, $brk - $idx);
+
+      $idx = $brk + 1;                            # move past delimiter
+    }
+
+    # $idx now matches the slash after the common prefix; remove path contents
+    # up to that point.
+    substr($rpath, 0, $idx) = '';
+    substr($bpath, 0, $idx) = '';
+
+    # Add ../ for each remaining base path segment
+    while ($bpath =~ m|/|gc) {
+      $rpath = "../$rpath";
+    }
+
+    # An empty path becomes ./
+    $rpath ||= './';
+
+    $rel->path($rpath);
+  }
+
+  $rel->clear_scheme;
+  $rel->clear_auth;
+
+  return $rel;
+}
+
+sub normalize {
+  my $self = shift;
+  $self->normalize_uri;
+  $self;
 }
 
 =encoding UTF8
@@ -466,6 +528,37 @@ Sugar for:
   my $uri = uri '...';
   my $clone = uri $uri;
 
+=head2 absolute
+
+Builds an absolute URI from a relative URI and a base URI string.
+Adheres as strictly as possible to the rules for resolving a target URI in
+L<RFC3986 section 5.2|https://www.rfc-editor.org/rfc/rfc3986.txt>. Returns a new
+L<URI::Fast> object representing the absolute, merged URI.
+
+  my $uri = uri('some/path')->absolute('http://www.example.com/fnord');
+  $uri->to_string; # "http://www.example.com/fnord/some/path"
+
+=head2 relative
+
+Builds a relative URI using a second URI (either a C<URI::Fast> object or a
+string) as a base. Unlike L<URI/rel>, ignores differences in domain and scheme
+assumes the caller wishes to adopt the base URL's instead. Aside from that difference,
+it's behavior should mimic L<URI/rel>'s.
+
+  my $uri = uri('http://example.com/foo/bar')->relative('http://example.com/foo');
+  $uri->to_string; # "foo/bar"
+
+  my $uri = uri('http://example.com/foo/bar/')->relative('http://example.com/foo');
+  $uri->to_string; # "foo/bar/"
+
+=head2 normalize
+
+Similar to L<URI/canonical>, performs a minimal normalization on the URI. Only
+generic normalization described in the rfc is performed; no scheme-specific
+normalization is done. Specifically, the scheme and host members are converted
+to lower case, dot segments are collapsed in the path, and any percent-encoded
+characters in the URI are converted to upper case.
+
 =head1 ENCODING
 
 C<URI::Fast> tries to do the right thing in most cases with regard to reserved
@@ -542,15 +635,9 @@ See L<URI::Fast::Benchmarks>.
 
 =head1 FUTURE PLANS
 
+Some thoughts on future development for this module.
+
 =over
-
-=item Zero-copy strategy for parsing and updating query string
-
-L</uri> does a single, fast pass over the input string and copies portions into
-the struct members. Some compound fields, such as the query and path, are only
-parsed as needed. Switching to a zero-copy strategy could make the initial pass
-faster, reduce time spent zeroing out the struct, and make better use of the
-cache.
 
 =item Support for arbitrary binary data in query string
 
@@ -572,9 +659,9 @@ possible and croaks loudly otherwise.
 
 The de facto standard.
 
-=item L<Panda::URI>
+=item L<RFC 3986|https://www.rfc-editor.org/rfc/rfc3986.txt>
 
-Written in C++ and purportedly very fast, but appears to only support Linux.
+The official standard.
 
 =back
 
@@ -601,6 +688,8 @@ fun of me for naming certain methods too generically.
 =item Dave Hubbard (DAVEH)
 
 =item James Messrie
+
+=item Martin Locklear
 
 =item Randal Schwartz (MERLYN)
 
