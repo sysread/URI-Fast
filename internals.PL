@@ -1,8 +1,8 @@
 #!perl
 
 BEGIN{
-  unless ($ENV{BENCHINTERNALS}) {
-    print "Skipping internals benchmarks because BENCHINTERNALS was not set.\n";
+  unless ($ENV{BENCH}) {
+    print "Skipping internals benchmarks because BENCH was not set.\n";
     exit 0;
   }
 };
