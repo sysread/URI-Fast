@@ -7,14 +7,18 @@ use ExtUtils::MakeMaker;
 my $OPTIMIZE = $ENV{DEBUG} ? '-g -O1' : ($ENV{OPTIMIZE} || '-O2');
 
 sub MY::postamble {
-  return <<EOS;
+  return qq{
 
 misc : readme distcheck manifest
 
 release : test misc dist
-\tcpan-upload \$(DISTVNAME).tar.gz
+\tread -p "Release \$(DISTVNAME) to CPAN? " -n 1 -r
+\techo
+\tif [[ \$REPLY =~ ^[Yy]$ ]] then
+\t\t#cpan-upload \$(DISTVNAME).tar.gz
+\tfi
 
-EOS
+};
 }
 
 WriteMakefile(
