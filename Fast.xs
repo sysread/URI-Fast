@@ -1974,9 +1974,9 @@ SV* new(class, uri_str)
   SV* uri_str
   ALIAS:
     new_iri = 1
-      RETVAL = new(aTHX_ "URI::Fast::IRI", uri_str, 1);
   CODE:
     if (ix == 1) {
+      RETVAL = new(aTHX_ "URI::Fast::IRI", uri_str, 1);
     } else {
       RETVAL = new(aTHX_ class, uri_str, 0);
     }
