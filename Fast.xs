@@ -1997,7 +1997,7 @@ SV* uri(...)
   CODE:
     if (items > 0) {
       if (sv_isobject(ST(0)) && sv_derived_from(ST(0), "URI::Fast")) {
-        str = sv_2mortal(to_string(ST(0)));
+        str = sv_2mortal(to_string(aTHX_ ST(0)));
       } else {
         str = ST(0);
       }
