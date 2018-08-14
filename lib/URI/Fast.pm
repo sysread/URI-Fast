@@ -24,46 +24,17 @@ our @EXPORT_OK = qw(
 
 require URI::Fast::IRI;
 
-use overload '""' => sub{ $_[0]->to_string },
-             'eq' => sub{ $_[0]->compare($_[1]) };
-
-sub uri { URI::Fast->new($_[0]) }
-sub iri { URI::Fast::IRI->new_iri($_[0]) }
-
-# Aliases
-sub clone      { goto \&uri       }
-sub as_string  { goto \&to_string }
-sub canonical  { goto \&normalize }
-sub uri_encode { goto \&encode    }
-sub url_encode { goto \&encode    }
-sub uri_decode { goto \&decode    }
-sub url_decode { goto \&decode    }
-
-# Build a simple accessor for basic attributes
-foreach my $attr (qw(scheme usr pwd host port frag)) {
-  my $s = "set_$attr";
-  my $g = "get_$attr";
-
-  *{__PACKAGE__ . "::$attr"} = sub {
-    if (@_ == 2) {
-      $_[0]->$s( $_[1] );
-    }
-
-    if (defined wantarray) {
-      return $_[0]->$g();
-    }
-  };
-}
+use overload 'eq' => sub{ $_[0]->compare($_[1]) };
 
 sub auth {
   my ($self, $val) = @_;
 
   if (@_ == 2) {
     if (ref $val) {
-      $self->set_usr($val->{usr}   || '');
-      $self->set_pwd($val->{pwd}   || '');
-      $self->set_host($val->{host} || '');
-      $self->set_port($val->{port} || '');
+      $self->usr($val->{usr}   || '');
+      $self->pwd($val->{pwd}   || '');
+      $self->host($val->{host} || '');
+      $self->port($val->{port} || '');
     }
     else {
       $self->set_auth($val);
@@ -123,10 +94,6 @@ sub query_keys {
   keys %{ $_[0]->get_query_keys };
 }
 
-sub query_keyset {
-  $_[0]->update_query_keyset($_[1], $_[2] || '&');
-}
-
 sub param {
   my ($self, $key, $val, $sep) = @_;
   $sep ||= '&';
@@ -169,7 +136,7 @@ sub _cmp ($$) {
 
 sub compare {
   my ($self, $other) = @_;
-  $other = uri $other;
+  $other = uri($other);
 
   return unless _cmp($self->scheme, $other->scheme)
     && _cmp($self->usr,  $other->usr)
@@ -255,12 +222,6 @@ sub relative {
   $rel->clear_auth;
 
   return $rel;
-}
-
-sub normalize {
-  my $self = shift;
-  $self->normalize_uri;
-  $self;
 }
 
 =encoding UTF8

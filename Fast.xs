@@ -1936,29 +1936,35 @@ MODULE = URI::Fast  PACKAGE = URI::Fast
 
 PROTOTYPES: DISABLE
 
-VERSIONCHECK: ENABLE
+FALLBACK: TRUE
 
 #-------------------------------------------------------------------------------
 # URL-encoding
 #-------------------------------------------------------------------------------
 SV* encode(in, ...)
   SV *in
-    PREINIT:
-      SV *temp = NULL;
-    CODE:
-      if (items > 1) {
-        temp = ST(1);
-      }
-      RETVAL = encode(aTHX_ in, temp);
-    OUTPUT:
-      RETVAL
+  ALIAS:
+    uri_encode = 1
+    url_encode = 2
+  PREINIT:
+    SV *temp = NULL;
+  CODE:
+    if (items > 1) {
+      temp = ST(1);
+    }
+    RETVAL = encode(aTHX_ in, temp);
+  OUTPUT:
+    RETVAL
 
 SV* decode(in)
   SV* in
-    CODE:
-      RETVAL = decode(aTHX_ in);
-    OUTPUT:
-      RETVAL
+  ALIAS:
+    uri_decode = 1
+    url_decode = 2
+  CODE:
+    RETVAL = decode(aTHX_ in);
+  OUTPUT:
+    RETVAL
 
 #-------------------------------------------------------------------------------
 # Constructors and destructors
@@ -1966,16 +1972,14 @@ SV* decode(in)
 SV* new(class, uri_str)
   const char* class
   SV* uri_str
+  ALIAS:
+    new_iri = 1
+      RETVAL = new(aTHX_ "URI::Fast::IRI", uri_str, 1);
   CODE:
-    RETVAL = new(aTHX_ class, uri_str, 0);
-  OUTPUT:
-    RETVAL
-
-SV* new_iri(class, uri_str)
-  const char* class;
-  SV* uri_str
-  CODE:
-    RETVAL = new(aTHX_ "URI::Fast::IRI", uri_str, 1);
+    if (ix == 1) {
+    } else {
+      RETVAL = new(aTHX_ class, uri_str, 0);
+    }
   OUTPUT:
     RETVAL
 
@@ -1983,6 +1987,28 @@ void DESTROY(uri_obj)
   SV* uri_obj
   CODE:
     DESTROY(aTHX_ uri_obj);
+
+SV* uri(...)
+  ALIAS:
+    iri   = 1
+    clone = 2
+  PREINIT:
+    SV *str;
+  CODE:
+    if (items > 0) {
+      if (sv_isobject(ST(0)) && sv_derived_from(ST(0), "URI::Fast")) {
+        str = sv_2mortal(to_string(ST(0)));
+      } else {
+        str = ST(0);
+      }
+    }
+    else {
+      str = sv_2mortal(newSVpvn("", 0));
+    }
+
+    RETVAL = new(aTHX_ (ix == 1) ? "URI::Fast::IRI" : "URI::Fast", str, (ix == 1) ? 1 : 0);
+  OUTPUT:
+    RETVAL
 
 
 #-------------------------------------------------------------------------------
@@ -2099,16 +2125,10 @@ SV* raw_port(uri_obj)
   OUTPUT:
     RETVAL
 
-#-------------------------------------------------------------------------------
-# Decoding getters
-#-------------------------------------------------------------------------------
-SV* get_scheme(uri_obj)
-  SV *uri_obj
-  CODE:
-    RETVAL = get_scheme(aTHX_ uri_obj);
-  OUTPUT:
-    RETVAL
 
+#-------------------------------------------------------------------------------
+# Compound getters
+#-------------------------------------------------------------------------------
 SV* get_path(uri_obj)
   SV *uri_obj
   CODE:
@@ -2123,41 +2143,6 @@ SV* get_query(uri_obj)
   OUTPUT:
     RETVAL
 
-SV* get_frag(uri_obj)
-  SV *uri_obj
-  CODE:
-    RETVAL = get_frag(aTHX_ uri_obj);
-  OUTPUT:
-    RETVAL
-
-SV* get_usr(uri_obj)
-  SV *uri_obj
-  CODE:
-    RETVAL = get_usr(aTHX_ uri_obj);
-  OUTPUT:
-    RETVAL
-
-SV* get_pwd(uri_obj)
-  SV *uri_obj
-  CODE:
-    RETVAL = get_pwd(aTHX_ uri_obj);
-  OUTPUT:
-    RETVAL
-
-SV* get_host(uri_obj)
-  SV *uri_obj
-  CODE:
-    RETVAL = get_host(aTHX_ uri_obj);
-  OUTPUT:
-    RETVAL
-
-SV* get_port(uri_obj)
-  SV *uri_obj
-  CODE:
-    RETVAL = get_port(aTHX_ uri_obj);
-  OUTPUT:
-    RETVAL
-
 SV* get_auth(uri_obj)
   SV *uri_obj
   CODE:
@@ -2165,10 +2150,6 @@ SV* get_auth(uri_obj)
   OUTPUT:
     RETVAL
 
-
-#-------------------------------------------------------------------------------
-# Compound getters
-#-------------------------------------------------------------------------------
 SV* split_path(uri)
   SV* uri
   CODE:
@@ -2200,14 +2181,8 @@ SV* get_param(uri, sv_key)
 
 
 #-------------------------------------------------------------------------------
-# Setters
+# Compound setters
 #-------------------------------------------------------------------------------
-void set_scheme(uri_obj, value)
-  SV *uri_obj
-  SV *value
-  CODE:
-    set_scheme(aTHX_ uri_obj, value);
-
 void set_auth(uri_obj, value)
   SV *uri_obj
   SV *value
@@ -2232,36 +2207,6 @@ void set_query(uri_obj, value)
   CODE:
     set_query(aTHX_ uri_obj, value);
 
-void set_frag(uri_obj, value)
-  SV *uri_obj
-  SV *value
-  CODE:
-    set_frag(aTHX_ uri_obj, value);
-
-void set_usr(uri_obj, value)
-  SV *uri_obj
-  SV *value
-  CODE:
-    set_usr(aTHX_ uri_obj, value);
-
-void set_pwd(uri_obj, value)
-  SV *uri_obj
-  SV *value
-  CODE:
-    set_pwd(aTHX_ uri_obj, value);
-
-void set_host(uri_obj, value)
-  SV *uri_obj
-  SV *value
-  CODE:
-    set_host(aTHX_ uri_obj, value);
-
-void set_port(uri_obj, value)
-  SV *uri_obj
-  SV *value
-  CODE:
-    set_port(aTHX_ uri_obj, value);
-
 void set_param(uri, sv_key, sv_values, sv_separator)
   SV *uri
   SV *sv_key
@@ -2270,27 +2215,88 @@ void set_param(uri, sv_key, sv_values, sv_separator)
   CODE:
     set_param(aTHX_ uri, sv_key, sv_values, sv_separator);
 
-void update_query_keyset(uri, sv_key_set, sv_separator)
-  SV *uri
+void query_keyset(self, sv_key_set, ...)
+  SV *self
   SV *sv_key_set
-  SV *sv_separator
   CODE:
-    update_query_keyset(aTHX_ uri, sv_key_set, sv_separator);
+    SV *sv_separator = items > 2 ? ST(2) : sv_2mortal(newSVpvn("&", 1));
+    update_query_keyset(aTHX_ self, sv_key_set, sv_separator);
+
+
+#-------------------------------------------------------------------------------
+# Unified accessors
+#-------------------------------------------------------------------------------
+SV* scheme(self, ...)
+  SV *self
+  CODE:
+    if (items > 1) set_scheme(aTHX_ self, ST(1));
+    RETVAL = get_scheme(aTHX_ self);
+  OUTPUT:
+    RETVAL
+
+SV* usr(self, ...)
+  SV *self
+  CODE:
+    if (items > 1) set_usr(aTHX_ self, ST(1));
+    RETVAL = get_usr(aTHX_ self);
+  OUTPUT:
+    RETVAL
+
+SV* pwd(self, ...)
+  SV *self
+  CODE:
+    if (items > 1) set_pwd(aTHX_ self, ST(1));
+    RETVAL = get_pwd(aTHX_ self);
+  OUTPUT:
+    RETVAL
+
+SV* host(self, ...)
+  SV *self
+  CODE:
+    if (items > 1) set_host(aTHX_ self, ST(1));
+    RETVAL = get_host(aTHX_ self);
+  OUTPUT:
+    RETVAL
+
+SV* port(self, ...)
+  SV *self
+  CODE:
+    if (items > 1) set_port(aTHX_ self, ST(1));
+    RETVAL = get_port(aTHX_ self);
+  OUTPUT:
+    RETVAL
+
+SV* frag(self, ...)
+  SV *self
+  CODE:
+    if (items > 1) set_frag(aTHX_ self, ST(1));
+    RETVAL = get_frag(aTHX_ self);
+  OUTPUT:
+    RETVAL
+
 
 #-------------------------------------------------------------------------------
 # Extras
 #-------------------------------------------------------------------------------
-SV* to_string(uri_obj)
-  SV* uri_obj
+SV* to_string(self, ...)
+  SV *self
+  ALIAS:
+    as_string = 1
+  OVERLOAD:
+    to_string \"\"
   CODE:
-    RETVAL = to_string(aTHX_ uri_obj);
+    RETVAL = to_string(aTHX_ self);
   OUTPUT:
     RETVAL
 
-void normalize_uri(uri)
+SV* normalize(uri)
   SV *uri
+  ALIAS:
+    canonical = 1
   CODE:
     normalize(aTHX_ uri);
+  OUTPUT:
+    uri
 
 SV* absolute(uri, base)
   SV *uri

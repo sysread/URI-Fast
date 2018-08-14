@@ -4,6 +4,10 @@
 -new method: normalize (like URI->canonical)
 -bugfix: small memory leak in to_string when there is no authority section present
 -bugfix: to_string did not properly encode authority section in some cases
+-optimization: shorthand constructors (uri, iri) moved to XS
+-optimization: simple unified accessors moved to XS
+-optimization: overload of to_string moved to XS
+-optimization: aliases moved to XS
 
 0.40 2018-08-08
 -bugfix: gracefully handle incorrectly encoded query strings with unencoded '=' not following a key

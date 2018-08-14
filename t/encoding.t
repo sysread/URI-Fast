@@ -33,6 +33,12 @@ subtest 'negative path' => sub {
   is URI::Fast::decode("% foo"), "% foo", "leading %";
 };
 
+subtest 'aliases' => sub{
+  my $enc = URI::Fast::encode($reserved);
+  is $enc, URI::Fast::uri_encode($reserved), 'uri_encode';
+  is URI::Fast::decode($enc), URI::Fast::uri_decode($enc), 'uri_encode';
+};
+
 subtest 'utf8' => sub{
   my $u = "Ῥόδος";
   my $a = '%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82';
