@@ -237,7 +237,7 @@ typedef struct {
 // Searchs str for occurences of string *find. It is up to the caller to ensure
 // that *find is at least len chars long. Returns -1 if not found.
 static
-size_t str_index(pTHX_ uri_str_t *str, const char *find, size_t len) {
+int str_index(pTHX_ uri_str_t *str, const char *find, size_t len) {
   size_t i, j;
   bool found = 0;
 
