@@ -1,8 +1,6 @@
 *.bak
 *.swp
 .build
-.inline
-_Inline
 MYMETA.json
 MYMETA.yml
 Makefile
