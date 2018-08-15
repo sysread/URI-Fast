@@ -12,7 +12,7 @@ sub MY::postamble {
 misc : readme distcheck manifest
 
 release : test misc dist
-\t#cpan-upload \$(DISTVNAME).tar.gz
+\tcpan-upload \$(DISTVNAME).tar.gz
 
 };
 }
