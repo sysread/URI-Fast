@@ -12,11 +12,7 @@ sub MY::postamble {
 misc : readme distcheck manifest
 
 release : test misc dist
-\tread -p "Release \$(DISTVNAME) to CPAN? " -n 1 -r
-\techo
-\tif [[ \$REPLY =~ ^[Yy]$ ]] then
-\t\t#cpan-upload \$(DISTVNAME).tar.gz
-\tfi
+\t#cpan-upload \$(DISTVNAME).tar.gz
 
 };
 }
