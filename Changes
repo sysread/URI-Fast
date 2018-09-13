@@ -1,3 +1,6 @@
+0.42 2018-09-??
+-bugfix: uri_split() forces stringification of input
+
 0.41 2018-08-15
 -bugfix: small memory leak in to_string when there is no authority section present
 -bugfix: to_string did not properly encode authority section in some cases

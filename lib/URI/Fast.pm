@@ -26,6 +26,8 @@ require URI::Fast::IRI;
 
 use overload 'eq' => sub{ $_[0]->compare($_[1]) };
 
+#sub uri_split{ _split_uri(defined $_[0] ? "$_[0]" : $_[0]) }
+
 sub auth {
   my ($self, $val) = @_;
 

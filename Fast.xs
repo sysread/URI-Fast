@@ -1607,8 +1607,8 @@ void uri_split(pTHX_ SV *uri) {
     XPUSHs(sv_2mortal(get_query(aTHX_ uri)));
     XPUSHs(sv_2mortal(get_frag(aTHX_ uri)));
   }
-  // The object is defined and not a reference
-  else if (SvOK(uri) && !SvROK(uri)) {
+  // The object is defined
+  else if (SvOK(uri)) {
     const char *src;
     size_t idx = 0;
     size_t brk = 0;
@@ -1619,12 +1619,14 @@ void uri_split(pTHX_ SV *uri) {
       len = 0;
     }
     else {
-      src = SvPV_nomg_const(uri, len);
+      // Copy string into new SV
+      SV* str = sv_2mortal(newSV(0));
+      sv_copypv(str, ST(0));
+      src = SvPV_const(str, len);
 
-      if (!DO_UTF8(uri)) {
-        uri = sv_2mortal(newSVpvn(src, len));
-        sv_utf8_encode(uri);
-        src = SvPV_const(uri, len);
+      if (!DO_UTF8(str)) {
+        sv_utf8_encode(str);
+        src = SvPV_const(str, len);
       }
     }
 
@@ -2330,6 +2332,7 @@ void uri_split(uri)
   SV* uri
   PREINIT:
     I32* temp;
+    SV* str;
   PPCODE:
     temp = PL_markstack_ptr++;
     uri_split(aTHX_ uri);
