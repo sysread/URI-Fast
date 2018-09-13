@@ -2332,7 +2332,6 @@ void uri_split(uri)
   SV* uri
   PREINIT:
     I32* temp;
-    SV* str;
   PPCODE:
     temp = PL_markstack_ptr++;
     uri_split(aTHX_ uri);
