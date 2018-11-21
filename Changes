@@ -1,4 +1,4 @@
-0.42 2018-??-??
+0.42 2018-11-21
 -bugfix: uri_split() forces stringification of input
 -behavior: URI::Fast::Test routines now automatically stringify and parse their parameters
 
