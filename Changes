@@ -1,5 +1,6 @@
-0.42 2018-09-??
+0.42 2018-??-??
 -bugfix: uri_split() forces stringification of input
+-behavior: URI::Fast::Test routines now automatically stringify and parse their parameters
 
 0.41 2018-08-15
 -bugfix: small memory leak in to_string when there is no authority section present
