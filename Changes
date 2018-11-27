@@ -1,4 +1,4 @@
-0.43 2018-11-??
+0.43 2018-11-27
 -new feature: append() method serially constructs a URI from fragments of path,
  query, and fragment (credit: merlyn)
 
