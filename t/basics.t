@@ -198,4 +198,10 @@ subtest 'non-standard inputs' => sub{
   };
 };
 
+subtest 'append' => sub{
+  my $uri = uri 'http://www.example.com/foo?k=v';
+  ok $uri->append('bar', 'baz/bat', '?k=v1&k=v2', '#fnord', 'slack'), 'append';
+  is "$uri", 'http://www.example.com/foo/bar/baz/bat/slack?k=v&k=v1&k=v2#fnord', 'expected uri';
+};
+
 done_testing;

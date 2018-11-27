@@ -1,6 +1,6 @@
 package URI::Fast;
 
-our $XS_VERSION = our $VERSION = '0.42';
+our $XS_VERSION = our $VERSION = '0.43';
 $VERSION =~ tr/_//;
 
 use utf8;
@@ -122,6 +122,30 @@ sub param {
 sub add_param {
   my ($self, $key, $val, $sep) = @_;
   $self->param($key, [$self->param($key), $val], $sep);
+}
+
+sub append {
+  my $self = shift;
+
+  foreach my $segment (@_) {
+    if ($segment =~ /^\?/) {
+      my $q = uri($segment)->query_hash;
+
+      foreach my $key (keys %$q) {
+        $self->add_param($key => $_)
+          foreach @{ $q->{$key} };
+      }
+    }
+    elsif (my ($frag) = $segment =~ /^#(.*)$/) {
+      $self->frag($frag);
+    }
+    else {
+      my @segments = ($self->path, split('/', $segment));
+      $self->path(\@segments);
+    }
+  }
+
+  return $self;
 }
 
 sub _cmp ($$) {
@@ -467,6 +491,20 @@ untouched. A negative value will remove the key and value.
 An optional second parameter may be specified to control the separator
 character used when updating the query string. The same caveats apply with
 regard to normalization of the query string separator.
+
+=head2 append
+
+Serially appends path segments, query strings, and fragments, to the end of the
+URI. Each argument is added in order. If the segment begins with C<?>, it is
+assumed to be a query string and it is appended using L</add_param>. If the
+segment begins with C<#>, it is treated as a fragment, replacing any existing
+fragment. Otherwise, the segment is treated as a path fragment and appended to
+the path.
+
+  my $uri = uri 'http://www.example.com/foo?k=v';
+  $uri->append('bar', 'baz/bat', '?k=v1&k=v2', '#fnord', 'slack');
+  # 'http://www.example.com/foo/bar/baz/bat/slack?k=v&k=v1&k=v2#fnord'
+
 
 =head2 to_string
 
