@@ -112,6 +112,11 @@ subtest 'structured data' => sub{
 
   URI::Fast::unescape_tree($obj);
   is $obj, $orig, 'structure unescaped in place';
+
+  my $circular = { foo => {bar => 'baz bat'} };
+  $circular->{foo}{fnord} = $circular->{foo};
+  URI::Fast::escape_tree($circular);
+  is $circular->{foo}{fnord}{bar}, 'baz%20bat', 'circular reference is escaped once';
 };
 
 done_testing;

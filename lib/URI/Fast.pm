@@ -10,6 +10,7 @@ no strict 'refs';
 
 use Carp;
 use Exporter;
+use Scalar::Util qw(refaddr);
 
 require XSLoader;
 XSLoader::load('URI::Fast', $XS_VERSION);
@@ -251,30 +252,39 @@ sub relative {
 sub _walk {
   my ($ref, $sub) = @_;
   my @stack = ($ref);
+  my %seen;
 
   while (my $elt = shift @stack) {
-    if (ref $elt eq 'ARRAY') {
-      for (0 .. @$elt - 1) {
-        if (ref $elt->[$_]) {
-          push @stack, $elt->[$_];
-        }
-        elsif (defined $elt->[$_]) {
-          $elt->[$_] = $sub->( $elt->[$_] );
-        }
-      }
-    }
-    elsif (ref $elt eq 'HASH') {
-      foreach (keys %$elt) {
-        if (ref $elt->{$_}) {
-          push @stack, $elt->{$_};
-        }
-        elsif (defined $elt->{$_}) {
-          $elt->{$_} = $sub->( $elt->{$_} );
+    my $ref = ref $elt;
+
+    if (defined $ref) {
+      my $addr = refaddr $elt;
+      next if exists $seen{ $addr };
+      $seen{ $addr } = 1;
+
+      if ($ref eq 'ARRAY') {
+        for (0 .. @$elt - 1) {
+          if (ref $elt->[$_]) {
+            push @stack, $elt->[$_];
+          }
+          elsif (defined $elt->[$_]) {
+            $elt->[$_] = $sub->( $elt->[$_] );
+          }
         }
       }
-    }
-    elsif (ref $elt eq 'SCALAR') {
-      push @stack, $$elt;
+      elsif ($ref eq 'HASH') {
+        foreach (keys %$elt) {
+          if (ref $elt->{$_}) {
+            push @stack, $elt->{$_};
+          }
+          elsif (defined $elt->{$_}) {
+            $elt->{$_} = $sub->( $elt->{$_} );
+          }
+        }
+      }
+      elsif ($ref eq 'SCALAR') {
+        push @stack, $$elt;
+      }
     }
   }
 
@@ -808,6 +818,10 @@ fun of me for naming certain methods too generically.
 =item Sara Siegal (SSIEGAL)
 
 =item Tim Vroom (VROOM)
+
+=item Des Daignault (NAWGLAN)
+
+=item Josh Rosenbaum
 
 =back
 

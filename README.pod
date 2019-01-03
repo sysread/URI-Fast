@@ -504,6 +504,10 @@ fun of me for naming certain methods too generically.
 
 =item Tim Vroom (VROOM)
 
+=item Des Daignault (NAWGLAN)
+
+=item Josh Rosenbaum
+
 =back
 
 =head1 AUTHOR
