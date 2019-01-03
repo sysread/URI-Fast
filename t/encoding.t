@@ -88,4 +88,30 @@ subtest 'utf8' => sub{
   ok !utf8::is_utf8($mal), 'decode: utf8 flag not set when malformed';
 };
 
+subtest 'structured data' => sub{
+  my $orig = {
+    foo => ['bar baz', 'bat%fnord'],
+    bar => undef,
+    baz => {bat => 'fnord%slack'},
+  };
+
+  my $obj = {
+    foo => ['bar baz', 'bat%fnord'],
+    bar => undef,
+    baz => {bat => 'fnord%slack'},
+  };
+
+  URI::Fast::escape_tree($obj);
+
+  is $obj, hash {
+    field foo => array { item 'bar%20baz'; item 'bat%25fnord'; end; };
+    field bar => U;
+    field baz => hash { field bat => 'fnord%25slack'; end; };
+    end;
+  }, 'structure escaped in place';
+
+  URI::Fast::unescape_tree($obj);
+  is $obj, $orig, 'structure unescaped in place';
+};
+
 done_testing;
