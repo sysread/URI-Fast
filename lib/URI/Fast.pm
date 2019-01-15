@@ -293,6 +293,7 @@ sub _walk {
 
 sub escape_tree {
   my ($ref, @args) = @_;
+  ref $ref || croak "escape_tree: reference expected";
 
   my $sub = sub{
     push @_, @args;
@@ -304,6 +305,7 @@ sub escape_tree {
 
 sub unescape_tree {
   my ($ref, @args) = @_;
+  ref $ref || croak "unescape_tree: reference expected";
 
   my $sub = sub{
     push @_, @args;

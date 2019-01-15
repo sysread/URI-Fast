@@ -1,3 +1,7 @@
+0.47 2019-??-??
+-bugfix: escape_tree and unescape_tree die when called with non-reference
+ argument
+
 0.46 2019-01-03
 -feature: new routines escape_tree() and unescape_tree() added
 
