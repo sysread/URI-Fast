@@ -1,6 +1,9 @@
 0.47 2019-??-??
 -bugfix: escape_tree and unescape_tree die when called with non-reference
  argument
+-workaround: an older release had a versioned URI::Fast::IRI, requiring that it
+ remains versioned to keep the cpan indexer happy; this change works around
+ that by linking it to $URI::Fast::VERSION.
 
 0.46 2019-01-03
 -feature: new routines escape_tree() and unescape_tree() added
