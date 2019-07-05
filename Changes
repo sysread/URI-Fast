@@ -1,4 +1,4 @@
-0.47 2019-??-??
+0.47 2019-07-05
 -bugfix: escape_tree and unescape_tree die when called with non-reference
  argument
 -workaround: an older release had a versioned URI::Fast::IRI, requiring that it
