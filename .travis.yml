@@ -23,6 +23,8 @@ perl:
   - "5.24.3-dbg"
   - "5.26"
   - "5.26-shrplib"
+  - "5.28"
+  - "5.30"
 
 before_install:
   - eval $(curl https://travis-perl.github.io/init) --auto --always-upgrade-modules
