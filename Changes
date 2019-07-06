@@ -1,3 +1,6 @@
+0.48 2019-07-06
+-bugfix: fix dynamically set $VERSION in URI::Fast::IRI
+
 0.47 2019-07-05
 -bugfix: escape_tree and unescape_tree die when called with non-reference
  argument
