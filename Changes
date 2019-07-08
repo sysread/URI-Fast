@@ -1,4 +1,4 @@
-0.48 2019-07-06
+0.47_01 2019-07-06
 -bugfix: fix dynamically set $VERSION in URI::Fast::IRI
 
 0.47 2019-07-05
