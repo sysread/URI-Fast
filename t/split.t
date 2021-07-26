@@ -3,10 +3,20 @@ use ExtUtils::testlib;
 use Test2::V0;
 use Data::Dumper;
 use URI::Split qw();
-use URI::Fast qw(uri uri_split);
-use URI;
+use URI::Fast qw();
+use URI qw();
 
 my @uris = (
+  # From URI::Split's test suite
+  'p',
+  'p?q',
+  'p?q/#f/?',
+  's://a/p?q#f',
+  '<undef>',
+  's://a/p?q#f',
+  's://a/p?q#f',
+
+  # Extra cases
   '/foo/bar/baz',
   'file:///foo/bar/baz',
   'http://www.test.com',
@@ -19,26 +29,10 @@ my @uris = (
   '//foo/bar',
 );
 
-# From URI::Split's test suite
-subtest 'equivalence' => sub{
-  is([uri_split('p')],                     [U, U, 'p', U, U],          'p')            or diag Dumper [uri_split('p')];
-  is([uri_split('p?q')],                   [U, U, 'p', 'q', U],        'p?q')          or diag Dumper [uri_split('p?q')];
-  is([uri_split('p?q/#f/?')],              [U, U, 'p', 'q/', 'f/?'],   'p?q/f/?')      or diag Dumper [uri_split('p?q/#f/?')];
-  is([uri_split('s://a/p?q#f')],           ['s', 'a', '/p', 'q', 'f'], 's://a/p?qf')   or diag Dumper [uri_split('s://a/p?q#f')];
-  is([uri_split(undef)],                   [U, U, U, U, U],            '<undef>')      or diag Dumper [uri_split(undef)];
-  is([uri_split(URI->new('s://a/p?q#f'))], ['s', 'a', '/p', 'q', 'f'], '<URI>')        or diag Dumper [uri_split(URI->new('s://a/p?q#f'))];
-  is([uri_split(uri('s://a/p?q#f'))],      ['s', 'a', '/p', 'q', 'f'], '<URI::Fast>')  or diag Dumper [uri_split(uri('s://a/p?q#f'))];
-};
-
-# Ensure identical output to URI::Split
-subtest 'parity' => sub{
-  my $i = 0;
-  foreach my $uri (@uris) {
-    my $orig = [URI::Split::uri_split($uri)];
-    my $xs   = [uri_split($uri)];
-    is $xs, $orig, $uris[$i];
-    ++$i;
-  }
-};
+for my $str (@uris) {
+  my $orig = [ URI::Split::uri_split($str) ];
+  my $xs   = [ URI::Fast::uri_split($str)  ];
+  is $xs, $orig, $str or diag Dumper $xs;
+}
 
 done_testing;
