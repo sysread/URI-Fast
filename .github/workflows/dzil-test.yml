@@ -40,7 +40,11 @@ jobs:
       - uses: actions/checkout@v1
       - name: perl -V
         run: perl -V
-      - name: Install Dependencies
-        run: cpm install -g --no-test --show-build-log-on-failure --cpanfile cpanfile
+      - name: Install dependencies
+        run: cpanm -nq --install-deps .
       - name: Run tests
-        run: prove -lmfr -j4 t
+        run: perl Makefile.PL && make test
+#      - name: Install Dependencies
+#        run: cpm install -g --no-test --show-build-log-on-failure --cpanfile cpanfile
+#      - name: Run tests
+#        run: prove -lmfr -j4 t
