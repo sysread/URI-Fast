@@ -18,7 +18,7 @@ XSLoader::load('URI::Fast', $XS_VERSION);
 use Exporter 'import';
 
 our @EXPORT_OK = qw(
-  uri iri uri_split
+  uri iri uri_split html_url
   encode uri_encode url_encode
   decode uri_decode url_decode
 );
@@ -313,6 +313,27 @@ sub unescape_tree {
   };
 
   _walk($ref, $sub);
+}
+
+sub html_url ($;$) {
+  my ($uri_string, $source_uri) = @_;
+
+  # Remove characters specified by the URL standard
+  $uri_string =~ s|[\t\r\n]||g; # strip tabs, line feeds, and carriage returns
+  $uri_string =~ tr|\\|/|;      # convert backslashes to forward slashes
+
+  # Then, parse the URI string into a URI::Fast object
+  my $uri = uri $uri_string;
+
+  # If the URL begins with //, the scheme is replaced with that of a reference
+  # URI, presumably that of the source document from which the URI was read.
+  if ($source_uri && $uri_string =~ /^\/\//) {
+    if (my $scheme = URI::Fast::uri( $source_uri )->scheme) {
+      $uri->scheme($scheme);
+    }
+  }
+
+  return $uri;
 }
 
 =encoding UTF8
@@ -753,6 +774,20 @@ is a non-reference value.
     baz => undef,
     bat => '',
   }
+
+=head1 EXTRAS
+
+=head2 html_url
+
+Parses a URI string, first removing whitespace characters ignored in URLs
+found in HTML documents, replacing backslashes with forward slashes, and
+optionally defaulting the scheme to that of the document source URL when
+the URL begins with C<//>.
+
+  my $url = html_url "https://www.slashdot.org";
+
+  # Inheriting the scheme from $url
+  my $recent = html_url "//www.slashdot.org/recent", $url;
 
 =head1 SPEED
 

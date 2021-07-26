@@ -233,39 +233,6 @@ size_t maxnum(size_t x, size_t y) {
   return x >= y ? x : y;
 }
 
-/*
- * Pre-clean to remove whitespace (permitted in URLs from HTML) and to convert
- * backslashes to foward slashes (also permitted in HTML, because reasons).
- *
- * len must be the length of BOTH *src and *out.
- */
-static
-size_t uri_preclean(const char *src, char *out, size_t len) {
-  size_t idx = 0;
-  size_t i;
-
-  for (i = 0; i < len; ++i) {
-    switch (src[i]) {
-      case '\t':
-      case '\r':
-      case '\n':
-        break;
-
-      case '\\':
-        out[idx++] = '/';
-        break;
-
-      default:
-        out[idx++] = src[i];
-        break;
-    }
-  }
-
-  out[idx] = '\0';
-
-  return idx;
-}
-
 /*------------------------------------------------------------------------------
  * Resizable strings
  -----------------------------------------------------------------------------*/
@@ -1674,30 +1641,24 @@ void uri_split(pTHX_ SV *uri) {
     size_t brk = 0;
 
     // Read the string from the SV
-    const char *raw_src;
+    const char *src;
     size_t len;
 
     if (!SvTRUE(uri)) {
-      raw_src = "";
+      src = "";
       len = 0;
     }
     else {
       // Copy string into new SV
       SV* str = sv_2mortal(newSV(0));
       sv_copypv(str, ST(0));
-      raw_src = SvPV_const(str, len);
+      src = SvPV_const(str, len);
 
       if (!DO_UTF8(str)) {
         sv_utf8_encode(str);
-        raw_src = SvPV_const(str, len);
+        src = SvPV_const(str, len);
       }
     }
-
-    // Pre-clean to remove whitespace (permitted in URLs from HTML) and to
-    // convert backslashes to foward slashes (also permitted in HTML, because
-    // reasons).
-    char src[len];
-    len = uri_preclean(raw_src, src, len);
 
     // scheme
     brk = strcspn(&src[idx], ":/@?#");
