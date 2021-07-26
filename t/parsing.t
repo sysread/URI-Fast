@@ -1,6 +1,7 @@
 use utf8;
 use ExtUtils::testlib;
 use Test2::V0;
+use Data::Dumper;
 use URI::Fast qw(uri);
 
 my @uris = (
@@ -58,8 +59,6 @@ subtest 'query_hash' => sub{
 
 subtest 'split_path' => sub{
   is uri('//foo/baz.png')->split_path, array{
-    item '';
-    item 'foo';
     item 'baz.png';
     end;
   }, 'double leading slashes';
