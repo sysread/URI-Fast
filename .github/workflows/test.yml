@@ -43,6 +43,6 @@ jobs:
       - name: Build makefile
         run:  perl Makefile.PL
       - name: Install dependencies
-        run:  cpanm -n --install-deps .
+        run:  cpanm -n --installdeps .
       - name: Run tests
         run:  make test
