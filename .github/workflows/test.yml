@@ -39,12 +39,10 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: perl -V
-        run: perl -V
+        run:  perl -V
+      - name: Build makefile
+        run:  perl Makefile.PL
       - name: Install dependencies
-        run: cpanm -nq --install-deps .
+        run:  cpanm -n --install-deps .
       - name: Run tests
-        run: perl Makefile.PL && make test
-#      - name: Install Dependencies
-#        run: cpm install -g --no-test --show-build-log-on-failure --cpanfile cpanfile
-#      - name: Run tests
-#        run: prove -lmfr -j4 t
+        run:  make test
