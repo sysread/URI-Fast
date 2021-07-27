@@ -1,7 +1,6 @@
 use utf8;
 use ExtUtils::testlib;
 use Test2::V0;
-use Data::Dumper;
 use URI::Fast qw(uri);
 
 my @uris = (

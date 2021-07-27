@@ -327,7 +327,7 @@ sub html_url ($;$) {
 
   # If the URL begins with //, the scheme is replaced with that of a reference
   # URI, presumably that of the source document from which the URI was read.
-  if ($source_uri && $uri_string =~ /^\/\//) {
+  if ($source_uri && $uri_string =~ m|^//|) {
     if (my $scheme = URI::Fast::uri( $source_uri )->scheme) {
       $uri->scheme($scheme);
     }
