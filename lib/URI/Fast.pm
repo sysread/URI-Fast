@@ -789,12 +789,14 @@ the URL begins with C<//>.
   # Inheriting the scheme from $url
   my $recent = html_url "//www.slashdot.org/recent", $url;
 
-B<Important caveat:> This module is designed to parse URIs according to RFC
-3986. Browsers parse URLs using a different (but similar) algorithm and some
-strings that are valid URLs to browsers are not valid URLs to this module. This
-function attempts to parse URLs more in line with how browsers do, but no
-guarantees are made as HTML standards and browser implementations are an ever
-shifting landscape.
+=head1 CAVEATS
+
+This module is designed to parse URIs according to RFC 3986. Browsers parse
+URLs using a different (but similar) algorithm and some strings that are valid
+URLs to browsers are not valid URIs to this module. The L</html_url> function
+attempts to parse URLs more in line with how browsers do, but no guarantees are
+made as HTML standards and browser implementations are an ever shifting
+landscape.
 
 =head1 SPEED
 
