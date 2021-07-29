@@ -1644,7 +1644,7 @@ void uri_split(pTHX_ SV *uri) {
     const char *src;
     size_t len;
 
-    if (!SvTRUE(uri)) {
+    if (sv_len(uri) == 0) {
       src = "";
       len = 0;
     }
