@@ -1,4 +1,4 @@
-0.50 2021-07-??
+0.50 2021-08-03
 -behavior: correct uri_split and uri to treat leading double-slash in input
  string as the beginning of the authority section, as URI and URI::Split do,
  instead of as the beginning of the path with ad leading empty segment
