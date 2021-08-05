@@ -246,33 +246,6 @@ typedef struct {
 #define str_len(str) ((str)->length)
 #define str_get(str) (str_len(str) == 0 ? "" : (const char*)str->string)
 
-// Searchs str for occurences of string *find. It is up to the caller to ensure
-// that *find is at least len chars long. Returns -1 if not found.
-static
-int str_index(pTHX_ uri_str_t *str, const char *find, size_t len) {
-  size_t i, j;
-  bool found = 0;
-
-  for (i = 0; i < str->length; ++i) {
-    for (j = 0; j < len; ++j) {
-      if (str->string[i + j] != find[j]) {
-        goto STRCHR;
-      }
-    }
-
-    found = 1;
-
-    STRCHR:
-    ;
-  }
-
-  if (found) {
-    return i;
-  } else {
-    return -1;
-  }
-}
-
 // Truncates the string from the right-most occurence of r_char by setting that
 // index to nul. Does not zero out the rest of the string.
 static
@@ -1871,7 +1844,7 @@ void absolute(pTHX_ SV *sv_target, SV *sv_uri, SV *sv_base) {
             str_append(aTHX_ merged, rel->path->string, rel->path->length);
           }
           else {
-            if (str_index(aTHX_ base->path, "/", 1) >= 0) {
+            if (strstr(base->path->string, "/") != NULL) {
               // truncate base path at right-most /, inclusive
               str_append(aTHX_ merged, base->path->string, base->path->length);
               str_rtrim(aTHX_ merged, '/');
