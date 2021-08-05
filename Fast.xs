@@ -1928,12 +1928,11 @@ void normalize(pTHX_ SV *uri_obj) {
   str_free(aTHX_ uri->path);
   uri->path = tmp;
 
-  // (6.2.2.1) upper case hex codes in each section of the uri
-  uc_hex(aTHX_ uri->scheme);
+  // (6.2.2.1) upper case hex codes in each section of the uri except for
+  // scheme and port.
   uc_hex(aTHX_ uri->query);
   uc_hex(aTHX_ uri->path);
   uc_hex(aTHX_ uri->host);
-  uc_hex(aTHX_ uri->port);
   uc_hex(aTHX_ uri->frag);
   uc_hex(aTHX_ uri->usr);
   uc_hex(aTHX_ uri->pwd);
