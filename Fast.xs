@@ -1575,7 +1575,6 @@ SV* new(pTHX_ const char* class, SV* uri_str, int is_iri) {
   obj = newSViv((IV) uri);
   obj_ref = newRV_noinc(obj);
   sv_bless(obj_ref, gv_stashpv(class, GV_ADD));
-  SvREADONLY_on(obj);
 
   // Scan the input string to fill the struct
   if (!SvTRUE(uri_str)) {
@@ -2323,6 +2322,7 @@ SV* to_string(self, ...)
   SV *self
   ALIAS:
     as_string = 1
+    TO_JSON = 1
   OVERLOAD:
     to_string \"\"
   CODE:

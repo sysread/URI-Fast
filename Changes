@@ -1,3 +1,6 @@
+0.51 ????-??-??
+-feature: TO_JSON() added as alias of to_string()
+
 0.50 2021-08-03
 -behavior: correct uri_split and uri to treat leading double-slash in input
  string as the beginning of the authority section, as URI and URI::Split do,
