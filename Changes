@@ -1,5 +1,6 @@
 0.51 ????-??-??
 -feature: TO_JSON() added as alias of to_string()
+-miscellaneous minor efficiency/speed improvements
 
 0.50 2021-08-03
 -behavior: correct uri_split and uri to treat leading double-slash in input
