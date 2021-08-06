@@ -12,12 +12,12 @@
 
 // Permitted characters
 #define URI_CHARS_AUTH          "!$&'()*+,;:=@"
+#define URI_CHARS_USER          "!$&'()*+,;="
 #define URI_CHARS_PATH          "!$&'()*+,;:=@/"
 #define URI_CHARS_PATH_SEGMENT  "!$&'()*+,;:=@"
 #define URI_CHARS_HOST          "!$&'()[]*+,.;=@/"
 #define URI_CHARS_QUERY         ":@?/&=;"
 #define URI_CHARS_FRAG          ":@?/"
-#define URI_CHARS_USER          "!$&'()*+,;="
 
 // Returns the uri_t* referenced by the blessed URI::Fast object in the SV ref.
 // Croaks if the SV does not point to a URI::Fast object.
@@ -1904,6 +1904,27 @@ void uc_hex(pTHX_ uri_str_t *str) {
 }
 
 /*
+ * Decodes and then reencodes a uri_str_t.
+ *
+ */
+// unreserved  = ALPHA / DIGIT / "-" / "." / "_" / "~"
+//       41-5A / 61-7A / 30-39 / 2D  / 2E  / 5F  / 7E
+static inline
+void normalize_encoding(pTHX_ uri_str_t *str, char *permitted_chars, int allow_utf8) {
+  if (str->length == 0 || (strchr(str->string, '+') == NULL && strchr(str->string, '%') == NULL)) {
+    return;
+  }
+
+  char decoded[str->length + 1];
+  size_t decoded_len = uri_decode(str->string, str->length, decoded, "");
+
+  char encoded[(decoded_len * 3) + 2];
+  size_t encoded_len = uri_encode(decoded, decoded_len, encoded, permitted_chars, allow_utf8);
+
+  str_set(str, encoded, encoded_len);
+}
+
+/*
  * Performs minimal normalization. Scheme and hostname are lower cased. All
  * members are scanned for lower case percent-encoded sequences.
  */
@@ -1933,17 +1954,14 @@ void normalize(pTHX_ SV *uri_obj) {
     uri->path = tmp;
   }
 
-  // (6.2.2.1) upper case hex codes in each section of the uri except for
-  // scheme and port.
-  uc_hex(aTHX_ uri->query);
-  uc_hex(aTHX_ uri->path);
-  uc_hex(aTHX_ uri->host);
-  uc_hex(aTHX_ uri->frag);
-  uc_hex(aTHX_ uri->usr);
-  uc_hex(aTHX_ uri->pwd);
-
-  // TODO (6.2.2.2) decode any percent-encoded sequences decoding to unreserved
-  // characters.
+  // (6.2.2.1) upper case hex codes in each section of the uri
+  // (6.2.2.2) decode any percent-encoded sequences decoding to unreserved chars
+  normalize_encoding(uri->usr,   URI_CHARS_USER,  uri->is_iri);
+  normalize_encoding(uri->pwd,   URI_CHARS_USER,  uri->is_iri);
+  normalize_encoding(uri->host,  URI_CHARS_HOST,  uri->is_iri);
+  normalize_encoding(uri->path,  URI_CHARS_PATH,  uri->is_iri);
+  normalize_encoding(uri->query, URI_CHARS_QUERY, uri->is_iri);
+  normalize_encoding(uri->frag,  URI_CHARS_FRAG,  uri->is_iri);
 }
 
 
@@ -2299,7 +2317,7 @@ SV* to_string(self, ...)
   SV *self
   ALIAS:
     as_string = 1
-    TO_JSON = 1
+    TO_JSON = 2
   OVERLOAD:
     to_string \"\"
   CODE:
