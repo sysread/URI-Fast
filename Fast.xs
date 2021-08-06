@@ -1923,10 +1923,15 @@ void normalize(pTHX_ SV *uri_obj) {
   }
 
   // (6.2.2) remove dot segments from path
-  uri_str_t *tmp = str_new(aTHX_ uri->path->length);
-  remove_dot_segments(aTHX_ tmp, uri->path->string, uri->path->length);
-  str_free(aTHX_ uri->path);
-  uri->path = tmp;
+  // This is expensive, so skip it unless the uri has a path with a dot in it.
+  if (uri->path->length > 0
+   && strchr(uri->path->string, '.') != NULL)
+  {
+    uri_str_t *tmp = str_new(aTHX_ uri->path->length);
+    remove_dot_segments(aTHX_ tmp, uri->path->string, uri->path->length);
+    str_free(aTHX_ uri->path);
+    uri->path = tmp;
+  }
 
   // (6.2.2.1) upper case hex codes in each section of the uri except for
   // scheme and port.
