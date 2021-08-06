@@ -10,6 +10,7 @@ BEGIN{
 use strict;
 use warnings;
 use utf8;
+use ExtUtils::testlib;
 use Benchmark qw(:all);
 use Config;
 use URI::Fast qw(uri uri_split iri);
