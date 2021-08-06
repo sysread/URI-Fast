@@ -1876,34 +1876,6 @@ void absolute(pTHX_ SV *sv_target, SV *sv_uri, SV *sv_base) {
 }
 
 /*
- * Uppercases a 3-digit hex sequence, if present, in the first 3 indices of
- * *buf. It is the caller's responsibility to ensure that *buf is at least 3
- * chars in length.
- */
-static inline
-bool uc_hex_3ch(pTHX_ char *buf) {
-  if (buf[0] != '%') return 0;
-  buf[1] = toUPPER(buf[1]);
-  buf[2] = toUPPER(buf[2]);
-  return 1;
-}
-
-/*
- * Uppercases 3-character hex codes over an entire uri_str_t.
- */
-static inline
-void uc_hex(pTHX_ uri_str_t *str) {
-  size_t i = 0;
-  while (i < str->length) {
-    if (i + 2 < str->length && uc_hex_3ch(aTHX_ &str->string[i]) == 1) {
-      i += 3;
-    } else {
-      ++i;
-    }
-  }
-}
-
-/*
  * Decodes and then reencodes a uri_str_t.
  *
  */
