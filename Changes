@@ -1,4 +1,8 @@
 0.51 ????-??-??
+-feature: new constructor, new_abs($rel, $base)
+-feature: abs() aliased to absolute()
+-feature: rel() aliased to relative()
+-feature: canonical() aliased to normalize() (this was true in prior versions, but undocumented)
 -feature: normalize() now decodes unreserved chars and normalizes + to %20 (RFC 3986, 6.2.2.2)
 -feature: TO_JSON() added as alias of to_string()
 -miscellaneous minor efficiency/speed improvements

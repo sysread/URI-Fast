@@ -22,7 +22,7 @@
 // Returns the uri_t* referenced by the blessed URI::Fast object in the SV ref.
 // Croaks if the SV does not point to a URI::Fast object.
 #define URI(obj) \
-  (((sv_isobject(obj) && sv_derived_from(obj, "URI::Fast")) ? NULL : croak("error")), \
+  (((sv_isobject(obj) && sv_derived_from(obj, "URI::Fast")) ? NULL : croak("error: expected instance of URI::Fast")), \
     ((uri_t*) SvIV(SvRV((obj)))))
 
 // Size constants
@@ -2015,6 +2015,29 @@ SV* uri(...)
   OUTPUT:
     RETVAL
 
+SV* new_abs(class, rel, base)
+  const char* class
+  SV* rel
+  SV* base
+  PREINIT:
+    SV *abs;
+  CODE:
+    if (!sv_isobject(rel) || !sv_derived_from(rel, class)) {
+      rel = sv_2mortal(new(aTHX_ class, rel, 0));
+    }
+
+    if (!sv_isobject(base) || !sv_derived_from(base, class)) {
+      base = sv_2mortal(new(aTHX_ class, base, 0));
+    }
+
+    abs = new(aTHX_ class, sv_2mortal(newSVpvn("", 0)), 0);
+
+    absolute(aTHX_ abs, rel, base);
+
+    RETVAL = abs;
+  OUTPUT:
+    RETVAL
+
 
 #-------------------------------------------------------------------------------
 # Clearers
@@ -2306,23 +2329,25 @@ SV* normalize(uri)
   OUTPUT:
     uri
 
-SV* absolute(uri, base)
-  SV *uri
-  SV *base
+SV* absolute(rel, base)
+  SV* rel
+  SV* base
+  ALIAS:
+    abs = 1
   PREINIT:
+    SV *abs;
     const char *class;
-    SV *sv_target;
   CODE:
-    class = class_name(aTHX_ uri);
-    sv_target = new(aTHX_ class, sv_2mortal(newSVpvn("", 0)), 0);
+    class = class_name(aTHX_ rel);
+    abs = new(aTHX_ class, sv_2mortal(newSVpvn("", 0)), 0);
 
     if (!sv_isobject(base) || !sv_derived_from(base, class)) {
-      absolute(aTHX_ sv_target, uri, sv_2mortal(new(aTHX_ class, base, 0)));
-    } else {
-      absolute(aTHX_ sv_target, uri, base);
+      base = sv_2mortal(new(aTHX_ class, base, 0));
     }
 
-    RETVAL = sv_target;
+    absolute(aTHX_ abs, rel, base);
+
+    RETVAL = abs;
   OUTPUT:
     RETVAL
 
