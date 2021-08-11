@@ -1893,7 +1893,7 @@ void normalize_encoding(pTHX_ uri_str_t *str, char *permitted_chars, int allow_u
   char encoded[(decoded_len * 3) + 2];
   size_t encoded_len = uri_encode(decoded, decoded_len, encoded, permitted_chars, allow_utf8);
 
-  str_set(str, encoded, encoded_len);
+  str_set(aTHX_ str, encoded, encoded_len);
 }
 
 /*
@@ -1928,12 +1928,12 @@ void normalize(pTHX_ SV *uri_obj) {
 
   // (6.2.2.1) upper case hex codes in each section of the uri
   // (6.2.2.2) decode any percent-encoded sequences decoding to unreserved chars
-  normalize_encoding(uri->usr,   URI_CHARS_USER,  uri->is_iri);
-  normalize_encoding(uri->pwd,   URI_CHARS_USER,  uri->is_iri);
-  normalize_encoding(uri->host,  URI_CHARS_HOST,  uri->is_iri);
-  normalize_encoding(uri->path,  URI_CHARS_PATH,  uri->is_iri);
-  normalize_encoding(uri->query, URI_CHARS_QUERY, uri->is_iri);
-  normalize_encoding(uri->frag,  URI_CHARS_FRAG,  uri->is_iri);
+  normalize_encoding(aTHX_ uri->usr,   URI_CHARS_USER,  uri->is_iri);
+  normalize_encoding(aTHX_ uri->pwd,   URI_CHARS_USER,  uri->is_iri);
+  normalize_encoding(aTHX_ uri->host,  URI_CHARS_HOST,  uri->is_iri);
+  normalize_encoding(aTHX_ uri->path,  URI_CHARS_PATH,  uri->is_iri);
+  normalize_encoding(aTHX_ uri->query, URI_CHARS_QUERY, uri->is_iri);
+  normalize_encoding(aTHX_ uri->frag,  URI_CHARS_FRAG,  uri->is_iri);
 }
 
 
