@@ -40,7 +40,7 @@ jobs:
         run:  perl Makefile.PL
 
       - name: Install dependencies
-        run:  cpanm -n --installdeps .
+        run:  cpanm -nq --installdeps .
 
       - name: Run tests
         run:  make test
