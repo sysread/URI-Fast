@@ -73,6 +73,7 @@ WriteMakefile(
     'URI::Encode::XS'   => '0.11',
     'URI::Split'        => '0',
     'Unicode::GCString' => '0',
+    'Pod::Select'       => '0', # undeclared dep in one of the other test deps, apparently
   },
 
   PREREQ_PM => {
