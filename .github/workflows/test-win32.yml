@@ -23,6 +23,6 @@ jobs:
       - name: Build makefile
         run:  perl Makefile.PL
       - name: Install dependencies
-        run:  curl -sL https://git.io/cpm | perl - install -g --show-build-log-on-failure
+        run:  curl -sL http://cpanmin.us | perl - -n --installdeps .
       - name: Run tests
         run:  make test
