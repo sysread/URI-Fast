@@ -34,16 +34,21 @@ jobs:
 
     steps:
       - name: Check out repo
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
+
       - name: Set up perl
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
+
       - name: perl -V
-      - run:  perl -V
+        run:  perl -V
+
       - name: Build makefile
         run:  perl Makefile.PL
+
       - name: Install dependencies
-      - run:  cpanm --installdeps .
+        run:  cpanm --installdeps .
+
       - name: Run tests
-      - run:  prove -lv t
+        run:  prove -lv t
