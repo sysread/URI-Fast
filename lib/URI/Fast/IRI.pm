@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 require URI::Fast;
-our $VERSION = '0.50_01';
+our $VERSION = '0.50_02';
 
 our @ISA = qw(URI::Fast);
 
