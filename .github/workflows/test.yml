@@ -1,3 +1,13 @@
+name: test
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
