@@ -50,17 +50,18 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
-          install-modules-with: cpanm
-          install-modules-args: -n --installdeps --with-develop --with-configure
 
       - name: perl -V
         run:  perl -V
 
+      - name: Update ExtUtils::MakeMaker
+        run:  cpanm -nq --reinstall ExtUtils::MakeMaker
+
       - name: Build makefile
         run:  perl Makefile.PL
 
-      #- name: Install dependencies
-      #  run:  cpanm -nq --installdeps .
+      - name: Install dependencies
+        run:  cpanm -n --installdeps .
 
       - name: Run tests
         run:  make test
