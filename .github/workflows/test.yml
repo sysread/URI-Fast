@@ -19,7 +19,7 @@ jobs:
           - 'macos-latest'
           - 'windows-latest'
 
-        perl-version:
+        perl:
           - 'latest'
           - '5.32'
           - '5.30'
@@ -34,12 +34,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
       - name: Set up perl
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
-      - run: perl -V
+
+      - name: perl -V
+      - run:  perl -V
+
       - name: Build makefile
         run:  perl Makefile.PL
-      - run: cpanm --installdeps .
-      - run: prove -lv t
+
+      - name: Install dependencies
+      - run:  cpanm --installdeps .
+
+      - name: Run tests
+      - run:  prove -lv t
