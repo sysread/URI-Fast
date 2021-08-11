@@ -1,4 +1,4 @@
-name: run-tests
+name: linux
 
 on:
   push:
@@ -13,9 +13,9 @@ jobs:
     env:
       # some plugins still needs this to run their tests...
       PERL_USE_UNSAFE_INC: 0
-      AUTHOR_TESTING: 1
-      AUTOMATED_TESTING: 1
-      RELEASE_TESTING: 1
+      AUTHOR_TESTING:      1
+      AUTOMATED_TESTING:   1
+      RELEASE_TESTING:     1
       PERL_ANYEVENT_MODEL: Perl
 
     runs-on: ubuntu-latest
