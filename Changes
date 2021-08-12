@@ -1,4 +1,4 @@
-0.51 ????-??-??
+0.51 2021-08-12
 -feature: new constructor, new_abs($rel, $base)
 -feature: abs() aliased to absolute()
 -feature: rel() aliased to relative()
