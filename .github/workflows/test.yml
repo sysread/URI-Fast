@@ -21,7 +21,7 @@ jobs:
       PERL_ANYEVENT_MODEL: Perl
 
     strategy:
-      fail-fast: false
+      #fail-fast: false
 
       matrix:
         os:
@@ -65,3 +65,6 @@ jobs:
 
       - name: Run tests
         run:  make test
+
+      - name: DEBUG
+        run:  perl -Ilib t/memory.t
