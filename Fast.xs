@@ -1936,6 +1936,47 @@ void normalize(pTHX_ SV *uri_obj) {
   normalize_encoding(aTHX_ uri->frag,  URI_CHARS_FRAG,  uri->is_iri);
 }
 
+/*
+ * Returns a new copy of the uri string with tabs, line feeds, and carriage
+ * returns stripped, and backslashes replaced with forward slashes.
+ */
+SV* html_url(pTHX_ SV *uri, SV *base) {
+  size_t i = 0;
+  size_t len;
+  const char *in = SvPV_nomg_const(uri, len);
+  uri_str_t *out = str_new(aTHX_ len);
+
+  if (in[0] == '/' && in[1] == '/') {
+    if (SvOK(base) || SvROK(base)) {
+      uri_t *base_uri = URI(base);
+      str_append(out, base_uri->scheme->string, base_uri->scheme->length);
+      str_append(out, ":", 1);
+    }
+  }
+
+  // Remove characters specified by the URL standard
+  for (i = 0; i < len + 1; ++i) {
+    switch (in[i]) {
+      // Strip tabs, line feeds, and carriage returns
+      case '\t':
+      case '\r':
+      case '\n':
+        break;
+
+      // Convert backslashes to forward slashes
+      case '\\':
+        str_append(out, "/", 1);
+        break;
+
+      default:
+        str_append(out, &in[i], 1);
+        break;
+    }
+  }
+
+  return URI_STR_2SV(out);
+}
+
 
 MODULE = URI::Fast  PACKAGE = URI::Fast
 
@@ -2038,6 +2079,36 @@ SV* new_abs(class, rel, base)
   OUTPUT:
     RETVAL
 
+SV* html_url(url, ...)
+  SV *url
+  ALIAS:
+    abs_html_url = 1
+  PREINIT:
+    SV *tmp;
+    SV *base;
+    SV *abs;
+  CODE:
+    if (items > 1) {
+      if (!sv_isobject(ST(1)) || !sv_derived_from(ST(1), "URI::Fast")) {
+        base = sv_2mortal(new(aTHX_ "URI::Fast", ST(1), 0));
+      } else {
+        base = ST(1);
+      }
+    }
+
+    tmp = html_url(aTHX_ url, base);
+    tmp = new(aTHX_ "URI::Fast", sv_2mortal(tmp), 0);
+
+    if (ix == 1) {
+      abs = new(aTHX_ "URI::Fast", sv_2mortal(newSVpvn("", 0)), 0);
+      absolute(aTHX_ abs, tmp, base);
+      normalize(aTHX abs);
+      RETVAL = abs;
+    } else {
+      RETVAL = tmp;
+    }
+  OUTPUT:
+    RETVAL
 
 #-------------------------------------------------------------------------------
 # Clearers

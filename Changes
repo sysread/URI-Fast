@@ -1,3 +1,7 @@
+0.52 ????-??-??
+-feature: html_url now implemented in XS
+-feature: new constructor, abs_html_url
+
 0.51 2021-08-12
 -feature: new constructor, new_abs($rel, $base)
 -feature: abs() aliased to absolute()
