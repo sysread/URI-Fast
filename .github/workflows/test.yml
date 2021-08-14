@@ -67,7 +67,4 @@ jobs:
         run:  perl -Ilib t/memory.t
 
       - name: Run tests
-        run:  make test
-
-      - name: DEBUG
-        run:  perl -Ilib t/memory.t
+        run:  make test TEST_VERBOSE=1
