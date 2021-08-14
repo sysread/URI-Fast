@@ -2101,7 +2101,7 @@ SV* html_url(url, ...)
     if (ix == 1) {
       abs = new(aTHX_ "URI::Fast", sv_2mortal(newSVpvn("", 0)), 0);
       absolute(aTHX_ abs, sv_2mortal(rel), base);
-      normalize(aTHX abs);
+      normalize(aTHX_ abs);
       RETVAL = abs;
     } else {
       RETVAL = rel;
