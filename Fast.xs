@@ -1949,8 +1949,8 @@ SV* html_url(pTHX_ SV *uri, SV *base) {
   if (in[0] == '/' && in[1] == '/') {
     if (SvOK(base) || SvROK(base)) {
       uri_t *base_uri = URI(base);
-      str_append(out, base_uri->scheme->string, base_uri->scheme->length);
-      str_append(out, ":", 1);
+      str_append(aTHX_ out, base_uri->scheme->string, base_uri->scheme->length);
+      str_append(aTHX_ out, ":", 1);
     }
   }
 
@@ -1965,11 +1965,11 @@ SV* html_url(pTHX_ SV *uri, SV *base) {
 
       // Convert backslashes to forward slashes
       case '\\':
-        str_append(out, "/", 1);
+        str_append(aTHX_ out, "/", 1);
         break;
 
       default:
-        str_append(out, &in[i], 1);
+        str_append(aTHX_ out, &in[i], 1);
         break;
     }
   }
