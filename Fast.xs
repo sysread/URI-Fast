@@ -2084,7 +2084,7 @@ SV* html_url(url, ...)
   ALIAS:
     abs_html_url = 1
   PREINIT:
-    SV *tmp;
+    SV *rel;
     SV *base;
     SV *abs;
   CODE:
@@ -2096,16 +2096,15 @@ SV* html_url(url, ...)
       }
     }
 
-    tmp = html_url(aTHX_ url, base);
-    tmp = new(aTHX_ "URI::Fast", sv_2mortal(tmp), 0);
+    rel = new(aTHX_ "URI::Fast", sv_2mortal(html_url(aTHX_ url, base)), 0);
 
     if (ix == 1) {
       abs = new(aTHX_ "URI::Fast", sv_2mortal(newSVpvn("", 0)), 0);
-      absolute(aTHX_ abs, tmp, base);
+      absolute(aTHX_ abs, sv_2mortal(rel), base);
       normalize(aTHX abs);
       RETVAL = abs;
     } else {
-      RETVAL = tmp;
+      RETVAL = rel;
     }
   OUTPUT:
     RETVAL
