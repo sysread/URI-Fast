@@ -21,7 +21,7 @@ jobs:
       PERL_ANYEVENT_MODEL: Perl
 
     strategy:
-      #fail-fast: false
+      fail-fast: false
 
       matrix:
         os:
@@ -63,8 +63,5 @@ jobs:
       - name: Install dependencies
         run:  cpanm -n --installdeps .
 
-      - name: DEBUG
-        run:  perl -Ilib t/memory.t
-
       - name: Run tests
-        run:  make test TEST_VERBOSE=1
+        run:  make test
