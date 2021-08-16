@@ -94,10 +94,6 @@ OO equivalent to L</abs_uri>.
 
 OO equivalent to L</html_url>.
 
-=head2 new_abs_html_url
-
-OO equivalent to L</abs_html_url>.
-
 =head1 ATTRIBUTES
 
 All attributes serve as full accessors, allowing the URI segment to be both
