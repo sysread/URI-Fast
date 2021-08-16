@@ -18,7 +18,12 @@ XSLoader::load('URI::Fast', $XS_VERSION);
 use Exporter 'import';
 
 our @EXPORT_OK = qw(
-  uri iri uri_split html_url abs_html_url
+  uri_split 
+  uri
+  iri
+  abs_uri
+  html_url
+  abs_html_url
   encode uri_encode url_encode
   decode uri_decode url_decode
 );
@@ -370,6 +375,41 @@ Similar to L</uri>, but returns a C<URI::Fast::IRI> object. A C<URI::Fast::IRI>
 differs from a C<URI::Fast> in that UTF-8 characters are permitted and will not
 be percent-encoded when modified.
 
+=head2 abs_uri
+
+Builds a new C<URI::Fast> from a relative URI string and makes it L</absolute>
+in relation to C<$base>.
+
+  my $uri = abs_uri 'some/path', 'http://www.example.com/fnord';
+  $uri->to_string; # "http://www.example.com/fnord/some/path"
+
+=head2 html_url
+
+Parses a URI string, first removing whitespace characters ignored in URLs
+found in HTML documents, replacing backslashes with forward slashes, and
+optionally defaulting the scheme to that of the document source URL when
+the URL begins with C<//>.
+
+  my $url = html_url "https://www.slashdot.org";
+
+  # Inheriting the scheme from $url
+  my $recent = html_url "//www.slashdot.org/recent", $url;
+
+=head2 abs_html_url
+
+Equivalent to L</html_url>, with the added behavior that, if a base URL is
+specified, the C<URI::Fast> object returned will be L</absolute> relative to
+that base URL and will be L</normalize>d.
+
+  # Resulting URL is "https://www.slashdot.org/"
+  my $url = abs_html_url "//www.slashdot.org/recent/..", "https://www.slashdot.org/recent";
+
+  # Equivalent to:
+  my $base = uri "https://www.slashdot.org/recent";
+  my $url = html_url("//www.slashdot.org/recent/..", $base)
+    ->absolute($base)
+    ->normalize;
+
 =head2 uri_split
 
 Behaves (hopefully) identically to L<URI::Split>, but roughly twice as fast.
@@ -383,17 +423,21 @@ See L</ENCODING>.
 =head2 new
 
 If desired, both C<URI::Fast> and L<URI::Fast::IRI> may be instantiated using
-the default constructor, C<new>.
+the default OO-flavored constructor, C<new>.
 
   my $uri = URI::Fast->new('http://www.example.com');
 
 =head2 new_abs
 
-Builds a new C<URI::Fast> from a relative URI string and makes it L</absolute>
-in relation to C<$base>.
+OO equivalent to L</abs_uri>.
 
-  my $uri = URI::Fast->new_abs('some/path', 'http://www.example.com/fnord');
-  $uri->to_string; # "http://www.example.com/fnord/some/path"
+=head2 new_html_url
+
+OO equivalent to L</html_url>.
+
+=head2 new_abs_html_url
+
+OO equivalent to L</abs_html_url>.
 
 =head1 ATTRIBUTES
 
@@ -779,35 +823,6 @@ is a non-reference value.
     baz => undef,
     bat => '',
   }
-
-=head1 EXTRAS
-
-=head2 html_url
-
-Parses a URI string, first removing whitespace characters ignored in URLs
-found in HTML documents, replacing backslashes with forward slashes, and
-optionally defaulting the scheme to that of the document source URL when
-the URL begins with C<//>.
-
-  my $url = html_url "https://www.slashdot.org";
-
-  # Inheriting the scheme from $url
-  my $recent = html_url "//www.slashdot.org/recent", $url;
-
-=head2 abs_html_url
-
-Equivalent to L</html_url>, with the added behavior that, if a base URL is
-specified, the C<URI::Fast> object returned will be L</absolute> relative to
-that base URL and will be L</normalize>d.
-
-  # Resulting URL is "https://www.slashdot.org/"
-  my $url = abs_html_url "//www.slashdot.org/recent/..", "https://www.slashdot.org/recent";
-
-  # Equivalent to:
-  my $base = uri "https://www.slashdot.org/recent";
-  my $url = html_url("//www.slashdot.org/recent/..", $base)
-    ->absolute($base)
-    ->normalize;
 
 =head1 CAVEATS
 

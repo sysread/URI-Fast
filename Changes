@@ -1,6 +1,7 @@
 0.52 ????-??-??
 -feature: html_url now implemented in XS
 -feature: new constructor, abs_html_url
+-feature: short-hand ctor equivalent to new_abs, abs_uri
 
 0.51 2021-08-12
 -feature: new constructor, new_abs($rel, $base)
