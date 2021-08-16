@@ -2,7 +2,7 @@ use utf8;
 use ExtUtils::testlib;
 use Test2::V0;
 use Test::LeakTrace qw(no_leaks_ok);
-use URI::Fast qw(uri uri_split html_url abs_html_url);
+use URI::Fast qw(uri uri_split html_url);
 
 SKIP: {
   skip_all 'memory tests fail when $ENV{COVERAGE} is set'
@@ -103,7 +103,7 @@ SKIP: {
     };
 
     no_leaks_ok{ my $url = html_url("//www.example.com\\foo\n\t\r\\bar", "http://www.example.com") } 'html_url';
-    no_leaks_ok{ my $url = abs_html_url("//www.example.com\\foo\n\t\r\\bar", "http://www.example.com") } 'abs_html_url';
+    no_leaks_ok{ my $url = URI::Fast->new_html_url("//www.example.com\\foo\n\t\r\\bar", "http://www.example.com") } 'html_url';
   };
 };
 

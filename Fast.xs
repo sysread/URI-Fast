@@ -2060,6 +2060,8 @@ SV* new_html_url(class, url, ...)
   SV *url
   PREINIT:
     SV *base = NULL;
+    SV *rel;
+    SV *abs;
   CODE:
     if (items > 2) {
       if (!sv_isobject(ST(2)) || !sv_derived_from(ST(2), "URI::Fast")) {
@@ -2067,30 +2069,19 @@ SV* new_html_url(class, url, ...)
       } else {
         base = ST(2);
       }
+
+      rel = new(aTHX_ "URI::Fast", sv_2mortal(html_url(aTHX_ url, base)), 0);
+      abs = new(aTHX_ "URI::Fast", sv_2mortal(newSVpvn("", 0)), 0);
+      absolute(aTHX_ abs, sv_2mortal(rel), base);
+      normalize(aTHX_ abs);
+      RETVAL = abs;
+    }
+    else {
+      rel = new(aTHX_ class, sv_2mortal(html_url(aTHX_ url, base)), 0);
+      normalize(aTHX_ rel);
+      RETVAL = rel;
     }
 
-    RETVAL = new(aTHX_ class, sv_2mortal(html_url(aTHX_ url, base)), 0);
-  OUTPUT:
-    RETVAL
-
-SV* new_abs_html_url(class, url, url_base)
-  const char *class
-  SV *url
-  SV *url_base
-  PREINIT:
-    SV *base;
-    SV *rel;
-    SV *abs;
-  CODE:
-    if (!sv_isobject(url_base) || !sv_derived_from(url_base, "URI::Fast")) {
-      base = sv_2mortal(new(aTHX_ "URI::Fast", url_base, 0));
-    }
-
-    rel = new(aTHX_ "URI::Fast", sv_2mortal(html_url(aTHX_ url, base)), 0);
-    abs = new(aTHX_ "URI::Fast", sv_2mortal(newSVpvn("", 0)), 0);
-    absolute(aTHX_ abs, sv_2mortal(rel), base);
-    normalize(aTHX_ abs);
-    RETVAL = abs;
   OUTPUT:
     RETVAL
 
@@ -2140,10 +2131,10 @@ SV* abs_uri(rel, base)
 
 SV* html_url(url, ...)
   SV *url
-  ALIAS:
-    abs_html_url = 1
   PREINIT:
     SV *base = NULL;
+    SV *abs;
+    SV *rel;
   CODE:
     if (items > 1) {
       if (!sv_isobject(ST(1)) || !sv_derived_from(ST(1), "URI::Fast")) {
@@ -2151,33 +2142,20 @@ SV* html_url(url, ...)
       } else {
         base = ST(1);
       }
-    }
 
-    RETVAL = new(aTHX_ "URI::Fast", sv_2mortal(html_url(aTHX_ url, base)), 0);
+      rel = new(aTHX_ "URI::Fast", sv_2mortal(html_url(aTHX_ url, base)), 0);
+      abs = new(aTHX_ "URI::Fast", sv_2mortal(newSVpvn("", 0)), 0);
+      absolute(aTHX_ abs, sv_2mortal(rel), base);
+      normalize(aTHX_ abs);
+      RETVAL = abs;
+    }
+    else {
+      rel = new(aTHX_ "URI::Fast", sv_2mortal(html_url(aTHX_ url, base)), 0);
+      normalize(aTHX_ rel);
+      RETVAL = rel;
+    }
   OUTPUT:
     RETVAL
-
-SV* abs_html_url(url, base)
-  SV *url
-  SV *base
-  PREINIT:
-    SV *rel;
-    SV *abs;
-  CODE:
-    if (!sv_isobject(base) || !sv_derived_from(base, "URI::Fast")) {
-      base = sv_2mortal(new(aTHX_ "URI::Fast", base, 0));
-    } else {
-      base = base;
-    }
-
-    rel = new(aTHX_ "URI::Fast", sv_2mortal(html_url(aTHX_ url, base)), 0);
-    abs = new(aTHX_ "URI::Fast", sv_2mortal(newSVpvn("", 0)), 0);
-    absolute(aTHX_ abs, sv_2mortal(rel), base);
-    normalize(aTHX_ abs);
-    RETVAL = abs;
-  OUTPUT:
-    RETVAL
-
 
 #-------------------------------------------------------------------------------
 # Clearers

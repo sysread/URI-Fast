@@ -23,7 +23,6 @@ our @EXPORT_OK = qw(
   iri
   abs_uri
   html_url
-  abs_html_url
   encode uri_encode url_encode
   decode uri_decode url_decode
 );
@@ -385,30 +384,15 @@ in relation to C<$base>.
 
 =head2 html_url
 
-Parses a URI string, first removing whitespace characters ignored in URLs
-found in HTML documents, replacing backslashes with forward slashes, and
-optionally defaulting the scheme to that of the document source URL when
-the URL begins with C<//>.
+Parses a URI string, removing whitespace characters ignored in URLs found in
+HTML documents, replacing backslashes with forward slashes, and making the
+URL L</normalize>d.
 
-  my $url = html_url "https://www.slashdot.org";
+If a base URL is specified, the C<URI::Fast> object returned will be made
+L</absolute> relative to that base URL.
 
-  # Inheriting the scheme from $url
-  my $recent = html_url "//www.slashdot.org/recent", $url;
-
-=head2 abs_html_url
-
-Equivalent to L</html_url>, with the added behavior that, if a base URL is
-specified, the C<URI::Fast> object returned will be L</absolute> relative to
-that base URL and will be L</normalize>d.
-
-  # Resulting URL is "https://www.slashdot.org/"
-  my $url = abs_html_url "//www.slashdot.org/recent/..", "https://www.slashdot.org/recent";
-
-  # Equivalent to:
-  my $base = uri "https://www.slashdot.org/recent";
-  my $url = html_url("//www.slashdot.org/recent/..", $base)
-    ->absolute($base)
-    ->normalize;
+  # Resulting URL is "https://www.slashdot.org/recent"
+  my $url = html_url '//www.slashdot.org\recent', "https://www.slashdot.org";
 
 =head2 uri_split
 
