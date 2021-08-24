@@ -1,3 +1,6 @@
+0.53 ????-??-??
+-bugfix: html_url w/ empty relative url crashes w/ floating point error (thanks markov2)
+
 0.52 2021-08-20
 -feature: html_url now implemented in XS
 -feature: html_url has OO ctor equivalent, new_html_url

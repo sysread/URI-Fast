@@ -1941,10 +1941,11 @@ void normalize(pTHX_ SV *uri_obj) {
  * returns stripped, and backslashes replaced with forward slashes.
  */
 SV* html_url(pTHX_ SV *uri, SV *base) {
+  SV *rv;
   size_t i = 0;
   size_t len;
   const char *in = SvPV_nomg_const(uri, len);
-  uri_str_t *out = str_new(aTHX_ len);
+  uri_str_t *out = str_new(aTHX_ 32);
 
   if (in[0] == '/' && in[1] == '/') {
     if (base != NULL && (SvOK(base) || SvROK(base))) {
@@ -1974,7 +1975,9 @@ SV* html_url(pTHX_ SV *uri, SV *base) {
     }
   }
 
-  return URI_STR_2SV(out);
+  rv = URI_STR_2SV(out);
+  str_free(aTHX_ out);
+  return rv;
 }
 
 

@@ -30,4 +30,8 @@ subtest new_html_url => sub{
   };
 };
 
+subtest outliers => sub{
+  is html_url('', 'http://xyz.com'), 'http://xyz.com', 'rel is an empty string';
+};
+
 done_testing;
