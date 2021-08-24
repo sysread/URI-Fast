@@ -1956,7 +1956,7 @@ SV* html_url(pTHX_ SV *uri, SV *base) {
   }
 
   // Remove characters specified by the URL standard
-  for (i = 0; i < len + 1; ++i) {
+  for (i = 0; i < len; ++i) {
     switch (in[i]) {
       // Strip tabs, line feeds, and carriage returns
       case '\t':
