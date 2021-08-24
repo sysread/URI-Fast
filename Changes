@@ -1,6 +1,7 @@
 0.53 ????-??-??
 -bugfix: html_url w/ empty relative url crashes w/ floating point error (thanks markov2)
 -bugfix: html_url w/ fragment appends null char to uri (thanks markov2)
+-bugfix: html_url segfaults when both rel and base start with "//" (thanks markov2)
 
 0.52 2021-08-20
 -feature: html_url now implemented in XS

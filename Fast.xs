@@ -1780,9 +1780,9 @@ void remove_dot_segments(pTHX_ uri_str_t *out, const char *path, size_t len) {
  *----------------------------------------------------------------------------*/
 static
 void absolute(pTHX_ SV *sv_target, SV *sv_uri, SV *sv_base) {
+  uri_t *target = URI(sv_target);
   uri_t *rel    = URI(sv_uri);
   uri_t *base   = URI(sv_base);
-  uri_t *target = URI(sv_target);
 
   const char *class = class_name(aTHX_ sv_target);
 
@@ -1844,7 +1844,7 @@ void absolute(pTHX_ SV *sv_target, SV *sv_uri, SV *sv_base) {
             str_append(aTHX_ merged, rel->path->string, rel->path->length);
           }
           else {
-            if (strstr(base->path->string, "/") != NULL) {
+            if (base->path->length > 0 && strstr(base->path->string, "/") != NULL) {
               // truncate base path at right-most /, inclusive
               str_append(aTHX_ merged, base->path->string, base->path->length);
               str_rtrim(aTHX_ merged, '/');
@@ -1950,8 +1950,10 @@ SV* html_url(pTHX_ SV *uri, SV *base) {
   if (in[0] == '/' && in[1] == '/') {
     if (base != NULL && (SvOK(base) || SvROK(base))) {
       uri_t *base_uri = URI(base);
-      str_append(aTHX_ out, base_uri->scheme->string, base_uri->scheme->length);
-      str_append(aTHX_ out, ":", 1);
+      if (base_uri->scheme->length > 0) {
+        str_append(aTHX_ out, base_uri->scheme->string, base_uri->scheme->length);
+        str_append(aTHX_ out, ":", 1);
+      }
     }
   }
 
