@@ -31,7 +31,8 @@ subtest new_html_url => sub{
 };
 
 subtest outliers => sub{
-  is html_url('', 'http://xyz.com'), 'http://xyz.com', 'rel is an empty string';
+  is html_url('http://www.example.com'), 'http://www.example.com/', 'empty path w/ authority section results in trailing slash';
+  is html_url('', 'http://xyz.com'), 'http://xyz.com/', 'rel is an empty string';
 };
 
 done_testing;

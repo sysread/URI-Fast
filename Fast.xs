@@ -852,6 +852,18 @@ void uri_scan(pTHX_ uri_t *uri, const char *src, size_t len) {
   }
 }
 
+/*
+ * Helper function that returns true if any part of the authority section is
+ * set.
+ */
+static inline
+int has_authority(pTHX_ uri_t *uri) {
+  return uri->host->length > 0
+      || uri->usr->length > 0
+      || uri->pwd->length > 0
+      || uri->port->length > 0;
+}
+
 /*------------------------------------------------------------------------------
  *
  * Perl API
@@ -1934,6 +1946,11 @@ void normalize(pTHX_ SV *uri_obj) {
   normalize_encoding(aTHX_ uri->path,  URI_CHARS_PATH,  uri->is_iri);
   normalize_encoding(aTHX_ uri->query, URI_CHARS_QUERY, uri->is_iri);
   normalize_encoding(aTHX_ uri->frag,  URI_CHARS_FRAG,  uri->is_iri);
+
+  // (6.2.3) empty path should be represented as "/" when authority is present
+  if (uri->path->length == 0 && has_authority(aTHX_ uri)) {
+    str_set(aTHX_ uri->path, "/", 1);
+  }
 }
 
 /*
