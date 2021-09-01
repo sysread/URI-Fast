@@ -2438,6 +2438,8 @@ SV* port(self, ...)
 
 SV* frag(self, ...)
   SV *self
+  ALIAS:
+    fragment = 1
   CODE:
     if (items > 1) set_frag(aTHX_ self, ST(1));
     RETVAL = get_frag(aTHX_ self);
