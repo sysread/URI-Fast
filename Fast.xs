@@ -1961,7 +1961,7 @@ SV* html_url(pTHX_ SV *uri, SV *base) {
   SV *rv;
   size_t i = 0;
   size_t len;
-  const char *in = SvPV_nomg_const(uri, len);
+  const char *in = SvPV_const(uri, len);
   uri_str_t *out = str_new(aTHX_ 32);
 
   if (in[0] == '/' && in[1] == '/') {
