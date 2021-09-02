@@ -1,6 +1,6 @@
-0.54 2021-09-01
+0.54 2021-09-02
 -feature: added fragment() as alias of frag() (thanks markov2)
--bugfix: (possibly) fixes utf8 encoding bug in html_url (thanks markov2)
+-bugfix: fixes several utf8 encoding bugs in html_url (thanks markov2)
 
 0.53 2021-08-31
 -bugfix: html_url w/ empty relative url crashes w/ floating point error (thanks markov2)

@@ -120,7 +120,7 @@ static SV* get_##member(pTHX_ SV *uri) { \
     str->chunk, \
     str->allocated, \
     str->length, \
-    str->length, \
+    (int)str->length, \
     str->string \
   )); \
 
@@ -1996,6 +1996,13 @@ SV* html_url(pTHX_ SV *uri, SV *base) {
 
   rv = URI_STR_2SV(out);
   str_free(aTHX_ out);
+
+  // If the source uri was utf8, ensure that the flag is flipped for the output
+  // buffer as well.
+  if (DO_UTF8(uri)) {
+    sv_utf8_decode(rv);
+  }
+
   return rv;
 }
 
