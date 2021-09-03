@@ -323,6 +323,73 @@ sub unescape_tree {
   _walk($ref, $sub);
 }
 
+sub data {
+  my $self = shift;
+  if (@_) {
+    $self->_set_data(@_);
+  } else {
+    $self->_get_data;
+  }
+}
+
+sub _set_data {
+  my ($self, %param) = @_;
+
+  my $media_type = $param{media_type};
+  my $charset    = $param{charset};
+  my $data       = $param{data} || croak 'expected parameter: data';
+
+  $self->clear_auth;
+  $self->clear_query;
+  $self->clear_frag;
+
+  my $path = '';
+
+  if ($media_type) {
+    $path .= $media_type;
+  }
+
+  if ($charset) {
+    $path .= ';' . $charset;
+  }
+
+  $path .= ',' . encode($data);
+
+  $self->scheme('data');
+  $self->path($path);
+}
+
+sub _get_data {
+  my $self = shift;
+  return if $self->scheme ne 'data';
+
+  my ($media_type, $charset, $data) = scalar($self->path) =~ qr{
+    ^
+    (?: ( [^;]+ ) )?
+    (?:
+      ;
+      (
+          (?: base64 )
+        | (?: charset=[^,]+ )
+      )
+    )?
+    ,
+    (.*)
+    $ 
+  }x;
+
+  $media_type ||= 'text/plain';
+  $charset    ||= 'US-ASCII';
+
+  $charset =~ s/^charset=//;
+
+  return {
+    media_type => $media_type,
+    charset    => $charset,
+    data       => decode($data),
+  }
+}
+
 =encoding UTF8
 
 =head1 NAME
